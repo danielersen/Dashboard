@@ -1,0 +1,44 @@
+# Principal informations
+name = "workspace"
+main = "index.js"
+compatibility_date = "2026-05-22"
+workers_dev = true
+compatibility_flags = ["nodejs_compat"]
+
+# Environnement variables
+[vars]
+MODE = "production" # -> "production" if enabled, or any other name if disabled
+SITE = "enabled" # -> "enabled" if enabled, or any other name if disabled
+API = "enabled" # -> "enbaled" if enabled, or any other name if disabled
+
+# Static site
+[assets]
+directory = "./frontend"
+binding = "ASSETS"
+
+# Secret store
+[[secrets_store_secrets]]
+binding = "MY_SECRET"
+store_id = "66ec2510845d44729eeef43b8f0a7f65"
+secret_name = "SECRET_KEY"
+
+# Worker executed before assets
+run_worker_first = [
+  "/api/",
+  "/api/*",
+  "/ws"
+]
+
+# Observability
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+invocation_logs = true
+
+[observability.traces]
+enabled = true
+head_sampling_rate = 1
