@@ -24,9 +24,7 @@ secret_name = "SECRET_KEY"
 
 # Worker executed before assets
 run_worker_first = [
-  "/api/",
-  "/api/*",
-  "/ws"
+  "/api/ed"
 ]
 
 # Observability
