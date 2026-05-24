@@ -34,15 +34,21 @@ export default {
     // =========================
     /// Ecoledirecte handle
     // Notes
-    if (url.pathname.startsWith("/api/ed/notes")) {
+    if (url.pathname.startsWith("/api/ed/notes")&&
+      request.method === "GET"
+    ) {
       return handleED(USER, PASSWORD, "notes")
     }
     // Agenda
-    if (url.pathname.startsWith("/api/ed/agenda")) {
+    if (url.pathname.startsWith("/api/ed/agenda")&&
+      request.method === "GET"
+    ) {
       return handleED(USER, PASSWORD, "agenda")
     }
     // Timetable
-    if (url.pathname.startsWith("/api/ed/timetable")) {
+    if (url.pathname.startsWith("/api/ed/timetable")&&
+      request.method === "GET"
+    ) {
       return handleED(USER, PASSWORD, "timetable")
     }
     
