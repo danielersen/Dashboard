@@ -7,6 +7,8 @@ export default {
     // GETTING VARIABLES...
     const MODE = env.MODE;
     const SITE = env.SITE;
+    const USER = env.USER;
+    const PASSWORD = env.PASSWORD;
     
     // =========================
     // ⛔ PRODUCTION MODE DISABLED
@@ -30,12 +32,20 @@ export default {
     // =========================
     // 📶 MAIN API
     // =========================
-    
-    // Ecoledirecte handle
-    if (url.pathname.startsWith("/api/ed")) {
-      return handleED(request, env, ctx, secretJson)
+    /// Ecoledirecte handle
+    // Notes
+    if (url.pathname.startsWith("/api/ed/notes")) {
+      return handleED(USER, PASSWORD, "notes")
     }
-
+    // Agenda
+    if (url.pathname.startsWith("/api/ed/agenda")) {
+      return handleED(USER, PASSWORD, "agenda")
+    }
+    // Timetable
+    if (url.pathname.startsWith("/api/ed/timetable")) {
+      return handleED(USER, PASSWORD, "timetable")
+    }
+    
     // =========================
     // ❌ 404 NOT FOUND
     // =========================
