@@ -6,37 +6,9 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url)
 
-    // Build the JSON secret
-    const variablesNames = [
-      "ALLOWED_TO_PRINCIPAL_LEVEL",
-      "ALLOWED_TO_WEBSOCKET_LEVEL",
-      "CLE_ULTRA_LEVEL",
-      "EMAIL",
-      "GMAIL_PASS",
-      "GMAIL_USER",
-      "NTFY_URL",
-      "SERCET_KEY"
-    ];
-    const variablesList = [];
-    const secretJson = {};
-    for (const name of variablesNames) {
-      let value = env[name];
-      if (
-        typeof value === "string" &&
-        value.trim().startsWith("{") &&
-        value.trim().endsWith("}")
-      ) {
-        try {
-          value = JSON.parse(value);
-        } catch (e) {}
-      }
-      const keyName = name === "SERCET_KEY" ? "CLE_ULTRA" : name;
-      variablesList.push({
-        name: keyName,
-        value
-      });
-      secretJson[keyName] = value;
-    };
+    // GETTING VARIABLES...
+    const MODE = env.MODE;
+    const SITE = env.SITE;
     
     // =========================
     // ⛔ PRODUCTION MODE DISABLED
