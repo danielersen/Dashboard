@@ -13,7 +13,7 @@ export default {
     // =========================
     // ⛔ PRODUCTION MODE DISABLED
     // =========================
-    if (env.MODE !== "prodution") {
+    if (env.MODE !== "production") {
       return new Response("Not Found", { status: 404 })
     }
 
