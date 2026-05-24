@@ -9,7 +9,6 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 MODE = "production" # -> "production" if enabled, or any other name if disabled
 SITE = "enabled" # -> "enabled" if enabled, or any other name if disabled
-API = "enabled" # -> "enbaled" if enabled, or any other name if disabled
 
 # Static site
 [assets]
