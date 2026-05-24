@@ -37,19 +37,34 @@ export default {
     if (url.pathname.startsWith("/api/ed/notes")&&
       request.method === "GET"
     ) {
-      return handleED(USER, PASSWORD, "notes")
+      const resp = await handleED(USER, PASSWORD, "notes");
+      return new Response(JSON.stringify({ resp }), {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
     }
     // Agenda
     if (url.pathname.startsWith("/api/ed/agenda")&&
       request.method === "GET"
     ) {
-      return handleED(USER, PASSWORD, "agenda")
+      const resp = await handleED(USER, PASSWORD, "agenda");
+      return new Response(JSON.stringify({ resp }), {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
     }
     // Timetable
     if (url.pathname.startsWith("/api/ed/timetable")&&
       request.method === "GET"
     ) {
-      return handleED(USER, PASSWORD, "timetable")
+      const resp = handleED(USER, PASSWORD, "timetable");
+      return new Response(JSON.stringify({ resp }), {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
     }
     
     // =========================
