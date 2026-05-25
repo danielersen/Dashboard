@@ -16,7 +16,7 @@ export async function handleED(user, password) {
 
   const setCookie = gtkRes.headers.get("set-cookie") || "";
   const gtk = setCookie.match(/GTK=([^;]+)/)?.[1];
-
+  return gtk
   if (!gtk) throw new Error("GTK introuvable");
 
   // 2. PAYLOAD EXACT (IMPORTANT)
