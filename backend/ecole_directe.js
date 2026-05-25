@@ -16,9 +16,7 @@ export async function handleED(user, password) {
       cookies.push(...gtkRes.headers.getSetCookie());
     }
     const rawSetCookie = gtkRes.headers.get("set-cookie");
-    if (rawSetCookie && cookies.length === 0) {
-      cookies.push(rawSetCookie);
-    }
+    if (rawSetCookie && cookies.length === 0) cookies.push(rawSetCookie);
     const gtk = cookies.map((c) => c.match(/GTK=([^;]+)/)?.[1]).find(Boolean);
     if (!gtk) throw new Error("GTK introuvable");
     return { gtk, cookies };
@@ -47,19 +45,26 @@ export async function handleED(user, password) {
       },
       body: body.toString()
     });
-    const json = await res.json();
-    return { json, gtk, cookies };
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`Réponse login invalide: ${text.slice(0, 200)}`);
+    }
+    const tokenFromHeader = res.headers.get("x-token") || res.headers.get("X-Token") || "";
+    const token = tokenFromHeader || json.token || "";
+    return { json, gtk, cookies, token };
   }
   const first = await login();
   if (first.json.code === 200) {
-    return { token: first.json.token, account: first.json.data };
+    return { token: first.token || first.json.token, account: first.json.data };
   }
   if (first.json.code !== 250) {
     throw new Error(first.json.message || `Login failed with code ${first.json.code}`);
   }
-  const qcmToken = first.json.token;
-  if (!qcmToken) {
-    throw new Error("Token manquant dans la réponse du login 250");
+  if (!first.token) {
+    throw new Error(`Token absent sur le login 250: ${JSON.stringify(first.json)}`);
   }
   const challengeRes = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp?verbe=get", {
     method: "POST",
@@ -69,7 +74,7 @@ export async function handleED(user, password) {
       "Accept": "application/json, text/plain, */*",
       "Referer": "https://www.ecoledirecte.com/",
       "Origin": "https://www.ecoledirecte.com",
-      "X-Token": qcmToken,
+      "X-Token": first.token,
       "Cookie": first.cookies.join("; ")
     },
     body: new URLSearchParams({
@@ -84,7 +89,7 @@ export async function handleED(user, password) {
     throw new Error(`Réponse QCM invalide: ${challengeText.slice(0, 200)}`);
   }
   if (challenge.code === 520) {
-    throw new Error("Token invalide pendant l'accès au QCM");
+    throw new Error(`Token invalide pendant l'accès au QCM: ${challengeText.slice(0, 200)}`);
   }
   if (challenge.code !== 200 || !challenge.data) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
@@ -96,7 +101,7 @@ export async function handleED(user, password) {
   }
   return {
     needs2FA: true,
-    token: qcmToken,
+    token: first.token,
     question,
     propositions
   };
