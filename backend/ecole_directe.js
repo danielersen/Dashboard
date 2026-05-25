@@ -1,4 +1,4 @@
-export async function handleED(user, password) {
+export async function handleED(user, password, year, day, classe, teacher) {
   const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
   const apiVersion = "4.75.0";
   async function getGtk() {
@@ -99,10 +99,38 @@ export async function handleED(user, password) {
   if (!question || propositions.length === 0) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
-  return {
-    needs2FA: true,
-    token: first.token,
-    question,
-    propositions
-  };
+  if (question === "Quel est votre jour de naissance ?") {
+    const answer = day;
+  }
+  if (question === "Quelle est votre année de naissance ?") {
+    const answer = year;
+  }
+  if (question === "Quel est le nom de famille de votre professeur principal ?") {
+    const answer = teacher;
+  }
+  if (question === "Quelle est votre classe ?") {
+    const answer = classe;
+  }
+  const body_QCM = new URLSearchParams();
+  body_QCM.append("data", JSON.stringify({
+    choix: btoa(answer) // réponse choisie, encodée en base64
+  }));
+  const res_QCM = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": userAgent,
+      "Accept": "application/json, text/plain, */*",
+      "Referer": "https://www.ecoledirecte.com/",
+      "Origin": "https://www.ecoledirecte.com",
+      "X-Token": token,
+      "Cookie": cookies.join("; ")
+    },
+    body: body_QCM.toString()
+  });
+  const json = await res_QCM.json();
+  if (json.code !== 200 || !json.data?.cn || !json.data?.cv) {
+    throw new Error(`Échec QCM: ${JSON.stringify(json)}`);
+  }
+  return json.data;
 }
