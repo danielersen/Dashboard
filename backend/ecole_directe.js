@@ -99,25 +99,37 @@ export async function handleED(user, password, day, month, year, classe, teacher
   if (!question || propositions.length === 0) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
-  let answer = null;
+  const norm = (s) =>
+    String(s)
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  let expected = null;
+
   if (question === "Quel est votre jour de naissance ?") {
-    answer = day;
+    expected = String(day);
+  } else if (question === "Quel est votre mois de naissance ?") {
+    expected = String(month);
+  } else if (question === "Quelle est votre année de naissance ?") {
+    expected = String(year);
+  } else if (question === "Quel est le nom de famille de votre professeur principal ?") {
+    expected = String(teacher);
+  } else if (question === "Quelle est votre classe ?") {
+    expected = String(classe);
   }
-  if (question === "Quel est votre mois de naissance ?") {
-    answer = month;
+  if (!expected) {
+    throw new Error(`Question QCM non gérée: ${question}`);
   }
-  if (question === "Quelle est votre année de naissance ?") {
-    answer = year;
-  }
-  if (question === "Quel est le nom de famille de votre professeur principal ?") {
-    answer = teacher;
-  }
-  if (question === "Quelle est votre classe ?") {
-    answer = classe;
+  const selected = propositions.find((p) => norm(p) === norm(expected));
+
+  if (!selected) {
+    throw new Error(`Aucune proposition ne correspond à "${expected}". Propositions: ${JSON.stringify(propositions)}`);
   }
   const body_QCM = new URLSearchParams();
   body_QCM.append("data", JSON.stringify({
-    choix: btoa(answer) // réponse choisie, encodée en base64
+    choix: btoa(selected)
   }));
   const res_QCM = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp", {
     method: "POST",
@@ -132,9 +144,12 @@ export async function handleED(user, password, day, month, year, classe, teacher
     },
     body: body_QCM.toString()
   });
-  const json = await res_QCM.json();
-  if (json.code !== 200 || !json.data?.cn || !json.data?.cv) {
-    throw new Error(`Échec QCM: ${JSON.stringify(json)}`);
+  const qcmJson = await res_QCM.json();
+  if (qcmJson.code !== 200 || !qcmJson.data?.cn || !qcmJson.data?.cv) {
+    throw new Error(`Échec QCM: ${JSON.stringify(qcmJson)}`);
   }
-  return json.data;
-}
+  const second = await login([{ cn: qcmJson.data.cn, cv: qcmJson.data.cv }]);
+
+  if (second.json.code === 200) {
+    return second;
+  throw new Error(`Re-login après QCM échoué: ${JSON.stringify(second.json)}`);
