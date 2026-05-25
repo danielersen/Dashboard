@@ -57,7 +57,7 @@ export async function handleED(user, password) {
   if (first.json.code !== 250) {
     throw new Error(first.json.message || `Login failed with code ${first.json.code}`);
   }
-  const challengeRes = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp", {
+  const challengeRes = await fetch(`https://api.ecoledirecte.com/v3/connexion/doubleauth.awp?verbe=get`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -79,11 +79,11 @@ export async function handleED(user, password) {
   } catch {
     throw new Error(`Réponse QCM invalide: ${challengeText.slice(0, 200)}`);
   }
-  const challengeData = challenge.data || {};
-  const questionEncoded = challengeData.question || null;
-  const propositionsEncoded = Array.isArray(challengeData.propositions) ? challengeData.propositions : [];
-  const question = questionEncoded ? atob(questionEncoded) : null;
-  const propositions = propositionsEncoded.map((p) => atob(p));
+  if (challenge.code !== 200 || !challenge.data) {
+    throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
+  }
+  const question = challenge.data.question ? atob(challenge.data.question) : null;
+  const propositions = Array.isArray(challenge.data.propositions) ? challenge.data.propositions.map((p) => atob(p)) : [];
   if (!question || propositions.length === 0) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
