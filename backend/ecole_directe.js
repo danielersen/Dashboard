@@ -2,14 +2,17 @@ export async function handleED(user, password) {
   const userAgent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
   const gtkResponse = await fetch(
-    "https://api.ecoledirecte.com/v3/login.awp?gtk=1&v=4.75.0",
+    "https://api.ecoledirecte.com/v3/login.awp?gtk=1&v=4.100.0",
     {
       method: "GET",
       headers: {
         "User-Agent": userAgent,
-        "Accept": "application/json, text/plain, */*",
-        "Referer": "https://www.ecoledirecte.com/",
-        "Origin": "https://www.ecoledirecte.com"
+        "Accept":
+          "application/json, text/plain, */*",
+        "Referer":
+          "https://www.ecoledirecte.com/",
+        "Origin":
+          "https://www.ecoledirecte.com"
       }
     }
   );
@@ -26,12 +29,13 @@ export async function handleED(user, password) {
       JSON.stringify({
         identifiant: user,
         motdepasse: password,
-        isRelogin: false,
-        uuid: ""
+        isReLogin: false,
+        uuid: "",
+        fa: []
       })
     );
   const response = await fetch(
-    "https://api.ecoledirecte.com/v3/login.awp?v=4.75.0",
+    "https://api.ecoledirecte.com/v3/login.awp?v=4.100.0",
     {
       method: "POST",
       headers: {
