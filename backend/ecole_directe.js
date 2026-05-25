@@ -11,12 +11,17 @@ export async function handleED(user, password) {
         "Origin": "https://www.ecoledirecte.com"
       }
     });
-    const cookies = typeof gtkRes.headers.getSetCookie === "function" ? gtkRes.headers.getSetCookie() : [];
+    const setCookies = [];
+    if (typeof gtkRes.headers.getSetCookie === "function") {
+      setCookies.push(...gtkRes.headers.getSetCookie());
+    }
     const rawSetCookie = gtkRes.headers.get("set-cookie");
-    if (rawSetCookie && cookies.length === 0) cookies.push(rawSetCookie);
-    const gtk = cookies.map((c) => c.match(/GTK=([^;]+)/)?.[1]).find(Boolean);
+    if (rawSetCookie && setCookies.length === 0) {
+      setCookies.push(rawSetCookie);
+    }
+    const gtk = setCookies.map((c) => c.match(/GTK=([^;]+)/)?.[1]).find(Boolean);
     if (!gtk) throw new Error("GTK introuvable");
-    return { gtk, cookies };
+    return { gtk, cookies: setCookies };
   }
   async function login(extraFa = null) {
     const { gtk, cookies } = await getGtk();
@@ -60,8 +65,7 @@ export async function handleED(user, password) {
       "Referer": "https://www.ecoledirecte.com/",
       "Origin": "https://www.ecoledirecte.com",
       "X-Token": first.json.token || ""
-    },
-    body: "{}"
+    }
   });
   const challenge = await challengeRes.json();
   const question = challenge.data?.question ? atob(challenge.data.question) : null;
