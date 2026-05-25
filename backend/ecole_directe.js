@@ -149,8 +149,8 @@ export async function handleED(user, password, day, month, year, classe, teacher
     throw new Error(`Échec QCM: ${JSON.stringify(qcmJson)}`);
   }
   const second = await login([{ cn: qcmJson.data.cn, cv: qcmJson.data.cv }]);
-
   if (second.json.code === 200) {
     return second;
+  }
   throw new Error(`Re-login après QCM échoué: ${JSON.stringify(second.json)}`);
 }
