@@ -99,7 +99,7 @@ export async function handleED(user, password, day, month, year, classe, teacher
   if (!question || propositions.length === 0) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
-  let answer = " ";
+  let answer = null;
   if (question === "Quel est votre jour de naissance ?") {
     answer = day;
   }
@@ -128,7 +128,7 @@ export async function handleED(user, password, day, month, year, classe, teacher
       "Referer": "https://www.ecoledirecte.com/",
       "Origin": "https://www.ecoledirecte.com",
       "X-Token": first.token,
-      "Cookie": cookies.join("; ")
+      "Cookie": first.cookies.join("; ")
     },
     body: body_QCM.toString()
   });
