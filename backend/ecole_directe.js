@@ -99,20 +99,21 @@ export async function handleED(user, password, day, month, year, classe, teacher
   if (!question || propositions.length === 0) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
+  let answer = " ";
   if (question === "Quel est votre jour de naissance ?") {
-    const answer = day;
+    answer = day;
   }
   if (question === "Quel est votre mois de naissance ?") {
-    const answer = month;
+    answer = month;
   }
   if (question === "Quelle est votre année de naissance ?") {
-    const answer = year;
+    answer = year;
   }
   if (question === "Quel est le nom de famille de votre professeur principal ?") {
-    const answer = teacher;
+    answer = teacher;
   }
   if (question === "Quelle est votre classe ?") {
-    const answer = classe;
+    answer = classe;
   }
   const body_QCM = new URLSearchParams();
   body_QCM.append("data", JSON.stringify({
