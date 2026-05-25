@@ -127,7 +127,7 @@ export async function handleED(user, password, day, month, year, classe, teacher
       "Accept": "application/json, text/plain, */*",
       "Referer": "https://www.ecoledirecte.com/",
       "Origin": "https://www.ecoledirecte.com",
-      "X-Token": token,
+      "X-Token": first.token,
       "Cookie": cookies.join("; ")
     },
     body: body_QCM.toString()
