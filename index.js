@@ -53,9 +53,7 @@ export default {
     ) {
       const resp = await handleED(USER, PASSWORD, "notes");
       return new Response(JSON.stringify({ resp }), {
-        headers: {
-          corsHeaders
-        }
+        headers: corsHeaders
       })
     }
     // Agenda
@@ -64,9 +62,7 @@ export default {
     ) {
       const resp = await handleED(USER, PASSWORD, "agenda");
       return new Response(JSON.stringify({ resp }), {
-        headers: {
-          corsHeaders
-        }
+        headers: corsHeaders
       })
     }
     // Timetable
@@ -75,9 +71,7 @@ export default {
     ) {
       const resp = await handleED(USER, PASSWORD, "timetable");
       return new Response(JSON.stringify({ resp }), {
-        headers: {
-          corsHeaders
-        }
+        headers: corsHeaders
       })
     }
     
