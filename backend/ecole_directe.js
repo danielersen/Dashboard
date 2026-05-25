@@ -57,7 +57,11 @@ export async function handleED(user, password) {
   if (first.json.code !== 250) {
     throw new Error(first.json.message || `Login failed with code ${first.json.code}`);
   }
-  const challengeRes = await fetch(`https://api.ecoledirecte.com/v3/connexion/doubleauth.awp?verbe=get`, {
+  const qcmToken = first.json.token;
+  if (!qcmToken) {
+    throw new Error("Token manquant dans la réponse du login 250");
+  }
+  const challengeRes = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp?verbe=get", {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -65,7 +69,7 @@ export async function handleED(user, password) {
       "Accept": "application/json, text/plain, */*",
       "Referer": "https://www.ecoledirecte.com/",
       "Origin": "https://www.ecoledirecte.com",
-      "X-Token": first.json.token || "",
+      "X-Token": qcmToken,
       "Cookie": first.cookies.join("; ")
     },
     body: new URLSearchParams({
@@ -79,6 +83,9 @@ export async function handleED(user, password) {
   } catch {
     throw new Error(`Réponse QCM invalide: ${challengeText.slice(0, 200)}`);
   }
+  if (challenge.code === 520) {
+    throw new Error("Token invalide pendant l'accès au QCM");
+  }
   if (challenge.code !== 200 || !challenge.data) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
@@ -89,41 +96,8 @@ export async function handleED(user, password) {
   }
   return {
     needs2FA: true,
-    token: first.json.token || null,
+    token: qcmToken,
     question,
-    propositions,
-    answer: async (choixTexte) => {
-      const answerRes = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent": userAgent,
-          "Accept": "application/json, text/plain, */*",
-          "Referer": "https://www.ecoledirecte.com/",
-          "Origin": "https://www.ecoledirecte.com",
-          "X-Token": first.json.token || "",
-          "Cookie": first.cookies.join("; ")
-        },
-        body: new URLSearchParams({
-          data: JSON.stringify({
-            choix: btoa(choixTexte)
-          })
-        }).toString()
-      });
-      const answerJson = await answerRes.json();
-      if (answerJson.code !== 200) {
-        throw new Error(answerJson.message || "Double auth failed");
-      }
-      const fa = [{
-        cn: answerJson.data.cn,
-        cv: answerJson.data.cv,
-        uniq: false
-      }];
-      const second = await login(fa);
-      if (second.json.code !== 200) {
-        throw new Error(second.json.message || `Login failed with code ${second.json.code}`);
-      }
-      return { token: second.json.token, account: second.json.data };
-    }
+    propositions
   };
 }
