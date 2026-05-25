@@ -32,6 +32,20 @@ export default {
     // =========================
     // 📶 MAIN API
     // =========================
+    /// CORS
+    const corsHeaders = {
+      "Content-Type":
+        "application/json",
+
+      "Access-Control-Allow-Origin":
+        "*",
+
+      "Access-Control-Allow-Methods":
+        "GET, POST, PATCH",
+
+      "Access-Control-Allow-Headers":
+        "*"
+    };
     /// Ecoledirecte handle
     // Notes
     if (url.pathname.startsWith("/api/ed/notes")&&
@@ -40,7 +54,7 @@ export default {
       const resp = await handleED(USER, PASSWORD, "notes");
       return new Response(JSON.stringify({ resp }), {
         headers: {
-          "Content-Type": "application/json"
+          corsHeaders
         }
       })
     }
@@ -51,7 +65,7 @@ export default {
       const resp = await handleED(USER, PASSWORD, "agenda");
       return new Response(JSON.stringify({ resp }), {
         headers: {
-          "Content-Type": "application/json"
+          corsHeaders
         }
       })
     }
@@ -59,10 +73,10 @@ export default {
     if (url.pathname.startsWith("/api/ed/timetable")&&
       request.method === "GET"
     ) {
-      const resp = handleED(USER, PASSWORD, "timetable");
+      const resp = await handleED(USER, PASSWORD, "timetable");
       return new Response(JSON.stringify({ resp }), {
         headers: {
-          "Content-Type": "application/json"
+          corsHeaders
         }
       })
     }
