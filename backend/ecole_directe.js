@@ -11,24 +11,24 @@ export async function handleED(user, password) {
         "Origin": "https://www.ecoledirecte.com"
       }
     });
-    const setCookies = [];
+    const cookies = [];
     if (typeof gtkRes.headers.getSetCookie === "function") {
-      setCookies.push(...gtkRes.headers.getSetCookie());
+      cookies.push(...gtkRes.headers.getSetCookie());
     }
     const rawSetCookie = gtkRes.headers.get("set-cookie");
-    if (rawSetCookie && setCookies.length === 0) {
-      setCookies.push(rawSetCookie);
+    if (rawSetCookie && cookies.length === 0) {
+      cookies.push(rawSetCookie);
     }
-    const gtk = setCookies.map((c) => c.match(/GTK=([^;]+)/)?.[1]).find(Boolean);
+    const gtk = cookies.map((c) => c.match(/GTK=([^;]+)/)?.[1]).find(Boolean);
     if (!gtk) throw new Error("GTK introuvable");
-    return { gtk, cookies: setCookies };
+    return { gtk, cookies };
   }
   async function login(extraFa = null) {
     const { gtk, cookies } = await getGtk();
     const payload = {
       identifiant: user,
       motdepasse: password,
-      isReLogin: false,
+      isRelogin: false,
       uuid: ""
     };
     if (Array.isArray(extraFa) && extraFa.length > 0) payload.fa = extraFa;
@@ -58,22 +58,34 @@ export async function handleED(user, password) {
     throw new Error(first.json.message || `Login failed with code ${first.json.code}`);
   }
   const challengeRes = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp", {
-    method: "GET",
+    method: "POST",
     headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
       "User-Agent": userAgent,
       "Accept": "application/json, text/plain, */*",
       "Referer": "https://www.ecoledirecte.com/",
       "Origin": "https://www.ecoledirecte.com",
-      "X-Token": first.json.token || ""
-    }
+      "X-Token": first.json.token || "",
+      "Cookie": first.cookies.join("; ")
+    },
+    body: new URLSearchParams({
+      data: JSON.stringify({})
+    }).toString()
   });
-  const challenge = await challengeRes.json();
-  const question = challenge.data?.question ? atob(challenge.data.question) : null;
-  const propositions = Array.isArray(challenge.data?.propositions)
-    ? challenge.data.propositions.map((p) => atob(p))
-    : [];
+  const challengeText = await challengeRes.text();
+  let challenge;
+  try {
+    challenge = JSON.parse(challengeText);
+  } catch {
+    throw new Error(`Réponse QCM invalide: ${challengeText.slice(0, 200)}`);
+  }
+  const challengeData = challenge.data || {};
+  const questionEncoded = challengeData.question || null;
+  const propositionsEncoded = Array.isArray(challengeData.propositions) ? challengeData.propositions : [];
+  const question = questionEncoded ? atob(questionEncoded) : null;
+  const propositions = propositionsEncoded.map((p) => atob(p));
   if (!question || propositions.length === 0) {
-    throw new Error("QCM 2FA introuvable");
+    throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
   return {
     needs2FA: true,
@@ -89,7 +101,8 @@ export async function handleED(user, password) {
           "Accept": "application/json, text/plain, */*",
           "Referer": "https://www.ecoledirecte.com/",
           "Origin": "https://www.ecoledirecte.com",
-          "X-Token": first.json.token || ""
+          "X-Token": first.json.token || "",
+          "Cookie": first.cookies.join("; ")
         },
         body: new URLSearchParams({
           data: JSON.stringify({
