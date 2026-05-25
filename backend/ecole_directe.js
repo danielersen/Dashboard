@@ -23,17 +23,14 @@ export async function handleED(user, password) {
   if (!gtk) {
     throw new Error("GTK introuvable");
   }
+  const payload = {
+    identifiant: user,
+    motdepasse: password,
+    isRelogin: false,
+    uuid: ""
+  };
   const body =
-    "data=" +
-    encodeURIComponent(
-      JSON.stringify({
-        identifiant: user,
-        motdepasse: password,
-        isReLogin: false,
-        uuid: "",
-        fa: []
-      })
-    );
+    "data=" + encodeURIComponent(JSON.stringify(payload));
   const response = await fetch(
     "https://api.ecoledirecte.com/v3/login.awp?v=4.100.0",
     {
@@ -45,8 +42,6 @@ export async function handleED(user, password) {
           userAgent,
         "X-Gtk":
           gtk,
-        "Accept":
-          "application/json, text/plain, */*",
         "Referer":
           "https://www.ecoledirecte.com/",
         "Origin":
@@ -60,8 +55,11 @@ export async function handleED(user, password) {
   if (result.code !== 200) {
     throw new Error(
       result.message ||
-      `Login failed with code ${result.code}`
+      "Login failed"
     );
   }
-  return result.token;
+  return {
+    token: result.token,
+    accounts: result.data?.accounts || []
+  };
 }
