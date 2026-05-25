@@ -21,14 +21,15 @@ export async function handleED(user, password) {
     throw new Error("GTK introuvable");
   }
   const body =
-    new URLSearchParams({
-      data: JSON.stringify({
+    "data=" +
+    encodeURIComponent(
+      JSON.stringify({
         identifiant: user,
         motdepasse: password,
         isRelogin: false,
         uuid: ""
       })
-    }).toString();
+    );
   const response = await fetch(
     "https://api.ecoledirecte.com/v3/login.awp?v=4.75.0",
     {
@@ -40,8 +41,6 @@ export async function handleED(user, password) {
           userAgent,
         "X-Gtk":
           gtk,
-        "Cookie":
-          `GTK=${gtk}`,
         "Accept":
           "application/json, text/plain, */*",
         "Referer":
