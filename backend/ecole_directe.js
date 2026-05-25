@@ -1,4 +1,4 @@
-export async function handleED(user, password, year, day, classe, teacher) {
+export async function handleED(user, password, day, month, year, classe, teacher) {
   const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
   const apiVersion = "4.75.0";
   async function getGtk() {
@@ -101,6 +101,10 @@ export async function handleED(user, password, year, day, classe, teacher) {
   }
   if (question === "Quel est votre jour de naissance ?") {
     const answer = day;
+  }
+  if (question === "Quel est votre mois de naissance ?") {
+    const answer = month;
+  }
   }
   if (question === "Quelle est votre année de naissance ?") {
     const answer = year;
