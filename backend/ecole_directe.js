@@ -99,7 +99,6 @@ export async function handleED(user, password, day, month, year, classe, teacher
   if (!question || propositions.length === 0) {
     throw new Error(`QCM 2FA introuvable: ${challengeText.slice(0, 200)}`);
   }
-  return day
   if (question === "Quel est votre jour de naissance ?") {
     const answer = day;
   }
