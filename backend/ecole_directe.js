@@ -153,3 +153,4 @@ export async function handleED(user, password, day, month, year, classe, teacher
   if (second.json.code === 200) {
     return second;
   throw new Error(`Re-login après QCM échoué: ${JSON.stringify(second.json)}`);
+}
