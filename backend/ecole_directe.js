@@ -105,7 +105,6 @@ export async function handleED(user, password, day, month, year, classe, teacher
   if (question === "Quel est votre mois de naissance ?") {
     const answer = month;
   }
-  }
   if (question === "Quelle est votre année de naissance ?") {
     const answer = year;
   }
