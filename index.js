@@ -9,6 +9,11 @@ export default {
     const SITE = env.SITE;
     const USER = env.USER;
     const PASSWORD = env.PASSWORD;
+    const DAY = env.DAY;
+    const MONTH = env.MONTH;
+    const YEAR = env.YEAR;
+    const CLASSE = env.CLASSE;
+    const TEACHER = env.TEACHER;
     
     // =========================
     // ⛔ PRODUCTION MODE DISABLED
@@ -51,7 +56,7 @@ export default {
     if (url.pathname.startsWith("/api/ed/notes")&&
       request.method === "GET"
     ) {
-      const resp = await handleED(USER, PASSWORD, "notes");
+      const resp = await handleED(USER, PASSWORD, DAY, MONTH, YEAR, CLASSE, TEACHER);
       return new Response(JSON.stringify({ resp }), {
         headers: corsHeaders
       })
@@ -60,7 +65,7 @@ export default {
     if (url.pathname.startsWith("/api/ed/agenda")&&
       request.method === "GET"
     ) {
-      const resp = await handleED(USER, PASSWORD, "agenda");
+      const resp = await handleED(USER, PASSWORD, DAY, MONTH, YEAR, CLASSE, TEACHER);
       return new Response(JSON.stringify({ resp }), {
         headers: corsHeaders
       })
@@ -69,7 +74,7 @@ export default {
     if (url.pathname.startsWith("/api/ed/timetable")&&
       request.method === "GET"
     ) {
-      const resp = await handleED(USER, PASSWORD, "timetable");
+      const resp = await handleED(USER, PASSWORD, DAY, MONTH, YEAR, CLASSE, TEACHER);
       return new Response(JSON.stringify({ resp }), {
         headers: corsHeaders
       })
