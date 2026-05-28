@@ -21,6 +21,14 @@ binding = "MY_SECRET"
 store_id = "66ec2510845d44729eeef43b8f0a7f65"
 secret_name = "SECRET_KEY"
 
+# Worker AI
+[ai]
+binding = "AI"
+
+# AI search web
+binding = "SEARCH"
+namespace = "default"
+
 # Worker executed before assets
 run_worker_first = [
   "/api/ed"
