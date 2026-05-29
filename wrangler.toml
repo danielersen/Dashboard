@@ -26,6 +26,7 @@ secret_name = "SECRET_KEY"
 binding = "AI"
 
 # AI search web
+[[ai_search_namespaces]]
 binding = "SEARCH"
 namespace = "default"
 
