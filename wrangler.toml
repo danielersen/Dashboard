@@ -1,6 +1,6 @@
 # Principal informations
 name = "workspace"
-main = "index.js"
+main = "src/index.js"
 compatibility_date = "2026-05-22"
 workers_dev = true
 compatibility_flags = ["nodejs_compat"]
@@ -12,7 +12,7 @@ SITE = "enabled" # -> "enabled" if enabled, or any other name if disabled
 
 # Static site
 [assets]
-directory = "./frontend"
+directory = "./src/frontend"
 binding = "ASSETS"
 
 # Secret store
