@@ -8,4 +8,4 @@
 
 ## Cloudflare security
  - To protect the API from bots, with "Bot Fight Mode".
- - To protect the API from malicious people or hackers, with "Web Application Firewall"
+ - To protect the API from malicious people or hackers, with "Web Application Firewall".
