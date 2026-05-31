@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="150" src="src/frontend/logo.png" style="border-radius: 100px;" />
+  <img width="155" src="src/frontend/logo.png" style="border-radius: 100px;" />
 </p>
 
 <h1 align="center">Dashboard</h1>
