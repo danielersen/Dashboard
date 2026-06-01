@@ -1,18 +1,18 @@
-# Backend
-Each of the backend features are async functions organized in the scr/backend/{feature}/ folder. If the functions of the featrure are similar, they are in the same file. Othewise they are different files. This is a small project so classes aren't necessary.
-# Frontend
-
-
 # Src folder
 ```text
 src/
   index.js
 
   backend/
-    routes/
-    services/
-    middleware/
-    utils/
+    feature1/
+      file1.js
+      file2.js
+      ...
+    feature2/
+      file1.js
+      file2.js
+      ...
+    .../
 
   frontend/
     pages/
@@ -20,20 +20,23 @@ src/
         page.html
         page.css
         page.js
-      dashboard/
+      feature1/
         page.html
         page.css
         page.js
-      settings/
+      feature2/
+        page.html
+        page.css
+        page.js
+      .../
         page.html
         page.css
         page.js
     components/
       navbar/
       sidebar/
-      modal/
+      .../
     assets/
       images/
-      fonts/
       icons/
 ```
