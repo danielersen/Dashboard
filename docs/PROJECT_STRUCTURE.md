@@ -1,30 +1,37 @@
 # Src folder
 ```text
 src/
-├── index.js
-├── backend/
-│   ├── routes/
-│   ├── services/
-│   ├── middleware/
-│   └── utils/
-└── frontend/
+├── index.js    -> manage the API and website paths
+├── backend/    -> contains the API code
+│   ├── feature1/
+│   │   ├── file1.js
+│   │   ├── file2.js
+│   │   └──...
+│   ├── feature2/
+│   │   ├── file1.js
+│   │   ├── file2.js
+│   │   └──...
+│   └── ...
+└── frontend/    -> contains the website code
     ├── pages/
     │   ├── home/
     │   │   ├── page.html
     │   │   ├── page.css
     │   │   └── page.js
-    │   ├── dashboard/
+    │   ├── feature1/
     │   │   ├── page.html
     │   │   ├── page.css
     │   │   └── page.js
-    │   └── settings/
-    │       ├── page.html
-    │       ├── page.css
-    │       └── page.js
+    │   │   └── page.js
+    │   ├── feature2/
+    │   │   ├── page.html
+    │   │   ├── page.css
+    │   │   └── page.js
+    │   └── ...
     ├── components/
     │   ├── navbar/
     │   ├── sidebar/
-    │   └── modal/
+    │   └── ...
     └── assets/
         ├── images/
         ├── fonts/
