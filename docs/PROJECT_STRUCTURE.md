@@ -4,33 +4,32 @@ Each of the backend features are async functions organized in the scr/backend/{f
 
 
 # Src folder
-src/
-├── index.js
-<br>
-├── backend/
-│   ├── routes/
-│   ├── services/
-│   ├── middleware/
-│   └── utils/
-└── frontend/
-    ├── pages/
-    │   ├── home/
-    │   │   ├── page.html
-    │   │   ├── page.css
-    │   │   └── page.js
-    │   ├── dashboard/
-    │   │   ├── page.html
-    │   │   ├── page.css
-    │   │   └── page.js
-    │   └── settings/
-    │       ├── page.html
-    │       ├── page.css
-    │       └── page.js
-    ├── components/
-    │   ├── navbar/
-    │   ├── sidebar/
-    │   └── modal/
-    └── assets/
-        ├── images/
-        ├── fonts/
-        └── icons/
+src/<br>
+├── index.js<br>
+├── backend/<br>
+│   ├── routes/<br>
+│   ├── services/<br>
+│   ├── middleware/<br>
+│   └── utils/<br>
+└── frontend/<br>
+    ├── pages/<br>
+    │   ├── home/<br>
+    │   │   ├── page.html<br>
+    │   │   ├── page.css<br>
+    │   │   └── page.js<br>
+    │   ├── dashboard/<br>
+    │   │   ├── page.html<br>
+    │   │   ├── page.css<br>
+    │   │   └── page.js<br>
+    │   └── settings/<br>
+    │       ├── page.html<br>
+    │       ├── page.css<br>
+    │       └── page.js<br>
+    ├── components/<br>
+    │   ├── navbar/<br>
+    │   ├── sidebar/<br>
+    │   └── modal/<br>
+    └── assets/<br>
+        ├── images/<br>
+        ├── fonts/<br>
+        └── icons/<br>
