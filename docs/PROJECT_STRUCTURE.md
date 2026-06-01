@@ -1,4 +1,4 @@
-# Src folder
+# Src folder : production version
 ```text
 src/
 ├── index.js    -> manage the API and website paths
