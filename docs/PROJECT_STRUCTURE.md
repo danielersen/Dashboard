@@ -2,7 +2,7 @@
  - Production folder
  - Official version
  - Almost no bugs
- - Workers code
+ - Worker code
 ```text
 src/
 ├── index.js    -> manage the API and website paths
