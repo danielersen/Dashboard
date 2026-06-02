@@ -1,7 +1,8 @@
 # Src folder
- - Production mode
+ - Production folder
  - Official version
  - Almost no bugs
+ - Workers code
 ```text
 src/
 ├── index.js    -> manage the API and website paths
