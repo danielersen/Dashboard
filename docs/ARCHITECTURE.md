@@ -1,4 +1,4 @@
-# The project's architecture
+# The architecture
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                              User                               │
