@@ -18,8 +18,8 @@
        │                │                │                │
        ▼                ▼                ▼                ▼
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│ Workers AI   │ │ ÉcoleDirecte │ │ Google Cloud │ │     ntfy     │
-│              │ │     API      │ │   Storage    │ │Notifications │
+│ Workers AI   │ │ ÉcoleDirecte │ │ Google Drive │ │     ntfy     │
+│              │ │     API      │ │              │ │Notifications │
 └──────┬───────┘ └──────────────┘ └──────────────┘ └──────────────┘
        │
        ▼
