@@ -22,4 +22,6 @@ To create the worker, you have to go on the Cloudflare dahsboard, go in the work
 ### - Account
 ### - Cloudflare's securities
 
-To check if it's done go in src/index.js and check if all the envieonnement variables and secrets taked are in the Cloudflare dashboard (in the worker's sertings).
+## 4) Final check
+ - Go in src/index.js and check if all the envieonnement variables and secrets taked are in the Cloudflare dashboard (in the worker's sertings).
+ - Go on the website, in the sertings, and execute an API test.
