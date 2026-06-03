@@ -14,6 +14,7 @@ To create the worker, you have to go on the Cloudflare dahsboard, go in the work
 ## 2) Add the other services
 ### - Workers AI
 ### - Vectorize
+### - Cloudflare workflow
 ### - Google drive
 ### - Ntfy
 
