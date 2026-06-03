@@ -14,8 +14,10 @@ To create the worker, you have to go on the Cloudflare dahsboard, go in the work
 ## 2) Configure the other services
 ### - Workers AI
 ### - Vectorize
-### - Cl
+### - Google drive
+### - Ntfy
 
 ## 3) Set up the securities
 ### - Domain security (if you have one)
-###
+### - Account
+### - Cloudflare's securities
