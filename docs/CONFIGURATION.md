@@ -1,4 +1,4 @@
-# How use this repository ?
+# The manner to use th
 (If you don't know things, ask AI to do ut properly.)
 
 ## The environnement variable/secret
@@ -14,4 +14,8 @@ To create the worker, you have to go on the Cloudflare dahsboard, go in the work
 ## 2) Configure the other services
 ### - Workers AI
 ### - Vectorize
-### - 
+### - Cl
+
+## 3) Set up the securities
+### - Domain security (if you have one)
+###
