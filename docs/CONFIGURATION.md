@@ -7,7 +7,7 @@ Don't do the modifications on the Cloudflare dashboard because it's temporary on
 The environnement variable are manageable in the wrangler.toml file at root of the main branch.
 The environnement secrets are manageable on your local terminal, that's the simplest way. Install node and then use wrangler to connect your terminal to your Cloudflare Worker. Then do the modifications by using the wrangler commands.
 
-## Create the worker
+## 1) Create the worker
 To create the worker, you have to go on the Cloudflare dahsboard, go in the worker part, and create a new one. You can now link your github repository, keep the deploy command "npx wrangler deploy", no command is necessary for the build, and finally keep the variable part empty for the moment.
 
 ## 2) Configure the other services
