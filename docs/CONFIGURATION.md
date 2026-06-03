@@ -1,4 +1,4 @@
-# How use this repository ?
+# How use and deploy this repository ?
 (If you don't know things, ask AI to do ut properly.)
 
 ## The environnement variable/secret
