@@ -1,4 +1,4 @@
-# The website features
+# The website´s features
 
 ## Work dashboard
  - Notes, averages, and homeworks Ecole Directe
