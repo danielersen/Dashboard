@@ -1,4 +1,4 @@
-# The Security
+# The securities
 
 ## On the domain (if you have one)
  - The project must have a domain rule for more security : at all http requests, set a token in headers not visible ny the client in devTools or others. Thanks to that the API can regongnize allowed requests.
