@@ -19,7 +19,7 @@
        ▼                ▼                ▼                ▼
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
 │ Workers AI   │ │ ÉcoleDirecte │ │ Google Cloud │ │     ntfy     │
-│ + Vectorize  │ │     API      │ │   Storage    │ │Notifications │
+│              │ │     API      │ │   Storage    │ │Notifications │
 └──────┬───────┘ └──────────────┘ └──────────────┘ └──────────────┘
        │
        ▼
