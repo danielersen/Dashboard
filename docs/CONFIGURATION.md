@@ -26,4 +26,4 @@ To create the worker, you have to go on the Cloudflare dahsboard, go in the work
 ## 4) Final check
  - Go in src/index.js and check if all the envieonnement variables and secrets taked are in the Cloudflare dashboard (in the worker's sertings).
  - Go on the Cloudflare dashboard, in the build history, and check if the latest deploy failed or not.
- - Go on the website, in the settings, and execute an API test.
+ - Go on Cloudflare, in the workflows, and execute the API test.
