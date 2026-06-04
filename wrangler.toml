@@ -31,7 +31,7 @@ run_worker_first = [
 ]
 
 # Workflows
-[workflows]
+[[workflows]]
 name = "check_grades"
 
 # Observability
