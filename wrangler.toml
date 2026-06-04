@@ -27,7 +27,7 @@ binding = "AI"
 
 # AI search web
 [[ai_search_namespaces]]
-binding = "SEARCH"
+binding = "AI_SEARCH"
 namespace = "default"
 
 # Worker executed before assets
