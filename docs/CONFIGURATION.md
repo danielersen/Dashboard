@@ -13,7 +13,7 @@ To create the worker, you have to go on the Cloudflare dahsboard, go in the work
 
 ## 2) Add the other services
 ### - Workers AI
-Go on the cloudflare dashboard,
+No manually add needed anymore, the project and Cloudflare will automatically link the Worker AI.
 ### - Vectorize
 ### - Cloudflare workflow
 ### - Google drive
