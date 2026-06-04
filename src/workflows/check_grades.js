@@ -1,4 +1,4 @@
-export class MyWorkflow {
+export class CheckGradesWorkflow {
   async run(event, step) {
     return { success: true };
   }
