@@ -1,7 +1,5 @@
 // Workflows
 import { CheckGradesWorkflow } from "./workflows/check_grades";
-export { CheckGradesWorkflow };
-
 import { handleED } from "./backend/ecole_directe.js"
 
 export default {
@@ -90,3 +88,6 @@ export default {
     return new Response("Not Found", { status: 404 })
   }
 }
+
+// export the workflows code
+export { CheckGradesWorkflow };
