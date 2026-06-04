@@ -1,3 +1,7 @@
+// Workflows
+import { CheckGradesWorkflow } from "./workflows/check_grades";
+export { CheckGradesWorkflow };
+
 import { handleED } from "./backend/ecole_directe.js"
 
 export default {
