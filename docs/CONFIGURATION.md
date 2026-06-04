@@ -17,8 +17,10 @@ No manually add needed anymore, the project and Cloudflare will automatically li
 ### - AI Gateway
 No manually add needed too.
 ### - Cloudflare workflow
+No manually add needed too !
 ### - Google drive
 ### - Ntfy
+
 
 ## 3) Set up the securities
 ### - Domain security (if you have a domain)
