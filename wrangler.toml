@@ -34,7 +34,7 @@ run_worker_first = [
 [[workflows]]
 name = "check_grades"
 binding = "CHECK_NOTES"
-class_name = "MyWorkflow"
+class_name = "CheckGradesWorkflow"
 
 # Observability
 [observability]
