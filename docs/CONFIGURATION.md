@@ -14,13 +14,14 @@ To create the worker, you have to go on the Cloudflare dahsboard, go in the work
 ## 2) Add the other services
 ### - Workers AI
 No manually add needed anymore, the project and Cloudflare will automatically link Workers AI.
-### - Vectorize
+### - AI Gateway
+No manually add needed too.
 ### - Cloudflare workflow
 ### - Google drive
 ### - Ntfy
 
 ## 3) Set up the securities
-### - Domain security (if you have one)
+### - Domain security (if you have a domain)
 ### - Account
 ### - Cloudflare's securities
 
