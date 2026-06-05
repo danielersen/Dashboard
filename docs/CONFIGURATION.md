@@ -20,8 +20,7 @@ No manually add needed too.
 No manually add needed too !
 ### - Google drive
 ### - Ntfy
-Create a name for your
-
+Create a name for your topic ntfy, an hard name. Then install ntfy on your phone, create a new topic, and write the name. After that create an environnement secret named NYFY_URL and tap the same name.
 
 ## 3) Set up the securities
 ### - Domain security (if you have a domain)
