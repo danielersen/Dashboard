@@ -123,26 +123,22 @@ export async function handleED(user, password, day, month, year, classe, teacher
     throw new Error(`Question QCM non gérée: ${question}`);
   }
   const selected = propositions.find((p) => norm(p) === norm(expected));
-
   if (!selected) {
     throw new Error(`Aucune proposition ne correspond à "${expected}". Propositions: ${JSON.stringify(propositions)}`);
   }
-  const body_QCM = new URLSearchParams();
-  body_QCM.append("data", JSON.stringify({
-    choix: btoa(selected)
+  const body = new URLSearchParams();
+  body.set("data", JSON.stringify({
+    choix: btoa(unescape(encodeURIComponent(selected)))
   }));
-  const res_QCM = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp", {
+  await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": userAgent,
-      "Accept": "application/json, text/plain, */*",
-      "Referer": "https://www.ecoledirecte.com/",
-      "Origin": "https://www.ecoledirecte.com",
       "X-Token": first.token,
-      "Cookie": first.cookies.join("; ")
+      "Cookie": first.cookies.join("; "),
+      "User-Agent": userAgent
     },
-    body: body_QCM.toString()
+    body: body.toString()
   });
   const qcmJson = await res_QCM.json();
   if (qcmJson.code !== 200 || !qcmJson.data?.cn || !qcmJson.data?.cv) {
