@@ -20,6 +20,7 @@ No manually add needed too.
 No manually add needed too !
 ### - Google drive
 ### - Ntfy
+Create a name for your
 
 
 ## 3) Set up the securities
