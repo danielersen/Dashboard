@@ -7,6 +7,9 @@ export default {
     const url = new URL(request.url)
 
     // GETTING VARIABLES...
+    const NTFY_URL = env.NTFY;
+    const DRIVE_TOKEN = env.DRIVE_TOKEN;
+    const DRIVE_URL = env.DRIVE_URL;
     const MODE = env.MODE;
     const SITE = env.SITE;
     const USER = env.USER;
