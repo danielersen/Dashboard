@@ -129,7 +129,7 @@ export async function handleED(user, password, day, month, year, classe, teacher
   body.set("data", JSON.stringify({
     choix: btoa(unescape(encodeURIComponent(selected)))
   }));
-  await fetch(url, {
+  const res_QCM = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
