@@ -111,7 +111,7 @@ export async function handleED(user, password, day, month, year, classe, teacher
     expected = String(day);
   } else if (q === norm("Quel est votre mois de naissance ?")) {
     expected = String(month);
-  } else if (q === norm("Quelle est votre année de naissance ?")) {
+  } else if (q === norm("Quelle est votre annÃ©e de naissance ?")) {
     expected = String(year);
   } else if (q === norm("Quel est le nom de famille de votre professeur principal ?")) {
     expected = String(teacher);
