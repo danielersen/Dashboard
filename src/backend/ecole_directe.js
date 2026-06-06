@@ -105,18 +105,17 @@ export async function handleED(user, password, day, month, year, classe, teacher
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
-
   let expected = null;
-
-  if (question === "Quel est votre jour de naissance ?") {
+  const q = norm(question);
+  if (q === norm("Quel est votre jour de naissance ?")) {
     expected = String(day);
-  } else if (question === "Quel est votre mois de naissance ?") {
+  } else if (q === norm("Quel est votre mois de naissance ?")) {
     expected = String(month);
-  } else if (question === "Quelle est votre année de naissance ?") {
+  } else if (q === norm("Quelle est votre année de naissance ?")) {
     expected = String(year);
-  } else if (question === "Quel est le nom de famille de votre professeur principal ?") {
+  } else if (q === norm("Quel est le nom de famille de votre professeur principal ?")) {
     expected = String(teacher);
-  } else if (question === "Quelle est votre classe ?") {
+  } else if (q === norm("Quelle est votre classe ?")) {
     expected = String(classe);
   }
   if (!expected) {
