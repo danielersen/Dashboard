@@ -1,24 +1,10 @@
 // Workflows
 import { CheckGradesWorkflow } from "./workflows/check_grades";
-import { handleED } from "./backend/ecole_directe.js"
+import { ecole_directe } from "./backend/ecole_directe/index.js"
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url)
-
-    // GETTING VARIABLES...
-    const NTFY_URL = env.NTFY;
-    const DRIVE_TOKEN = env.DRIVE_TOKEN;
-    const DRIVE_URL = env.DRIVE_URL;
-    const MODE = env.MODE;
-    const SITE = env.SITE;
-    const USER = env.USER;
-    const PASSWORD = env.PASSWORD;
-    const DAY = env.DAY;
-    const MONTH = env.MONTH;
-    const YEAR = env.YEAR;
-    const CLASSE = env.CLASSE;
-    const TEACHER = env.TEACHER;
     
     // =========================
     // ⛔ PRODUCTION MODE DISABLED
