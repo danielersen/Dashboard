@@ -8,8 +8,6 @@ export async function EDinformations(env) {
   const password = env.ED_PASSWORD;
   const classe = env.ED_CLASS;
   const teacher = env.ED_TEACHER;
-  const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-  const apiVersion = "4.75.0";
   async function getGtk() {
     const gtkRes = await fetch(`https://api.ecoledirecte.com/v3/login.awp?gtk=1&v=${apiVersion}`, {
       method: "GET",
@@ -116,15 +114,15 @@ export async function EDinformations(env) {
       .replace(/[\u0300-\u036f]/g, "");
   let expected = null;
   const q = norm(question);
-  if (q.includes("jour")) {
+  if (q === norm("Quel est votre jour de naissance ?")) {
     expected = String(day);
-  } else if (q.includes("mois")) {
+  } else if (q === norm("Quel est votre mois de naissance ?")) {
     expected = String(month);
-  } else if (q.includes("annee") || q.includes("année") || q.includes("annÃ©e")) {
+  } else if (q === norm("Quelle est votre annÃ©e de naissance ?")) {
     expected = String(year);
-  } else if (q.includes("professeur")) {
+  } else if (q === norm("Quel est le nom de famille de votre professeur principal ?")) {
     expected = String(teacher);
-  } else if (q.includes("classe")) {
+  } else if (q === norm("Quelle est votre classe ?")) {
     expected = String(classe);
   }
   if (!expected) {
