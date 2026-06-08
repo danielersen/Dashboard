@@ -59,15 +59,13 @@ export default {
           headers: corsHeaders
         });
       } catch (e) {
-        console.error("ED informations error:", e);
-
-        return new Response(JSON.stringify({
-          error: "ED informations failed"
-        }), {
-          status: 500,
-          headers: corsHeaders
-        });
-      }
+          console.error("ED ERROR FULL:", e?.stack || e);
+          return new Response(JSON.stringify({
+            error: e?.message || String(e)
+          }), {
+            status: 500,
+            headers: corsHeaders
+          });
     }
     
     // Grades
