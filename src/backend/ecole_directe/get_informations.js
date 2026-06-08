@@ -114,7 +114,7 @@ export async function informationsED() {
       .replace(/[\u0300-\u036f]/g, "");
   let expected = null;
   const q = norm(question);
-  if (q.includes("jour") {
+  if (q.includes("jour")) {
     expected = String(day);
   } else if (q.includes("mois")) {
     expected = String(month);
