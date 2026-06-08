@@ -52,7 +52,7 @@ export default {
     if (url.pathname.startsWith("/api/ed/informations")&&
       request.method === "GET"
     ) {
-      const resp = await EDinformations();
+      const resp = await EDinformations(env);
       return new Response(JSON.stringify({ resp }), {
         headers: corsHeaders
       })
