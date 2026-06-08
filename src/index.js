@@ -49,23 +49,26 @@ export default {
     
     /// Ecoledirecte paths
     // Informations
-    if (url.pathname.startsWith("/api/ed/informations") &&
-      request.method === "GET"
+    if (
+        url.pathname.startsWith("/api/ed/informations") &&
+        request.method === "GET"
     ) {
-      try {
-        const resp = await EDinformations(env);
+        try {
+            const resp = await EDinformations(env);
 
-        return new Response(JSON.stringify({ resp }), {
-          headers: corsHeaders
-        });
-      } catch (e) {
-          console.error("ED ERROR FULL:", e?.stack || e);
-          return new Response(JSON.stringify({
-            error: e?.message || String(e)
-          }), {
-            status: 500,
-            headers: corsHeaders
-          });
+            return new Response(JSON.stringify({ resp }), {
+                headers: corsHeaders
+            });
+        } catch (e) {
+            console.error("ED ERROR FULL:", e?.stack || e);
+
+            return new Response(JSON.stringify({
+                error: e?.message || String(e)
+            }), {
+                status: 500,
+                headers: corsHeaders
+            });
+        }
     }
     
     // Grades
