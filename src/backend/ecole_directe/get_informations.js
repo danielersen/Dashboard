@@ -1,4 +1,11 @@
-export async function handleED(user, password, day, month, year, classe, teacher) {
+export async function handleED() {
+  const day = env.BORN_DAY;
+  const month = env.BORN_MONTH;
+  const year = env.BORN_YEAR;
+  const user = env.ED_USER;
+  const password = env.ED_PASSWORD;
+  const classe = env.ED_CLASS;
+  const teacher = env.ED_TEACHER;
   const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
   const apiVersion = "4.75.0";
   async function getGtk() {
