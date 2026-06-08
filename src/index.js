@@ -49,13 +49,25 @@ export default {
     
     /// Ecoledirecte paths
     // Informations
-    if (url.pathname.startsWith("/api/ed/informations")&&
+    if (url.pathname.startsWith("/api/ed/informations") &&
       request.method === "GET"
     ) {
-      const resp = await EDinformations(env);
-      return new Response(JSON.stringify({ resp }), {
-        headers: corsHeaders
-      })
+      try {
+        const resp = await EDinformations(env);
+
+        return new Response(JSON.stringify({ resp }), {
+          headers: corsHeaders
+        });
+      } catch (e) {
+        console.error("ED informations error:", e);
+
+        return new Response(JSON.stringify({
+          error: "ED informations failed"
+        }), {
+          status: 500,
+          headers: corsHeaders
+        });
+      }
     }
     
     // Grades
