@@ -1,4 +1,4 @@
-export async function EDinformations() {
+export async function EDinformations(env) {
   const day = env.BORN_DAY;
   const month = env.BORN_MONTH;
   const year = env.BORN_YEAR;
