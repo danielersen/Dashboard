@@ -114,15 +114,15 @@ export async function EDinformations(env) {
       .replace(/[\u0300-\u036f]/g, "");
   let expected = null;
   const q = norm(question);
-  if (q === norm("Quel est votre jour de naissance ?")) {
+  if (q.includes("jour")) {
     expected = String(day);
-  } else if (q === norm("Quel est votre mois de naissance ?")) {
+  } else if (q.includes("mois")) {
     expected = String(month);
-  } else if (q === norm("Quelle est votre annÃ©e de naissance ?")) {
+  } else if (q.includes("annee") || q.includes("année") || q.includes("annÃ©e")) {
     expected = String(year);
-  } else if (q === norm("Quel est le nom de famille de votre professeur principal ?")) {
+  } else if (q.includes("professeur")) {
     expected = String(teacher);
-  } else if (q === norm("Quelle est votre classe ?")) {
+  } else if (q.includes("classe")) {
     expected = String(classe);
   }
   if (!expected) {
