@@ -1,6 +1,6 @@
 // Workflows
 import { CheckGradesWorkflow } from "./workflows/check_grades";
-import { EDinformations } from "./backend/ecole_directe/index.js"
+import { EDinformations } from "./backend/ecole_directe/index.js";
 
 export default {
   async fetch(request, env, ctx) {
