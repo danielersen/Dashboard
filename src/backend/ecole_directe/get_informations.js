@@ -90,6 +90,7 @@ export async function EDinformations(env) {
   });
   console.log("AVANT CHALLENGE");
   const challengeText = await challengeRes.text();
+  return challengeText
   console.log("APRES CHALLENGE");
   let challenge = None;
   try {
