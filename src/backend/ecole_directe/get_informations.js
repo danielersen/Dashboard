@@ -88,10 +88,8 @@ export async function EDinformations(env) {
       data: JSON.stringify({})
     }).toString()
   });
-  console.log("AVANT CHALLENGE");
+  return challengeRes
   const challengeText = await challengeRes.text();
-  return challengeText
-  console.log("APRES CHALLENGE");
   let challenge = None;
   try {
     challenge = JSON.parse(challengeText);
