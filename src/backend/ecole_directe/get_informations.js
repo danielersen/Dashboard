@@ -11,6 +11,8 @@ export async function EDinformations(env) {
   
   // Test
   const test = new URLSearchParams();
+  test.append("a", "b");
+
   const resp_test = {
     type: typeof test,
     isUndefined: test === undefined,
