@@ -1,4 +1,5 @@
-export async function EDgrades (env) {
+export async function EDgrades (env, informations) {
+  
 }
 export async function EDnewgrades (env) {
 }
