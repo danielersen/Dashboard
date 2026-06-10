@@ -10,7 +10,6 @@ export async function EDinformations(env) {
   const teacher = env.ED_TEACHER;
   
   // Test
-  return env;
   //
   
   async function getGtk() {
