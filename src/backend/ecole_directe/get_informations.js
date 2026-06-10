@@ -8,10 +8,8 @@ export async function EDinformations(env) {
   const password = env.ED_PASSWORD;
   const classe = env.ED_CLASS;
   const teacher = env.ED_TEACHER;
-  
-  // Test
-  //
-  
+
+  // Get the gtk and login
   async function getGtk() {
     const gtkRes = await fetch(`https://api.ecoledirecte.com/v3/login.awp?gtk=1&v=${apiVersion}`, {
       method: "GET",
@@ -77,6 +75,8 @@ export async function EDinformations(env) {
   if (!first.token) {
     throw new Error(`Token absent sur le login 250: ${JSON.stringify(first.json)}`);
   }
+
+  // QCM
   const challengeRes = await fetch("https://api.ecoledirecte.com/v3/connexion/doubleauth.awp?verbe=get", {
     method: "POST",
     headers: {
@@ -152,6 +152,8 @@ export async function EDinformations(env) {
     body: body.toString()
   });
   const qcmJson = await res_QCM.json();
+
+  // Answering informations if they exist
   if (qcmJson.code !== 200 || !qcmJson.data?.cn || !qcmJson.data?.cv) {
     throw new Error(`Échec QCM: ${JSON.stringify(qcmJson)}`);
   }
