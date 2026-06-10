@@ -1,1 +1,4 @@
-export { EDfunction } from "./get_informations.js";
+import { EDinformations } from "./get_informations.js";
+
+export async funtion EDfunction (env) {
+}
