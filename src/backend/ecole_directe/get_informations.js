@@ -28,6 +28,7 @@ export async function EDinformations(env) {
     if (!gtk) throw new Error("GTK introuvable");
     return { gtk, cookies };
   }
+  return new URLSearchParams();
   async function login(extraFa = null) {
     const { gtk, cookies } = await getGtk();
     const payload = {
@@ -38,7 +39,6 @@ export async function EDinformations(env) {
     };
     if (Array.isArray(extraFa) && extraFa.length > 0) payload.fa = extraFa;
     const body = new URLSearchParams();
-    return "${new URLSearchParams()}";
     body.append("data", JSON.stringify(payload));
     const res = await fetch(`https://api.ecoledirecte.com/v3/login.awp?v=${apiVersion}`, {
       method: "POST",
