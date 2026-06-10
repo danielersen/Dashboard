@@ -10,21 +10,7 @@ export async function EDinformations(env) {
   const teacher = env.ED_TEACHER;
   
   // Test
-  const test_payload = {
-    identifiant: user,
-    motdepasse: password,
-    isRelogin: false,
-    uuid: ""
-  };
-
-  const test = new URLSearchParams();
-  test.append("data", JSON.stringify(test_payload));
-
-  const resp_test = {
-    string: test.toString(),
-    length: test.toString().length
-  };
-  return resp_test;
+  return env;
   //
   
   async function getGtk() {
