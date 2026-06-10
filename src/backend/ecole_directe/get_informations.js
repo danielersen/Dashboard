@@ -11,11 +11,12 @@ export async function EDinformations(env) {
   
   // Test
   const test = new URLSearchParams();
-  return Response.json({
+  resp_test = {
     type: typeof test,
     isUndefined: test === undefined,
     string: test.toString()
-  });
+  };
+  return resp_test;
   //
   
   async function getGtk() {
