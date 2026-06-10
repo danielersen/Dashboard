@@ -1,6 +1,9 @@
 // Workflows
 import { CheckGradesWorkflow } from "./workflows/check_grades";
+
+// Ecole Directe functions
 import { EDinformations } from "./backend/ecole_directe/index.js";
+export { EDgrades } from "./backend/ecole_directe/index.js";
 
 export default {
   async fetch(request, env, ctx) {
@@ -75,7 +78,7 @@ export default {
     if (url.pathname.startsWith("/api/ed/grades")&&
       request.method === "GET"
     ) {
-      const resp = None;
+      const resp = EDgrades;
       return new Response(JSON.stringify({ resp }), {
         headers: corsHeaders
       })
@@ -85,7 +88,7 @@ export default {
     if (url.pathname.startsWith("/api/ed/homeworks")&&
       request.method === "GET"
     ) {
-      const resp = None;
+      const resp = null;
       return new Response(JSON.stringify({ resp }), {
         headers: corsHeaders
       })
@@ -95,7 +98,7 @@ export default {
     if (url.pathname.startsWith("/api/ed/timetable")&&
       request.method === "GET"
     ) {
-      const resp = None;
+      const resp = null;
       return new Response(JSON.stringify({ resp }), {
         headers: corsHeaders
       })
