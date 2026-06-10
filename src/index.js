@@ -1,8 +1,7 @@
 // Workflows
 import { CheckGradesWorkflow } from "./workflows/check_grades";
 
-// Ecole Directe functions
-import { EDinformations } from "./backend/ecole_directe/index.js";
+// API functions
 export { EDgrades } from "./backend/ecole_directe/index.js";
 
 export default {
@@ -48,63 +47,28 @@ export default {
       "Access-Control-Allow-Headers":
         "*"
     };
-
-    
-    /// Ecoledirecte paths
-    // Informations
-    if (
-        url.pathname.startsWith("/api/ed/informations") &&
-        request.method === "GET"
-    ) {
-        try {
-            const resp = await EDinformations(env);
-
-            return new Response(JSON.stringify({ resp }), {
-                headers: corsHeaders
-            });
-        } catch (e) {
-            console.error("ED ERROR FULL:", e?.stack || e);
-
-            return new Response(JSON.stringify({
-                error: e?.message || String(e)
-            }), {
-                status: 500,
-                headers: corsHeaders
-            });
-        }
-    }
-    
-    // Grades
-    if (url.pathname.startsWith("/api/ed/grades")&&
-      request.method === "GET"
-    ) {
-      const resp = EDgrades;
-      return new Response(JSON.stringify({ resp }), {
+    try {
+      // Ecole directe paths
+      if (url.pathname.startsWith("/api/ed/")) {
+        const resp = EDfunction(env, url.pathname);
+      // Return response
+      return new Response(JSON.stringify({ 
+        resp 
+      }), {
         headers: corsHeaders
       })
-    }
-    
-    // Homeworks
-    if (url.pathname.startsWith("/api/ed/homeworks")&&
-      request.method === "GET"
-    ) {
-      const resp = null;
-      return new Response(JSON.stringify({ resp }), {
+      }
+    } catch (e) {
+      console.error("API ERROR:", e?.stack || e);
+      return new Response(JSON.stringify({
+        error: e?.message
+      }), {
+        status: 500,
         headers: corsHeaders
-      })
-    }
-    
-    // Timetable
-    if (url.pathname.startsWith("/api/ed/timetable")&&
-      request.method === "GET"
-    ) {
-      const resp = null;
-      return new Response(JSON.stringify({ resp }), {
-        headers: corsHeaders
-      })
+      });
     }
 
-    
+
     // =========================
     // ❌ 404 NOT FOUND
     // =========================
@@ -113,5 +77,5 @@ export default {
 }
 
 
-// export the workflows code
+// Export the workflows code
 export { CheckGradesWorkflow };
