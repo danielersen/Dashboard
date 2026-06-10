@@ -8,6 +8,16 @@ export async function EDinformations(env) {
   const password = env.ED_PASSWORD;
   const classe = env.ED_CLASS;
   const teacher = env.ED_TEACHER;
+  
+  // Test
+  const body = new URLSearchParams();
+  return Response.json({
+    type: typeof body,
+    isUndefined: body === undefined,
+    string: body.toString()
+  });
+  //
+  
   async function getGtk() {
     const gtkRes = await fetch(`https://api.ecoledirecte.com/v3/login.awp?gtk=1&v=${apiVersion}`, {
       method: "GET",
@@ -28,7 +38,6 @@ export async function EDinformations(env) {
     if (!gtk) throw new Error("GTK introuvable");
     return { gtk, cookies };
   }
-  return new URLSearchParams();
   async function login(extraFa = null) {
     const { gtk, cookies } = await getGtk();
     const payload = {
