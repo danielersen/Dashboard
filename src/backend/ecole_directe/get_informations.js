@@ -10,11 +10,11 @@ export async function EDinformations(env) {
   const teacher = env.ED_TEACHER;
   
   // Test
-  const body = new URLSearchParams();
+  const test = new URLSearchParams();
   return Response.json({
-    type: typeof body,
-    isUndefined: body === undefined,
-    string: body.toString()
+    type: typeof test,
+    isUndefined: test === undefined,
+    string: test.toString()
   });
   //
   
