@@ -122,7 +122,7 @@ export async function EDinformations(env) {
     expected = String(day);
   } else if (q.includes("mois")) {
     expected = String(month);
-  } else if (q.includes("annee") || q.includes("année") || q.includes("annÃ©e")) {
+  } else if (q.includes("annee") || q.includes("année") || q.includes("ann")) {
     expected = String(year);
   } else if (q.includes("professeur")) {
     expected = String(teacher);
