@@ -1,7 +1,7 @@
 import { EDinformations } from "./get_informations.js";
 import { EDgrades } from "./get_grades.js"
 
-export async funtion EDfunction (env, subpath) {
+export async function EDfunction (env, subpath) {
   const informations = EDinformations(env)
   if (subpath === "info") {
     return informations
