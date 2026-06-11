@@ -2,7 +2,7 @@
 import { CheckGradesWorkflow } from "./workflows/check_grades";
 
 // API functions
-export { EDgrades } from "./backend/ecole_directe/index.js";
+export { EDfunction } from "./backend/ecole_directe/index.js";
 
 export default {
   async fetch(request, env, ctx) {
