@@ -5,7 +5,7 @@ export async function EDfunction (env, subpath) {
   const informations = await EDinformations(env)
   if (subpath === "info") {
     return informations
-  } else if (subpath === "averages") {
+  } else if (subpath === "grades") {
     return await EDgrades (env, informations)
   } else if (subpath === "") {
     return "None"
