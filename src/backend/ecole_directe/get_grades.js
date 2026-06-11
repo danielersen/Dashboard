@@ -1,7 +1,7 @@
 export async function EDgrades (env, informations) {
-  const token = information.token;
-  const cookies = information.cookies;
-  const account = information.json.data.accounts[0];
+  const token = informations.token;
+  const cookies = informations.cookies;
+  const account = informations.json.data.accounts[0];
   const eleveId = account.id;
 
   const body = new URLSearchParams();
