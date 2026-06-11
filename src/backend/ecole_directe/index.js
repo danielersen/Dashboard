@@ -8,7 +8,7 @@ export async function EDfunction (env, subpath) {
   } else if (subpath === "averages") {
     return EDgrades (env, informations)
   } else if (subpath === "") {
-    return
+    return "None"
   } else {
     return "There is no ed features which match with your request"
   }
