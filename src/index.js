@@ -50,7 +50,7 @@ export default {
     try {
       // Ecole directe paths
       if (url.pathname.startsWith("/api/ed/")) {
-        const resp = EDfunction(env, url.pathname.slice("/api/ed/".length));
+        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length));
       // Return response
       return new Response(JSON.stringify({ 
         resp 
