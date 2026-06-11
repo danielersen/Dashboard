@@ -24,7 +24,7 @@ export default {
       (url.pathname === "/" ||
       url.pathname === "" ||
       url.pathname.startsWith("/assets"))&&
-      SITE === "production"
+      env.SITE === "production"
     ) {
       return env.ASSETS.fetch(request)
     }
