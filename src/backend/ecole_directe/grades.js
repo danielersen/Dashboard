@@ -126,6 +126,7 @@ export async function EDgrades(env, informations, filter) {
   const timelineCode = timeline.json?.code ?? null;
   const invalid = notesCode === 520 || timelineCode === 520;
   const expired = notesCode === 525 || timelineCode === 525;
+  return filter
   if (filter !== "true") {
     return {
       ok: !invalid && !expired && notes.status >= 200 && notes.status < 300 && timeline.status >= 200 && timeline.status < 300,
