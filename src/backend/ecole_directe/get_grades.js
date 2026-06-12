@@ -70,8 +70,8 @@ export async function EDgrades(env, informations) {
     });
   }
 
-  const login = informations?.json ?? informations ?? {};
-  const token = login?.token;
+  const login = informations.json;
+  const token = login.token;
   const eleveId = login?.data?.accounts?.[0]?.id ?? login?.eleveId;
   const cookieHeader = normalizeCookieHeader(informations?.cookies ?? login?.cookies);
   const gtk = extractGtk(informations?.cookies ?? login?.cookies);
