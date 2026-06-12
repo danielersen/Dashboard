@@ -1,4 +1,4 @@
-export async function EDhomeworks(env, informations) {
+export async function EDhomeworks(env, informations, filter) {
   const ED_USER_AGENT = env.USER_AGENT;
   const ED_VERSION = "4.75.0";
   function normalizeCookieHeader(rawCookies) {
