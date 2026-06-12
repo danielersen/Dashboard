@@ -1,5 +1,5 @@
 export async function EDgrades (env, informations) {
-  const token = informations.token;
+  const token = informations.json.token;
   const cookies = informations.cookies;
   const account = informations.json.data.accounts[0];
   const eleveId = account.id;
