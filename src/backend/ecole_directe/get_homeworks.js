@@ -1,4 +1,4 @@
-export async function EDhomeworks (env, informations) {
+export async function EDhomeworks(env, informations) {
   const ED_USER_AGENT = env.USER_AGENT;
   const ED_VERSION = "4.75.0";
 
@@ -73,7 +73,7 @@ export async function EDhomeworks (env, informations) {
     const first = await readResponse(await postED(url, token, cookieHeader, primaryBody));
     const code1 = first.json?.code ?? null;
 
-    if (code1 === 520 || code1 === 525 || first.status < 200 || first.status >= 300) {
+    if (code1 === 520 || code1 === 525) {
       const second = await readResponse(await postED(url, token, cookieHeader, fallbackBody));
       const code2 = second.json?.code ?? null;
       return {
@@ -120,55 +120,50 @@ export async function EDhomeworks (env, informations) {
 
   const schoolBounds = getSchoolYearBounds();
 
-  const homeworkPrimary = `data=${JSON.stringify({
+  const urls = [
+    `https://api.ecoledirecte.com/v3/Eleves/${eleveId}/cahierdetexte.awp?verbe=get`,
+    `https://api.ecoledirecte.com/v3/eleves/${eleveId}/cahierdetexte.awp?verbe=get`,
+  ];
+
+  const primaryBody = `data=${JSON.stringify({
+    anneeScolaire: "",
+  })}`;
+
+  const fallbackBody = `data=${JSON.stringify({
     token,
     ...schoolBounds,
   })}`;
 
-  const homeworkFallback = `data=${JSON.stringify({
-    ...schoolBounds,
-  })}`;
+  let attempt = null;
+  let endpointUsed = null;
 
-  const homeworkUrls = [
-    `https://api.ecoledirecte.com/v3/eleves/${eleveId}/cahierdetexte.awp?verbe=get`,
-    `https://api.ecoledirecte.com/v3/eleves/${eleveId}/cahierdetexte/homeworks.awp?verbe=get`,
-  ];
+  for (const url of urls) {
+    const res = await tryEndpoint(url, token, cookieHeader, primaryBody, fallbackBody);
+    attempt = res;
+    endpointUsed = url;
 
-  let homeworkAttempt = null;
-  let homeworkUrlUsed = null;
+    const code = res.chosen.json?.code ?? null;
+    const valid =
+      res.chosen.status >= 200 &&
+      res.chosen.status < 300 &&
+      code !== 520 &&
+      code !== 525 &&
+      code !== 403;
 
-  for (const url of homeworkUrls) {
-    const attempt = await tryEndpoint(
-      url,
-      token,
-      cookieHeader,
-      homeworkPrimary,
-      homeworkFallback
-    );
-
-    homeworkAttempt = attempt;
-    homeworkUrlUsed = url;
-
-    const homeworkStatus = attempt.chosen.status;
-    const homeworkCode = attempt.code;
-    const validHomework =
-      homeworkStatus >= 200 &&
-      homeworkStatus < 300 &&
-      homeworkCode !== 520 &&
-      homeworkCode !== 525;
-
-    if (validHomework) break;
+    if (valid) break;
   }
 
-  const homeworks = homeworkAttempt.chosen;
+  const homeworks = attempt.chosen;
   const homeworksCode = homeworks.json?.code ?? null;
   const invalid = homeworksCode === 520;
   const expired = homeworksCode === 525;
+  const forbidden = homeworksCode === 403;
 
   return {
     ok:
       !invalid &&
       !expired &&
+      !forbidden &&
       homeworks.status >= 200 &&
       homeworks.status < 300,
     eleveId,
@@ -178,6 +173,7 @@ export async function EDhomeworks (env, informations) {
     session: {
       invalid,
       expired,
+      forbidden,
       homeworksCode,
     },
     homeworks: {
@@ -186,8 +182,8 @@ export async function EDhomeworks (env, informations) {
       json: homeworks.json,
     },
     debug: {
-      homeworksAlternate: homeworkAttempt.alternate,
-      homeworksEndpoint: homeworkUrlUsed,
+      homeworksAlternate: attempt.alternate,
+      homeworksEndpoint: endpointUsed,
       schoolBounds,
     },
     originalLogin: login ?? null,
