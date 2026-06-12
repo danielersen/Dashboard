@@ -27,20 +27,11 @@ export async function EDhomeworks(env, informations) {
     for (const part of parts) {
       const eq = part.indexOf("=");
       if (eq <= 0) continue;
-
       const key = part.slice(0, eq).trim().toLowerCase();
       if (attrs.has(key)) continue;
-
       cookies.push(part);
     }
-
     return cookies.join("; ");
-  }
-
-  function extractGtk(rawCookies) {
-    const cookieHeader = normalizeCookieHeader(rawCookies);
-    const match = cookieHeader.match(/(?:^|;\s*)GTK=([^;]+)/i);
-    return match ? match[1] : null;
   }
 
   function safeParse(text) {
@@ -76,18 +67,12 @@ export async function EDhomeworks(env, informations) {
   }
 
   async function tryEndpoint(url, token, cookieHeader, primaryBody, fallbackBody) {
-    const first = await readResponse(
-      await postED(url, token, cookieHeader, primaryBody)
-    );
+    const first = await readResponse(await postED(url, token, cookieHeader, primaryBody));
 
     const code1 = first.json?.code ?? null;
 
-    // fallback si API EcoleDirecte casse (très fréquent)
-    if (code1 === 520 || code1 === 225) {
-      const second = await readResponse(
-        await postED(url, token, cookieHeader, fallbackBody)
-      );
-
+    if (code1 === 520 || code1 === 525 || code1 === 403) {
+      const second = await readResponse(await postED(url, token, cookieHeader, fallbackBody));
       return {
         chosen: second,
         alternate: first,
@@ -102,81 +87,47 @@ export async function EDhomeworks(env, informations) {
     };
   }
 
-  // =========================
-  // 🔐 Extraction source login
-  // =========================
-  const source = informations?.resp ?? informations?.json ?? informations ?? {};
+  const source = informations?.resp ?? informations ?? {};
   const login = source?.originalLogin ?? source;
 
-  const token = source?.token ?? login?.token ?? null;
-  const eleveId =
-    source?.eleveId ??
-    login?.data?.accounts?.[0]?.id ??
-    null;
+  const token = source?.token ?? login?.token;
+  const eleveId = source?.eleveId ?? login?.data?.accounts?.[0]?.id;
 
-  const cookieHeader = normalizeCookieHeader(
-    source?.cookies ?? informations?.cookies
-  );
-
-  const gtk = extractGtk(source?.cookies ?? informations?.cookies);
+  const cookieHeader = normalizeCookieHeader(source?.cookieHeader || source?.cookies);
 
   if (!token || !eleveId) {
     return {
       ok: false,
-      error: "Token ou eleveId manquant",
-      received: informations ?? null,
+      error: "token ou eleveId manquant",
+      received: informations,
     };
   }
 
-  // =========================
-  // 📚 ENDPOINT HOMEWORKS
-  // =========================
-  const homeworkUrl =
-    `https://api.ecoledirecte.com/v3/eleves/${eleveId}/cahierdetexte.awp?verbe=get`;
+  const url = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/cahierdetexte.awp`;
 
-  const primaryBody = 'data={}';
+  const primaryBody = 'data={"anneeScolaire":""}';
 
   const fallbackBody = `data=${JSON.stringify({
+    anneeScolaire: "",
     token,
   })}`;
 
-  const homeworksAttempt = await tryEndpoint(
-    homeworkUrl,
-    token,
-    cookieHeader,
-    primaryBody,
-    fallbackBody
-  );
+  const result = await tryEndpoint(url, token, cookieHeader, primaryBody, fallbackBody);
 
-  const homeworks = homeworksAttempt.chosen;
-
-  const code = homeworks.json?.code ?? null;
-
-  const invalid = code === 520 || code === 225;
+  const json = result.chosen.json;
 
   return {
-    ok: !invalid && homeworks.status >= 200 && homeworks.status < 300,
-
+    ok: json?.code === 200,
     eleveId,
     token,
-    gtk,
-    cookieHeader,
-
     session: {
-      invalid,
-      code,
+      code: json?.code,
     },
-
     homeworks: {
-      status: homeworks.status,
-      raw: homeworks.raw,
-      json: homeworks.json,
+      status: result.chosen.status,
+      raw: result.chosen.raw,
+      json,
     },
-
-    debug: {
-      alternate: homeworksAttempt.alternate,
-    },
-
-    originalLogin: login ?? null,
+    originalLogin: login,
   };
 }
