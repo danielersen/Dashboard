@@ -1,37 +1,143 @@
-export async function EDgrades(env, informations) {
-  const token = informations.json.token;
-  const account = informations.json.data.accounts[0];
-  const eleveId = account.id;
+// edgrades.js
 
-  // ⚠️ NE PAS modifier les cookies
-  const cookieHeader = (informations.cookies || []).join("; ");
+const ED_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
 
-  async function edFetch(url, body = "data={}") {
-    return fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-Token": token,
-        "Cookie": cookieHeader,
-        "User-Agent": "Mozilla/5.0",
-        "Referer": "https://www.ecoledirecte.com/",
-        "Origin": "https://www.ecoledirecte.com"
-      },
-      body
-    });
+const ED_VERSION = "4.75.0";
+
+function normalizeCookieHeader(rawCookies) {
+  if (!rawCookies) return "";
+
+  const text = Array.isArray(rawCookies) ? rawCookies.join("; ") : String(rawCookies);
+
+  // On récupère uniquement les paires nom=valeur, sans attributs Set-Cookie
+  const parts = text
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const attrs = new Set([
+    "secure",
+    "httponly",
+    "samesite",
+    "path",
+    "domain",
+    "expires",
+    "max-age",
+  ]);
+
+  const cookies = [];
+  for (const part of parts) {
+    const eq = part.indexOf("=");
+    if (eq <= 0) continue;
+
+    const key = part.slice(0, eq).trim().toLowerCase();
+    if (attrs.has(key)) continue;
+
+    cookies.push(part);
   }
 
-  const notesRes = await edFetch(
-    `https://api.ecoledirecte.com/v3/eleves/${eleveId}/notes.awp?verbe=get`,
+  return cookies.join("; ");
+}
+
+function extractGtk(rawCookies) {
+  const cookieHeader = normalizeCookieHeader(rawCookies);
+  const match = cookieHeader.match(/(?:^|;\s*)GTK=([^;]+)/i);
+  return match ? match[1] : null;
+}
+
+async function postED(url, token, cookieHeader, body) {
+  return fetch(url, {
+    method: "POST",
+    headers: {
+      "Accept": "application/json, text/plain, */*",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": ED_USER_AGENT,
+      "X-Token": token,
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+    },
+    body,
+  });
+}
+
+async function readJsonSafe(response) {
+  const text = await response.text();
+  try {
+    return { text, json: JSON.parse(text) };
+  } catch {
+    return { text, json: null };
+  }
+}
+
+/**
+ * Attendu: informations = resp
+ * Exemple:
+ * {
+ *   token: "...",
+ *   eleveId: 2683,
+ *   cookies: "...",
+ *   originalLogin: {...}
+ * }
+ */
+export async function EDgrades(env, informations) {
+  const token = informations?.token;
+  const eleveId = informations?.eleveId;
+  const cookieHeader = normalizeCookieHeader(informations?.cookies);
+  const gtk = extractGtk(informations?.cookies);
+
+  if (!token || !eleveId) {
+    return {
+      ok: false,
+      error: "Informations incomplètes: token ou eleveId manquant.",
+      received: informations ?? null,
+    };
+  }
+
+  const notesUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/notes.awp?verbe=get`;
+  const timelineUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/timeline.awp?verbe=get`;
+
+  const notesRes = await postED(
+    notesUrl,
+    token,
+    cookieHeader,
     'data={"anneeScolaire":""}'
   );
 
-  const notesText = await notesRes.text();
+  const timelineRes = await postED(
+    timelineUrl,
+    token,
+    cookieHeader,
+    "data={}"
+  );
+
+  const notesRead = await readJsonSafe(notesRes);
+  const timelineRead = await readJsonSafe(timelineRes);
+
+  const expired =
+    notesRead.json?.code === 525 ||
+    timelineRead.json?.code === 525;
 
   return {
+    ok: !expired && notesRes.ok && timelineRes.ok,
     eleveId,
     token,
-    cookies: cookieHeader,
-    notes: notesText
+    gtk,
+    cookieHeader,
+    session: {
+      expired,
+      notesCode: notesRead.json?.code ?? null,
+      timelineCode: timelineRead.json?.code ?? null,
+    },
+    notes: {
+      status: notesRes.status,
+      raw: notesRead.text,
+      json: notesRead.json,
+    },
+    timeline: {
+      status: timelineRes.status,
+      raw: timelineRead.text,
+      json: timelineRead.json,
+    },
+    originalLogin: informations.originalLogin ?? null,
   };
 }
