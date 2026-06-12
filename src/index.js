@@ -7,9 +7,13 @@ import { EDfunction } from "./backend/ecole_directe/index.js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const body = await request.json();
     const headers = request.headers;
-
+    try {
+      const body = JSON.parse(await request.text);
+    } catch (e) {
+      const body = null;
+    }
+    
     // =========================
     // ⛔ PRODUCTION MODE DISABLED
     // =========================
@@ -49,7 +53,7 @@ export default {
     try {
       // Ecole directe paths
       if (url.pathname.startsWith("/api/ed/")) {
-        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), body);
+        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), headers);
         
       // Return response
       return new Response(JSON.stringify({ 
