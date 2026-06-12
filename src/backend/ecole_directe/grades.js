@@ -126,32 +126,35 @@ export async function EDgrades(env, informations, filter) {
   const timelineCode = timeline.json?.code ?? null;
   const invalid = notesCode === 520 || timelineCode === 520;
   const expired = notesCode === 525 || timelineCode === 525;
-  return {
-    ok: !invalid && !expired && notes.status >= 200 && notes.status < 300 && timeline.status >= 200 && timeline.status < 300,
-    eleveId,
-    token,
-    gtk,
-    cookieHeader,
-    session: {
-      invalid,
-      expired,
-      notesCode,
-      timelineCode,
-    },
-    notes: {
-      status: notes.status,
-      raw: notes.raw,
-      json: notes.json,
-    },
-    timeline: {
-      status: timeline.status,
-      raw: timeline.raw,
-      json: timeline.json,
-    },
-    debug: {
-      notesAlternate: notesAttempt.alternate,
-      timelineAlternate: timelineAttempt.alternate,
-    },
-    originalLogin: login ?? null,
-  };
+  if (filter !== "true") {
+    return {
+      ok: !invalid && !expired && notes.status >= 200 && notes.status < 300 && timeline.status >= 200 && timeline.status < 300,
+      eleveId,
+      token,
+      gtk,
+      cookieHeader,
+      session: {
+        invalid,
+        expired,
+        notesCode,
+        timelineCode,
+      },
+      notes: {
+        status: notes.status,
+        raw: notes.raw,
+        json: notes.json,
+      },
+      timeline: {
+        status: timeline.status,
+        raw: timeline.raw,
+        json: timeline.json,
+      },
+      debug: {
+        notesAlternate: notesAttempt.alternate,
+        timelineAlternate: timelineAttempt.alternate,
+      },
+      originalLogin: login ?? null,
+    };
+  }
+  // Filter abd organize the reponse
 }
