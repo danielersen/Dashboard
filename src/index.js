@@ -10,7 +10,6 @@ export default {
     const body = request.text();
     const headers = request.headers;
 
-    
     // =========================
     // ⛔ PRODUCTION MODE DISABLED
     // =========================
@@ -18,7 +17,6 @@ export default {
       return new Response("Not Found", { status: 404 })
     }
 
-    
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
@@ -31,7 +29,6 @@ export default {
       return env.ASSETS.fetch(request)
     }
 
-    
     // =========================
     // 📶 MAIN API
     // =========================
@@ -52,7 +49,8 @@ export default {
     try {
       // Ecole directe paths
       if (url.pathname.startsWith("/api/ed/")) {
-        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length));
+        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), body);
+        
       // Return response
       return new Response(JSON.stringify({ 
         resp 
@@ -69,7 +67,6 @@ export default {
         headers: corsHeaders
       });
     }
-
 
     // =========================
     // ❌ 404 NOT FOUND
