@@ -10,6 +10,7 @@ export async function EDfunction (env, subpath, headers) {
   }
 
   // Cases with filter
+  return headers.filter
   let filter;
   if (headers.filter === "true") {
     filter = true;
