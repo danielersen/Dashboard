@@ -7,6 +7,7 @@ export async function EDfunction (env, subpath, body) {
   const informations = await EDinformations(env)
   if (subpath === "info") {
     return informations
+  }
 
   // Cases with filter
   if (data.filter === "true") {
