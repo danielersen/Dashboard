@@ -10,10 +10,11 @@ export async function EDfunction (env, subpath, headers) {
   }
 
   // Cases with filter
+  let filter;
   if (headers.filter === "true") {
-    const filter = true;
+    filter = true;
   } else {
-    const filter = false;
+    filter = false;
   }
   if (subpath === "grades") {
     return await EDgrades (env, informations, filter)
