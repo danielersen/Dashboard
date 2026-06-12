@@ -1,5 +1,5 @@
 export async function EDinformations(env) {
-  const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
+  const userAgent = env.USER_AGENT;
   const apiVersion = "4.75.0";
   const day = env.BORN_DAY;
   const month = env.BORN_MONTH;
