@@ -40,10 +40,25 @@ export async function EDgrades(env, informations) {
     return cookies.join("; ");
   }
 
-  function extractGtk(rawCookies) {
-    const cookieHeader = normalizeCookieHeader(rawCookies);
-    const match = cookieHeader.match(/(?:^|;\s*)GTK=([^;]+)/i);
-    return match ? match[1] : null;
+  function readLoginShape(input) {
+    const base = input?.json ?? input ?? {};
+
+    const token =
+      base?.token ??
+      input?.token ??
+      null;
+
+    const eleveId =
+      base?.data?.accounts?.[0]?.id ??
+      input?.eleveId ??
+      null;
+
+    const cookies =
+      input?.cookies ??
+      base?.cookies ??
+      [];
+
+    return { token, eleveId, cookies, base };
   }
 
   async function readJsonSafe(response) {
@@ -55,14 +70,13 @@ export async function EDgrades(env, informations) {
     }
   }
 
-  async function postED(url, token, cookieHeader, body) {
+  async function postED(url, body, cookieHeader) {
     return fetch(url, {
       method: "POST",
       headers: {
         "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/x-www-form-urlencoded",
         "User-Agent": ED_USER_AGENT,
-        "X-Token": token,
         "X-Version": ED_VERSION,
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
@@ -70,11 +84,8 @@ export async function EDgrades(env, informations) {
     });
   }
 
-  const login = informations.json;
-  const token = login.token;
-  const eleveId = login?.data?.accounts?.[0]?.id ?? login?.eleveId;
-  const cookieHeader = normalizeCookieHeader(informations?.cookies ?? login?.cookies);
-  const gtk = extractGtk(informations?.cookies ?? login?.cookies);
+  const { token, eleveId, cookies, base } = readLoginShape(informations);
+  const cookieHeader = normalizeCookieHeader(cookies);
 
   if (!token || !eleveId) {
     return {
@@ -87,19 +98,17 @@ export async function EDgrades(env, informations) {
   const notesUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/notes.awp?verbe=get`;
   const timelineUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/timeline.awp?verbe=get`;
 
-  const notesRes = await postED(
-    notesUrl,
+  const notesBody = `data=${JSON.stringify({
     token,
-    cookieHeader,
-    'data={"anneeScolaire":""}'
-  );
+    anneeScolaire: "",
+  })}`;
 
-  const timelineRes = await postED(
-    timelineUrl,
+  const timelineBody = `data=${JSON.stringify({
     token,
-    cookieHeader,
-    "data={}"
-  );
+  })}`;
+
+  const notesRes = await postED(notesUrl, notesBody, cookieHeader);
+  const timelineRes = await postED(timelineUrl, timelineBody, cookieHeader);
 
   const notesRead = await readJsonSafe(notesRes);
   const timelineRead = await readJsonSafe(timelineRes);
@@ -108,15 +117,16 @@ export async function EDgrades(env, informations) {
   const timelineCode = timelineRead.json?.code ?? null;
 
   const expired = notesCode === 525 || timelineCode === 525;
+  const invalid = notesCode === 520 || timelineCode === 520;
 
   return {
-    ok: !expired && notesRes.ok && timelineRes.ok,
+    ok: !expired && !invalid && notesRes.ok && timelineRes.ok,
     eleveId,
     token,
-    gtk,
     cookieHeader,
     session: {
       expired,
+      invalid,
       notesCode,
       timelineCode,
     },
@@ -130,6 +140,6 @@ export async function EDgrades(env, informations) {
       raw: timelineRead.text,
       json: timelineRead.json,
     },
-    originalLogin: informations?.originalLogin ?? login ?? null,
+    originalLogin: base ?? null,
   };
 }
