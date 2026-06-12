@@ -1,11 +1,10 @@
 export async function EDgrades(env, informations) {
-  const token = informations.token || informations.json.token;
+  const token = informations.token || informations.json?.token;
 
-  const account = informations.json.data.accounts[0];
-  const eleveId = account.id;
+  const account = informations.json?.data?.accounts?.[0];
+  const eleveId = account?.id;
 
-  // Ne garder que les vraies paires nom=valeur
-  const cookieHeader = informations.cookies
+  const cookieHeader = (informations.cookies || [])
     .map(cookie => cookie.split(";")[0])
     .join("; ");
 
@@ -36,15 +35,21 @@ export async function EDgrades(env, informations) {
   let json;
   try {
     json = JSON.parse(text);
-  } catch (err) {
-    throw new Error(
-      `Réponse invalide de l'API : ${text.slice(0, 500)}`
-    );
+  } catch {
+    json = null;
   }
 
-  console.log("Token utilisé :", token);
-  console.log("Cookies :", cookieHeader);
-  console.log("Réponse notes :", JSON.stringify(json, null, 2));
-
-  return json;
+  return {
+    request: {
+      eleveId,
+      token,
+      cookies: cookieHeader
+    },
+    response: {
+      status: res.status,
+      headers: Object.fromEntries(res.headers.entries()),
+      raw: text,
+      json
+    }
+  };
 }
