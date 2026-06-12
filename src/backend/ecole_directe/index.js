@@ -1,7 +1,7 @@
-import { EDinformations } from "./get_informations.js";
-import { EDgrades } from "./get_grades.js"
-import { EDhomeworks } from "./get_homeworks.js"
-import { EDtimetable } from "./get_timetable.js"
+import { EDinformations } from "./informations.js";
+import { EDgrades } from "./grades.js"
+import { EDhomeworks } from "./homeworks.js"
+import { EDtimetable } from "./timetable.js"
 
 export async function EDfunction (env, subpath) {
   const informations = await EDinformations(env)
