@@ -4,13 +4,13 @@ import { EDhomeworks } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
 export async function EDfunction (env, subpath, headers) {
+  return headers
   const informations = await EDinformations(env)
   if (subpath === "info") {
     return informations
   }
 
   // Cases with filter
-  return headers.filter
   let filter;
   if (headers.filter === "true") {
     filter = true;
