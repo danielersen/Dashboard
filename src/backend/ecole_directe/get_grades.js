@@ -1,21 +1,15 @@
 export async function EDgrades(env, informations) {
-  const ED_USER_AGENT =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
-
+  const ED_USER_AGENT = env.USER_AGENT;
   const ED_VERSION = "4.75.0";
-
   function normalizeCookieHeader(rawCookies) {
     if (!rawCookies) return "";
-
     const text = Array.isArray(rawCookies)
       ? rawCookies.join("; ")
       : String(rawCookies);
-
     const parts = text
       .split(";")
       .map((s) => s.trim())
       .filter(Boolean);
-
     const attrs = new Set([
       "secure",
       "httponly",
@@ -25,27 +19,21 @@ export async function EDgrades(env, informations) {
       "expires",
       "max-age",
     ]);
-
     const cookies = [];
     for (const part of parts) {
       const eq = part.indexOf("=");
       if (eq <= 0) continue;
-
       const key = part.slice(0, eq).trim().toLowerCase();
       if (attrs.has(key)) continue;
-
       cookies.push(part);
     }
-
     return cookies.join("; ");
   }
-
   function extractGtk(rawCookies) {
     const cookieHeader = normalizeCookieHeader(rawCookies);
     const match = cookieHeader.match(/(?:^|;\s*)GTK=([^;]+)/i);
     return match ? match[1] : null;
   }
-
   function safeParse(text) {
     try {
       return JSON.parse(text);
@@ -53,7 +41,6 @@ export async function EDgrades(env, informations) {
       return null;
     }
   }
-
   async function readResponse(response) {
     const raw = await response.text();
     return {
@@ -62,7 +49,6 @@ export async function EDgrades(env, informations) {
       json: safeParse(raw),
     };
   }
-
   async function postED(url, token, cookieHeader, body) {
     return fetch(url, {
       method: "POST",
@@ -77,7 +63,6 @@ export async function EDgrades(env, informations) {
       body,
     });
   }
-
   async function tryEndpoint(url, token, cookieHeader, primaryBody, fallbackBody) {
     const first = await readResponse(await postED(url, token, cookieHeader, primaryBody));
     const code1 = first.json?.code ?? null;
@@ -91,22 +76,18 @@ export async function EDgrades(env, informations) {
         code: code2,
       };
     }
-
     return {
       chosen: first,
       alternate: null,
       code: code1,
     };
   }
-
   const source = informations?.resp ?? informations?.json ?? informations ?? {};
   const login = source?.originalLogin ?? source;
-
   const token = source?.token ?? login?.token ?? null;
   const eleveId = source?.eleveId ?? login?.data?.accounts?.[0]?.id ?? null;
   const cookieHeader = normalizeCookieHeader(source?.cookies ?? informations?.cookies);
   const gtk = extractGtk(source?.cookies ?? informations?.cookies);
-
   if (!token || !eleveId) {
     return {
       ok: false,
@@ -114,21 +95,17 @@ export async function EDgrades(env, informations) {
       received: informations ?? null,
     };
   }
-
   const notesUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/notes.awp?verbe=get`;
   const timelineUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/timeline.awp?verbe=get`;
-
   const notesPrimary = 'data={"anneeScolaire":""}';
   const notesFallback = `data=${JSON.stringify({
     anneeScolaire: "",
     token,
   })}`;
-
   const timelinePrimary = "data={}";
   const timelineFallback = `data=${JSON.stringify({
     token,
   })}`;
-
   const notesAttempt = await tryEndpoint(
     notesUrl,
     token,
@@ -136,7 +113,6 @@ export async function EDgrades(env, informations) {
     notesPrimary,
     notesFallback
   );
-
   const timelineAttempt = await tryEndpoint(
     timelineUrl,
     token,
@@ -144,16 +120,12 @@ export async function EDgrades(env, informations) {
     timelinePrimary,
     timelineFallback
   );
-
   const notes = notesAttempt.chosen;
   const timeline = timelineAttempt.chosen;
-
   const notesCode = notes.json?.code ?? null;
   const timelineCode = timeline.json?.code ?? null;
-
   const invalid = notesCode === 520 || timelineCode === 520;
   const expired = notesCode === 525 || timelineCode === 525;
-
   return {
     ok: !invalid && !expired && notes.status >= 200 && notes.status < 300 && timeline.status >= 200 && timeline.status < 300,
     eleveId,
