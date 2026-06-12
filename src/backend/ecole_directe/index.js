@@ -1,6 +1,7 @@
 import { EDinformations } from "./get_informations.js";
 import { EDgrades } from "./get_grades.js"
 import { EDhomeworks } from "./get_homeworks.js"
+import { EDtimetable } from "./get_timetable.js"
 
 export async function EDfunction (env, subpath) {
   const informations = await EDinformations(env)
@@ -10,6 +11,8 @@ export async function EDfunction (env, subpath) {
     return await EDgrades (env, informations)
   } else if (subpath === "homeworks") {
     return await EDhomeworks (env, informations)
+  } else if (subpath === "timetable") {
+    return await EDtimetable
   } else if (subpath === "") {
     return ""
   } else {
