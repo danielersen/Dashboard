@@ -12,7 +12,7 @@ export async function EDfunction (env, subpath) {
   } else if (subpath === "homeworks") {
     return await EDhomeworks (env, informations)
   } else if (subpath === "timetable") {
-    return await EDtimetable
+    return await EDtimetable (env, informations)
   } else if (subpath === "") {
     return ""
   } else {
