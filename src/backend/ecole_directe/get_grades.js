@@ -1,22 +1,32 @@
 export async function EDgrades(env, informations) {
-  const token = informations.token || informations.json?.token;
+  const token = informations.token || informations.json.token;
 
-  const account = informations.json?.data?.accounts?.[0];
-  const eleveId = account?.id;
+  const account = informations.json.data.accounts[0];
+  const eleveId = account.id;
 
-  const cookieHeader = (informations.cookies || [])
+  const cookieHeader = informations.cookies
     .map(cookie => cookie.split(";")[0])
     .join("; ");
 
-  const body = new URLSearchParams();
-  body.append(
-    "data",
-    JSON.stringify({
-      anneeScolaire: ""
-    })
+  // Test de la session avec timeline
+  const timelineRes = await fetch(
+    `https://api.ecoledirecte.com/v3/eleves/${eleveId}/timeline.awp?verbe=get`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Token": token,
+        "Cookie": cookieHeader,
+        "User-Agent": "Mozilla/5.0"
+      },
+      body: "data={}"
+    }
   );
 
-  const res = await fetch(
+  const timelineText = await timelineRes.text();
+
+  // Test des notes
+  const notesRes = await fetch(
     `https://api.ecoledirecte.com/v3/eleves/${eleveId}/notes.awp?verbe=get`,
     {
       method: "POST",
@@ -26,30 +36,24 @@ export async function EDgrades(env, informations) {
         "Cookie": cookieHeader,
         "User-Agent": "Mozilla/5.0"
       },
-      body: body.toString()
+      body: 'data={"anneeScolaire":""}'
     }
   );
 
-  const text = await res.text();
-
-  let json;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    json = null;
-  }
+  const notesText = await notesRes.text();
 
   return {
-    request: {
-      eleveId,
-      token,
-      cookies: cookieHeader
+    token,
+    eleveId,
+    cookies: cookieHeader,
+    timeline: {
+      status: timelineRes.status,
+      body: timelineText
     },
-    response: {
-      status: res.status,
-      headers: Object.fromEntries(res.headers.entries()),
-      raw: text,
-      json
-    }
+    notes: {
+      status: notesRes.status,
+      body: notesText
+    },
+    originalLogin: informations
   };
 }
