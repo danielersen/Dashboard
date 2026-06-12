@@ -3,14 +3,14 @@ import { EDgrades } from "./grades.js"
 import { EDhomeworks } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
-export async function EDfunction (env, subpath, body) {
+export async function EDfunction (env, subpath, headers) {
   const informations = await EDinformations(env)
   if (subpath === "info") {
     return informations
   }
 
   // Cases with filter
-  if (data.filter === "true") {
+  if (headers.filter === "true") {
     const filter = true;
   } else {
     const filter = false;
