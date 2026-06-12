@@ -1,6 +1,5 @@
 export async function EDtimetable(env, informations) {
   const ED_USER_AGENT = env.USER_AGENT;
-  return "True"
   const ED_VERSION = "4.75.0";
 
   function normalizeCookieHeader(rawCookies) {
