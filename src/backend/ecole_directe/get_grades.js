@@ -1,89 +1,80 @@
-// edgrades.js
-
-const ED_USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
-
-const ED_VERSION = "4.75.0";
-
-function normalizeCookieHeader(rawCookies) {
-  if (!rawCookies) return "";
-
-  const text = Array.isArray(rawCookies) ? rawCookies.join("; ") : String(rawCookies);
-
-  // On récupère uniquement les paires nom=valeur, sans attributs Set-Cookie
-  const parts = text
-    .split(";")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  const attrs = new Set([
-    "secure",
-    "httponly",
-    "samesite",
-    "path",
-    "domain",
-    "expires",
-    "max-age",
-  ]);
-
-  const cookies = [];
-  for (const part of parts) {
-    const eq = part.indexOf("=");
-    if (eq <= 0) continue;
-
-    const key = part.slice(0, eq).trim().toLowerCase();
-    if (attrs.has(key)) continue;
-
-    cookies.push(part);
-  }
-
-  return cookies.join("; ");
-}
-
-function extractGtk(rawCookies) {
-  const cookieHeader = normalizeCookieHeader(rawCookies);
-  const match = cookieHeader.match(/(?:^|;\s*)GTK=([^;]+)/i);
-  return match ? match[1] : null;
-}
-
-async function postED(url, token, cookieHeader, body) {
-  return fetch(url, {
-    method: "POST",
-    headers: {
-      "Accept": "application/json, text/plain, */*",
-      "Content-Type": "application/x-www-form-urlencoded",
-      "User-Agent": ED_USER_AGENT,
-      "X-Token": token,
-      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-    },
-    body,
-  });
-}
-
-async function readJsonSafe(response) {
-  const text = await response.text();
-  try {
-    return { text, json: JSON.parse(text) };
-  } catch {
-    return { text, json: null };
-  }
-}
-
-/**
- * Attendu: informations = resp
- * Exemple:
- * {
- *   token: "...",
- *   eleveId: 2683,
- *   cookies: "...",
- *   originalLogin: {...}
- * }
- */
 export async function EDgrades(env, informations) {
-  const token = informations?.token;
-  const eleveId = informations?.eleveId;
-  const cookieHeader = normalizeCookieHeader(informations?.cookies);
-  const gtk = extractGtk(informations?.cookies);
+  const ED_USER_AGENT =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
+
+  const ED_VERSION = "4.75.0";
+
+  function normalizeCookieHeader(rawCookies) {
+    if (!rawCookies) return "";
+
+    const text = Array.isArray(rawCookies)
+      ? rawCookies.join("; ")
+      : String(rawCookies);
+
+    const parts = text
+      .split(";")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const attrs = new Set([
+      "secure",
+      "httponly",
+      "samesite",
+      "path",
+      "domain",
+      "expires",
+      "max-age",
+    ]);
+
+    const cookies = [];
+    for (const part of parts) {
+      const eq = part.indexOf("=");
+      if (eq <= 0) continue;
+
+      const key = part.slice(0, eq).trim().toLowerCase();
+      if (attrs.has(key)) continue;
+
+      cookies.push(part);
+    }
+
+    return cookies.join("; ");
+  }
+
+  function extractGtk(rawCookies) {
+    const cookieHeader = normalizeCookieHeader(rawCookies);
+    const match = cookieHeader.match(/(?:^|;\s*)GTK=([^;]+)/i);
+    return match ? match[1] : null;
+  }
+
+  async function readJsonSafe(response) {
+    const text = await response.text();
+    try {
+      return { text, json: JSON.parse(text) };
+    } catch {
+      return { text, json: null };
+    }
+  }
+
+  async function postED(url, token, cookieHeader, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "User-Agent": ED_USER_AGENT,
+        "X-Token": token,
+        "X-Version": ED_VERSION,
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      body,
+    });
+  }
+
+  const login = informations?.json ?? informations ?? {};
+  const token = login?.token;
+  const eleveId = login?.data?.accounts?.[0]?.id ?? login?.eleveId;
+  const cookieHeader = normalizeCookieHeader(informations?.cookies ?? login?.cookies);
+  const gtk = extractGtk(informations?.cookies ?? login?.cookies);
 
   if (!token || !eleveId) {
     return {
@@ -113,9 +104,10 @@ export async function EDgrades(env, informations) {
   const notesRead = await readJsonSafe(notesRes);
   const timelineRead = await readJsonSafe(timelineRes);
 
-  const expired =
-    notesRead.json?.code === 525 ||
-    timelineRead.json?.code === 525;
+  const notesCode = notesRead.json?.code ?? null;
+  const timelineCode = timelineRead.json?.code ?? null;
+
+  const expired = notesCode === 525 || timelineCode === 525;
 
   return {
     ok: !expired && notesRes.ok && timelineRes.ok,
@@ -125,8 +117,8 @@ export async function EDgrades(env, informations) {
     cookieHeader,
     session: {
       expired,
-      notesCode: notesRead.json?.code ?? null,
-      timelineCode: timelineRead.json?.code ?? null,
+      notesCode,
+      timelineCode,
     },
     notes: {
       status: notesRes.status,
@@ -138,6 +130,6 @@ export async function EDgrades(env, informations) {
       raw: timelineRead.text,
       json: timelineRead.json,
     },
-    originalLogin: informations.originalLogin ?? null,
+    originalLogin: informations?.originalLogin ?? login ?? null,
   };
 }
