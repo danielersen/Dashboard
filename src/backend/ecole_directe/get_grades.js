@@ -40,25 +40,10 @@ export async function EDgrades(env, informations) {
     return cookies.join("; ");
   }
 
-  function readLoginShape(input) {
-    const base = input?.json ?? input ?? {};
-
-    const token =
-      base?.token ??
-      input?.token ??
-      null;
-
-    const eleveId =
-      base?.data?.accounts?.[0]?.id ??
-      input?.eleveId ??
-      null;
-
-    const cookies =
-      input?.cookies ??
-      base?.cookies ??
-      [];
-
-    return { token, eleveId, cookies, base };
+  function extractGtk(rawCookies) {
+    const cookieHeader = normalizeCookieHeader(rawCookies);
+    const match = cookieHeader.match(/(?:^|;\s*)GTK=([^;]+)/i);
+    return match ? match[1] : null;
   }
 
   async function readJsonSafe(response) {
@@ -70,13 +55,14 @@ export async function EDgrades(env, informations) {
     }
   }
 
-  async function postED(url, body, cookieHeader) {
+  async function postED(url, token, cookieHeader, body) {
     return fetch(url, {
       method: "POST",
       headers: {
-        "Accept": "application/json, text/plain, */*",
+        Accept: "application/json, text/plain, */*",
         "Content-Type": "application/x-www-form-urlencoded",
         "User-Agent": ED_USER_AGENT,
+        "X-Token": token,
         "X-Version": ED_VERSION,
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
@@ -84,8 +70,11 @@ export async function EDgrades(env, informations) {
     });
   }
 
-  const { token, eleveId, cookies, base } = readLoginShape(informations);
-  const cookieHeader = normalizeCookieHeader(cookies);
+  const source = informations?.resp ?? informations?.json ?? informations ?? {};
+  const token = source?.token ?? null;
+  const eleveId = source?.eleveId ?? source?.data?.accounts?.[0]?.id ?? null;
+  const cookieHeader = normalizeCookieHeader(source?.cookies ?? informations?.cookies);
+  const gtk = extractGtk(source?.cookies ?? informations?.cookies);
 
   if (!token || !eleveId) {
     return {
@@ -107,8 +96,8 @@ export async function EDgrades(env, informations) {
     token,
   })}`;
 
-  const notesRes = await postED(notesUrl, notesBody, cookieHeader);
-  const timelineRes = await postED(timelineUrl, timelineBody, cookieHeader);
+  const notesRes = await postED(notesUrl, token, cookieHeader, notesBody);
+  const timelineRes = await postED(timelineUrl, token, cookieHeader, timelineBody);
 
   const notesRead = await readJsonSafe(notesRes);
   const timelineRead = await readJsonSafe(timelineRes);
@@ -123,6 +112,7 @@ export async function EDgrades(env, informations) {
     ok: !expired && !invalid && notesRes.ok && timelineRes.ok,
     eleveId,
     token,
+    gtk,
     cookieHeader,
     session: {
       expired,
@@ -140,6 +130,6 @@ export async function EDgrades(env, informations) {
       raw: timelineRead.text,
       json: timelineRead.json,
     },
-    originalLogin: base ?? null,
+    originalLogin: source?.originalLogin ?? source ?? null,
   };
 }
