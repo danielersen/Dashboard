@@ -46,13 +46,21 @@ export async function EDgrades(env, informations) {
     return match ? match[1] : null;
   }
 
-  async function readJsonSafe(response) {
-    const text = await response.text();
+  function safeParse(text) {
     try {
-      return { text, json: JSON.parse(text) };
+      return JSON.parse(text);
     } catch {
-      return { text, json: null };
+      return null;
     }
+  }
+
+  async function readResponse(response) {
+    const raw = await response.text();
+    return {
+      status: response.status,
+      raw,
+      json: safeParse(raw),
+    };
   }
 
   async function postED(url, token, cookieHeader, body) {
@@ -70,9 +78,32 @@ export async function EDgrades(env, informations) {
     });
   }
 
+  async function tryEndpoint(url, token, cookieHeader, primaryBody, fallbackBody) {
+    const first = await readResponse(await postED(url, token, cookieHeader, primaryBody));
+    const code1 = first.json?.code ?? null;
+
+    if (code1 === 520 || code1 === 525) {
+      const second = await readResponse(await postED(url, token, cookieHeader, fallbackBody));
+      const code2 = second.json?.code ?? null;
+      return {
+        chosen: second,
+        alternate: first,
+        code: code2,
+      };
+    }
+
+    return {
+      chosen: first,
+      alternate: null,
+      code: code1,
+    };
+  }
+
   const source = informations?.resp ?? informations?.json ?? informations ?? {};
-  const token = source?.token ?? null;
-  const eleveId = source?.eleveId ?? source?.data?.accounts?.[0]?.id ?? null;
+  const login = source?.originalLogin ?? source;
+
+  const token = source?.token ?? login?.token ?? null;
+  const eleveId = source?.eleveId ?? login?.data?.accounts?.[0]?.id ?? null;
   const cookieHeader = normalizeCookieHeader(source?.cookies ?? informations?.cookies);
   const gtk = extractGtk(source?.cookies ?? informations?.cookies);
 
@@ -87,49 +118,68 @@ export async function EDgrades(env, informations) {
   const notesUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/notes.awp?verbe=get`;
   const timelineUrl = `https://api.ecoledirecte.com/v3/eleves/${eleveId}/timeline.awp?verbe=get`;
 
-  const notesBody = `data=${JSON.stringify({
-    token,
+  const notesPrimary = 'data={"anneeScolaire":""}';
+  const notesFallback = `data=${JSON.stringify({
     anneeScolaire: "",
-  })}`;
-
-  const timelineBody = `data=${JSON.stringify({
     token,
   })}`;
 
-  const notesRes = await postED(notesUrl, token, cookieHeader, notesBody);
-  const timelineRes = await postED(timelineUrl, token, cookieHeader, timelineBody);
+  const timelinePrimary = "data={}";
+  const timelineFallback = `data=${JSON.stringify({
+    token,
+  })}`;
 
-  const notesRead = await readJsonSafe(notesRes);
-  const timelineRead = await readJsonSafe(timelineRes);
+  const notesAttempt = await tryEndpoint(
+    notesUrl,
+    token,
+    cookieHeader,
+    notesPrimary,
+    notesFallback
+  );
 
-  const notesCode = notesRead.json?.code ?? null;
-  const timelineCode = timelineRead.json?.code ?? null;
+  const timelineAttempt = await tryEndpoint(
+    timelineUrl,
+    token,
+    cookieHeader,
+    timelinePrimary,
+    timelineFallback
+  );
 
-  const expired = notesCode === 525 || timelineCode === 525;
+  const notes = notesAttempt.chosen;
+  const timeline = timelineAttempt.chosen;
+
+  const notesCode = notes.json?.code ?? null;
+  const timelineCode = timeline.json?.code ?? null;
+
   const invalid = notesCode === 520 || timelineCode === 520;
+  const expired = notesCode === 525 || timelineCode === 525;
 
   return {
-    ok: !expired && !invalid && notesRes.ok && timelineRes.ok,
+    ok: !invalid && !expired && notes.status >= 200 && notes.status < 300 && timeline.status >= 200 && timeline.status < 300,
     eleveId,
     token,
     gtk,
     cookieHeader,
     session: {
-      expired,
       invalid,
+      expired,
       notesCode,
       timelineCode,
     },
     notes: {
-      status: notesRes.status,
-      raw: notesRead.text,
-      json: notesRead.json,
+      status: notes.status,
+      raw: notes.raw,
+      json: notes.json,
     },
     timeline: {
-      status: timelineRes.status,
-      raw: timelineRead.text,
-      json: timelineRead.json,
+      status: timeline.status,
+      raw: timeline.raw,
+      json: timeline.json,
     },
-    originalLogin: source?.originalLogin ?? source ?? null,
+    debug: {
+      notesAlternate: notesAttempt.alternate,
+      timelineAlternate: timelineAttempt.alternate,
+    },
+    originalLogin: login ?? null,
   };
 }
