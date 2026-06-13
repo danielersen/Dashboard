@@ -1,5 +1,7 @@
 import { EDinformations } from "./informations.js";
 import { EDgrades } from "./grades.js"
+import { EDaverages } from "./grades.js"
+import { EDnewgrades } from "./grades.js"
 import { EDhomeworks } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
