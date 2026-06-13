@@ -20,9 +20,9 @@ export async function EDfunction (env, subpath, headers) {
   if (subpath === "grades") {
     return await EDgrades (env, informations, filter)
   } else if (subpath === "averages") {
-    return await EDaverages (await EDgrades (env, informations, filter))
+    return await EDaverages (await EDgrades (env, informations, true))
   } else if (subpath === "new-grades") {
-    return await EDnewgrades (await EDgrades (env, informations, filter))
+    return await EDnewgrades (await EDgrades (env, informations, true))
   } else if (subpath === "homeworks") {
     return await EDhomeworks (env, informations, filter)
   } else if (subpath === "timetable") {
