@@ -164,7 +164,6 @@ export async function EDgrades(env, informations, filter) {
     examen_blanc: {},
     annee: {}
   };
-
   const periodeMap = {
     A001: "trimestre1",
     A002: "trimestre2",
@@ -172,20 +171,16 @@ export async function EDgrades(env, informations, filter) {
     A002X001: "examen_blanc",
     A999Z: "annee"
   };
-
   for (const note of notes.json.data.notes) {
     const trimestre = periodeMap[note.codePeriode];
-
     if (!trimestre) continue;
-
     const matiere = note.libelleMatiere;
-
     if (!filtered_note[trimestre][matiere]) {
       filtered_note[trimestre][matiere] = [];
     }
-
     filtered_note[trimestre][matiere].push({
       note: note.valeur,
+      noteSur: note.noteSur,
       coefficient: note.coef,
       titre: note.devoir,
       nouvelle_note: false,
@@ -193,4 +188,68 @@ export async function EDgrades(env, informations, filter) {
     });
   }
   return filtered_note
+}
+
+export async function EDaverages(filtered_note) {
+  const result = {};
+
+  for (const [trimestre, matieres] of Object.entries(filtered_note)) {
+    let totalGeneral = 0;
+    let coefGeneral = 0;
+
+    result[trimestre] = {
+      matieres: {},
+      moyenne_generale: null
+    };
+
+    for (const [matiere, notes] of Object.entries(matieres)) {
+      let total = 0;
+      let coefTotal = 0;
+
+      for (const note of notes) {
+        const valeur = parseFloat(
+          String(note.note).replace(",", ".")
+        );
+
+        const noteSur = parseFloat(
+          String(note.noteSur).replace(",", ".")
+        );
+
+        const coef = parseFloat(
+          String(note.coefficient).replace(",", ".")
+        );
+
+        if (
+          isNaN(valeur) ||
+          isNaN(noteSur) ||
+          isNaN(coef)
+        ) {
+          continue;
+        }
+
+        const note20 = (valeur / noteSur) * 20;
+
+        total += note20 * coef;
+        coefTotal += coef;
+      }
+
+      const moyenneMatiere =
+        coefTotal > 0 ? total / coefTotal : null;
+
+      result[trimestre].matieres[matiere] = moyenneMatiere;
+
+      if (moyenneMatiere !== null) {
+        totalGeneral += moyenneMatiere;
+        coefGeneral += 1;
+      }
+    }
+
+    result[trimestre].moyenne_generale =
+      coefGeneral > 0
+        ? totalGeneral / coefGeneral
+        : null;
+  }
+
+  return result;
+}
 }
