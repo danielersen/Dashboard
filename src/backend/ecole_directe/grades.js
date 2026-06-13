@@ -191,7 +191,47 @@ export async function EDgrades(env, informations, filter) {
       dateSaisie: note.dateSaisie
     });
   }
-  return notes.json
+  // --- Redistribution des examens blancs vers les trimestres ---
+  for (const note of notes.json.data.notes) {
+    if (note.codePeriode !== "A002X001") continue;
+
+    const dateNote = new Date(note.date);
+
+    let targetTrimestre = null;
+
+    for (const periode of notes.json.data.periodes) {
+      if (periode.examenBlanc) continue;
+
+      const debut = new Date(periode.dateDebut);
+      const fin = new Date(periode.dateFin);
+
+      if (dateNote >= debut && dateNote <= fin) {
+        targetTrimestre = periodeMap[periode.codePeriode];
+        break;
+      }
+    }
+
+    if (!targetTrimestre) continue;
+
+    const matiere = note.libelleMatiere;
+
+    if (!filtered_note[targetTrimestre][matiere]) {
+      filtered_note[targetTrimestre][matiere] = [];
+    }
+
+    filtered_note[targetTrimestre][matiere].push({
+      note: note.valeur,
+      noteSur: note.noteSur,
+      coefficient: note.coef,
+      significatif: note.nonSignificatif,
+      max: note.maxClasse,
+      min: note.minClasse,
+      moyenne: note.moyenneClasse,
+      titre: note.devoir,
+      date: note.date,
+      dateSaisie: note.dateSaisie,
+    });
+  }
   return filtered_note
 }
 
