@@ -7,7 +7,7 @@ import { EDfunction } from "./backend/ecole_directe/index.js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const headers = request.headers.get("filter");
+    const headers = request.headers
     try {
       const body = JSON.parse(await request.text);
     } catch (e) {
