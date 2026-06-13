@@ -253,6 +253,6 @@ export async function EDaverages(filtered_note) {
   return result;
 }
 
-export async function EDaverages(filtered_note) {
+export async function EDnewgrades(filtered_note) {
   return "none"
 }
