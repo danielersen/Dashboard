@@ -157,5 +157,23 @@ export async function EDgrades(env, informations, filter) {
     };
   }
   // Filter abd organize the reponse
-  return notes.json
+  const filtered_note = {};
+
+  for (const note of notes.json.data.notes) {
+    const matiere = note.libelleMatiere;
+
+    if (!filtered_note[matiere]) {
+      filtered_note[matiere] = [];
+    }
+
+    filtered_note[matiere].push({
+      note: note.valeur,
+      notesur: note.noteSur,
+      coefficient: note.coef,
+      titre: note.devoir,
+      nouvelle_note: false,
+      date: note.date
+    });
+  }
+  return filtered_note
 }
