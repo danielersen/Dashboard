@@ -191,7 +191,6 @@ export async function EDgrades(env, informations, filter) {
 }
 
 export async function EDaverages(filtered_note) {
-  return filtered_note
   const result = {};
 
   for (const [trimestre, matieres] of Object.entries(filtered_note)) {
