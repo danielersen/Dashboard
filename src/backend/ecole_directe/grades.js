@@ -191,34 +191,24 @@ export async function EDgrades(env, informations, filter) {
       dateSaisie: note.dateSaisie
     });
   }
-  // --- Redistribution des examens blancs vers les trimestres ---
   for (const note of notes.json.data.notes) {
     if (note.codePeriode !== "A002X001") continue;
-
     const dateNote = new Date(note.date);
-
     let targetTrimestre = null;
-
     for (const periode of notes.json.data.periodes) {
       if (periode.examenBlanc) continue;
-
       const debut = new Date(periode.dateDebut);
       const fin = new Date(periode.dateFin);
-
       if (dateNote >= debut && dateNote <= fin) {
         targetTrimestre = periodeMap[periode.codePeriode];
         break;
       }
     }
-
     if (!targetTrimestre) continue;
-
     const matiere = note.libelleMatiere;
-
     if (!filtered_note[targetTrimestre][matiere]) {
       filtered_note[targetTrimestre][matiere] = [];
     }
-
     filtered_note[targetTrimestre][matiere].push({
       note: note.valeur,
       noteSur: note.noteSur,
@@ -237,33 +227,26 @@ export async function EDgrades(env, informations, filter) {
 
 export async function EDaverages(filtered_note) {
   const result = {};
-
   for (const [trimestre, matieres] of Object.entries(filtered_note)) {
     let totalGeneral = 0;
     let coefGeneral = 0;
-
     result[trimestre] = {
       matieres: {},
       moyenne_generale: null
     };
-
     for (const [matiere, notes] of Object.entries(matieres)) {
       let total = 0;
       let coefTotal = 0;
-
       for (const note of notes) {
         const valeur = parseFloat(
           String(note.note).replace(",", ".")
         );
-
         const noteSur = parseFloat(
           String(note.noteSur).replace(",", ".")
         );
-
         const coef = parseFloat(
           String(note.coefficient).replace(",", ".")
         );
-
         if (
           (isNaN(valeur) ||
           isNaN(noteSur) ||
@@ -273,31 +256,24 @@ export async function EDaverages(filtered_note) {
           continue;
         }
         const note20 = (valeur / noteSur) * 20;
-
         total += note20 * coef;
         coefTotal += coef;
       }
-
       const moyenneMatiere =
         coefTotal > 0 ? total / coefTotal : null;
-
       result[trimestre].matieres[matiere] = moyenneMatiere;
-
       if (moyenneMatiere !== null) {
         totalGeneral += moyenneMatiere;
         coefGeneral += 1;
       }
     }
-
     result[trimestre].moyenne_generale =
       coefGeneral > 0
         ? totalGeneral / coefGeneral
         : null;
   }
-
   return result;
 }
-
 export async function EDnewgrades(filtered_note) {
   return "none"
 }
