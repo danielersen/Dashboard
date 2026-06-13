@@ -4,7 +4,7 @@ import { EDhomeworks } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
 export async function EDfunction (env, subpath, headers) {
-  return "123"
+  return headers
   const informations = await EDinformations(env)
   if (subpath === "info") {
     return informations
