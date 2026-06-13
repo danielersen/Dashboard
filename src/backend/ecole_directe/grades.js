@@ -187,6 +187,7 @@ export async function EDgrades(env, informations, filter) {
       date: note.date
     });
   }
+  return notes.json
   return filtered_note
 }
 
