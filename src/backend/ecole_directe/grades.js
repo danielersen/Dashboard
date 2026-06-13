@@ -182,9 +182,13 @@ export async function EDgrades(env, informations, filter) {
       note: note.valeur,
       noteSur: note.noteSur,
       coefficient: note.coef,
+      significatif: note.nonSignificatif,
+      max: note.maxClasse,
+      min: note.minClasse,
+      moyenne: note.moyenneClasse,
       titre: note.devoir,
-      nouvelle_note: false,
-      date: note.date
+      date: note.date,
+      dateSaisie: note.dateSaisie
     });
   }
   return notes.json
@@ -221,13 +225,13 @@ export async function EDaverages(filtered_note) {
         );
 
         if (
-          isNaN(valeur) ||
+          (isNaN(valeur) ||
           isNaN(noteSur) ||
-          isNaN(coef)
+          isNaN(coef)) &&
+          String(note.significatif).replace(",", ".") === "false"
         ) {
           continue;
         }
-
         const note20 = (valeur / noteSur) * 20;
 
         total += note20 * coef;
