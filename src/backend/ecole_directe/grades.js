@@ -157,5 +157,5 @@ export async function EDgrades(env, informations, filter) {
     };
   }
   // Filter abd organize the reponse
-  return notes.json
+  return "filter active"
 }
