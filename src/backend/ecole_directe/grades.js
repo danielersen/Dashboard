@@ -156,19 +156,36 @@ export async function EDgrades(env, informations, filter) {
       originalLogin: login ?? null,
     };
   }
-  // Filter abd organize the reponse
-  const filtered_note = {};
+  // Filter and organize the response
+  const filtered_note = {
+    trimestre1: {},
+    trimestre2: {},
+    trimestre3: {},
+    examen_blanc: {},
+    annee: {}
+  };
+
+  const periodeMap = {
+    A001: "trimestre1",
+    A002: "trimestre2",
+    A003: "trimestre3",
+    A002X001: "examen_blanc",
+    A999Z: "annee"
+  };
 
   for (const note of notes.json.data.notes) {
+    const trimestre = periodeMap[note.codePeriode];
+
+    if (!trimestre) continue;
+
     const matiere = note.libelleMatiere;
 
-    if (!filtered_note[matiere]) {
-      filtered_note[matiere] = [];
+    if (!filtered_note[trimestre][matiere]) {
+      filtered_note[trimestre][matiere] = [];
     }
 
-    filtered_note[matiere].push({
+    filtered_note[trimestre][matiere].push({
       note: note.valeur,
-      notesur: note.noteSur,
       coefficient: note.coef,
       titre: note.devoir,
       nouvelle_note: false,
