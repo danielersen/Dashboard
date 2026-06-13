@@ -4,7 +4,6 @@ import { EDhomeworks } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
 export async function EDfunction (env, subpath, headers) {
-  return headers.get("filter")
   const informations = await EDinformations(env)
   if (subpath === "info") {
     return informations
@@ -12,7 +11,7 @@ export async function EDfunction (env, subpath, headers) {
 
   // Cases with filter
   let filter;
-  if (headers.filter === "true") {
+  if (headers.get("filter") === "true") {
     filter = true;
   } else {
     filter = false;
