@@ -179,7 +179,7 @@ export async function EDtimetable(env, informations, filter) {
   }
   const timetable = attempt.chosen;
   const timetableCode = timetable.json?.code ?? null;
-  if (filtered !== "true") {
+  if (filter !== "true") {
     return {
       ok:
         timetable.status >= 200 &&
