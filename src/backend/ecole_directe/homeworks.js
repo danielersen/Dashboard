@@ -237,5 +237,5 @@ export async function EDhomeworks(env, informations, filter) {
   return homeworks.json.data
 }
 export async function EDhomeworksDone(env, informations, filter, id) {
-  return "None"
+  return id
 }
