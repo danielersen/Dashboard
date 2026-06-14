@@ -159,7 +159,7 @@ export async function EDhomeworks(env, informations, filter) {
           `data=${JSON.stringify({})}`
         )
       );
-
+      return detailResponse
       const matieres = detailResponse.json?.data?.matieres ?? [];
 
       for (const m of matieres) {
