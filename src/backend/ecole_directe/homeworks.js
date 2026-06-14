@@ -159,14 +159,21 @@ export async function EDhomeworks(env, informations, filter) {
           `data=${JSON.stringify({})}`
         )
       );
-      return detailResponse
+
       const matieres = detailResponse.json?.data?.matieres ?? [];
 
-      for (const m of matieres) {
-        const id = m?.aFaire?.idDevoir;
+      for (const matiere of matieres) {
+        const idDevoir = matiere?.aFaire?.idDevoir ?? matiere?.id;
 
-        if (id) {
-          homeworkDetails[id] = m?.aFaire?.contenu ?? null;
+        if (idDevoir) {
+          const contenuBrut =
+            matiere?.aFaire?.contenu ??
+            matiere?.aFaire?.contenuDeSeance?.contenu ??
+            null;
+
+          homeworkDetails[idDevoir] = contenuBrut
+            ? atob(contenuBrut)
+            : null;
         }
       }
     }
