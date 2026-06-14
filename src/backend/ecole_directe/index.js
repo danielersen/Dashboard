@@ -14,7 +14,7 @@ export async function EDfunction (env, subpath, method, headers, body) {
     filter = false;
   }
   const informations = await EDinformations(env)
-  
+  return "first ok"
   if (subpath === "info" && method === "GET") {
     return informations
   } else if (subpath === "grades" && method === "GET") {
