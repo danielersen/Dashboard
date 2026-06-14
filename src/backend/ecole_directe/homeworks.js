@@ -165,14 +165,18 @@ export async function EDhomeworks(env, informations, filter) {
   }
 
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
-    const details = homeworkDetails[date] ?? [];
+    const rawDetails = homeworkDetails?.[date];
+
+    const detailsArray = Array.isArray(rawDetails)
+      ? rawDetails
+      : Object.values(rawDetails ?? {});
 
     homeworks.json.data[date] = devoirs.map((devoir) => {
-      const detail = details.find(
+      const detail = detailsArray.find(
         (d) =>
           d?.aFaire?.idDevoir === devoir.idDevoir ||
-          d?.id === devoir.idDevoir ||
-          d?.idDevoir === devoir.idDevoir
+          d?.idDevoir === devoir.idDevoir ||
+          d?.id === devoir.idDevoir
       );
 
       return {
