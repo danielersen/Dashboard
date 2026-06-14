@@ -179,6 +179,7 @@ export async function EDtimetable(env, informations, filter) {
   }
   const timetable = attempt.chosen;
   const timetableCode = timetable.json?.code ?? null;
+  return filter
   if (filter !== "true") {
     return {
       ok:
