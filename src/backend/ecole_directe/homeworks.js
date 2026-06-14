@@ -241,95 +241,46 @@ export async function EDhomeworksDone(env, informations, id, done) {
   const ED_USER_AGENT = env.USER_AGENT;
   const ED_VERSION = "4.75.0";
 
-  function normalizeBoolean(value) {
-    if (typeof value === "boolean") return value;
-    if (typeof value === "string") {
-      return value.toLowerCase() === "true";
-    }
+  function toBool(v) {
+    if (typeof v === "boolean") return v;
+    if (typeof v === "string") return v.toLowerCase() === "true";
     return false;
   }
 
-  function safeParse(text) {
-    try {
-      return JSON.parse(text);
-    } catch {
-      return null;
-    }
-  }
-
-  async function readResponse(response) {
-    const raw = await response.text();
-    return {
-      status: response.status,
-      raw,
-      json: safeParse(raw),
-    };
-  }
-
-  async function postED(url, token, cookieHeader, body) {
-    return fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json, text/plain, */*",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": ED_USER_AGENT,
-        "X-Token": token,
-        "X-Version": ED_VERSION,
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
-      body,
-    });
-  }
-
   const source = informations?.resp ?? informations?.json ?? informations ?? {};
-  const login = source?.originalLogin ?? source;
-  const account = login?.data?.accounts?.[0] ?? source?.data?.accounts?.[0] ?? null;
-  const token = source?.token ?? login?.token ?? account?.token ?? null;
+  const account = source?.data?.accounts?.[0] ?? null;
+  const token = source?.token ?? account?.token ?? null;
 
-  const cookieHeader = source?.cookies ?? informations?.cookies;
-
-  if (!token) {
-    return {
-      ok: false,
-      error: "Token manquant",
-    };
+  if (!token || !account?.id) {
+    return { ok: false, error: "Missing auth" };
   }
 
-  if (!id || typeof id !== "string") {
-    return {
-      ok: false,
-      error: "ID invalide ou manquant",
-    };
-  }
+  const isDone = toBool(done);
+  const idNum = Number(id);
 
-  const isDone = normalizeBoolean(done);
+  const body = {
+    idDevoirsEffectues: isDone ? [idNum] : [],
+    idDevoirsNonEffectues: isDone ? [] : [idNum],
+  };
 
-  const url = `https://api.ecoledirecte.com/v3/Eleves/${account?.id}/cahierdetexte.awp?verbe=post`;
+  const url = `https://api.ecoledirecte.com/v3/Eleves/${account.id}/cahierdetexte.awp?verbe=put`;
 
-  const body = `data=${JSON.stringify({
-    id,
-    done: isDone,
-  })}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": ED_USER_AGENT,
+      "X-Token": token,
+      "X-Version": ED_VERSION,
+    },
+    body: `data=${JSON.stringify(body)}`
+  });
 
-  try {
-    const response = await readResponse(
-      await postED(url, token, cookieHeader, body)
-    );
+  const raw = await res.text();
 
-    const code = response.json?.code ?? null;
-
-    return {
-      ok: code === 200,
-      id,
-      done: isDone,
-      raw: response.raw,
-      code,
-    };
-  } catch (e) {
-    return {
-      ok: false,
-      error: e?.message,
-      stack: e?.stack,
-    };
-  }
+  return {
+    ok: res.ok,
+    raw,
+    sent: body,
+  };
 }
