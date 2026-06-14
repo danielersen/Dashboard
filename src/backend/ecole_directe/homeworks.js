@@ -160,9 +160,8 @@ export async function EDhomeworks(env, informations, filter) {
       homeworkDetails[date] = detailResponse.json?.data ?? null;
     }
   }
-  const homeworksWithContent = {};
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
-    homeworksWithContent[date] = devoirs.map((devoir, index) => ({
+    homeworks.json.data[date] = devoirs.map((devoir, index) => ({
       ...devoir,
       contenu:
         homeworkDetails?.[date]?.[index]?.aFaire?.contenu ?? null,
@@ -189,10 +188,7 @@ export async function EDhomeworks(env, informations, filter) {
       homeworks: {
         status: homeworks.status,
         raw: homeworks.raw,
-        json: {
-          original: homeworks.json,
-          data: homeworksWithContent,
-        }
+        json: homeworks.json,
       },
       debug: {
         homeworksAlternate: attempt.alternate,
