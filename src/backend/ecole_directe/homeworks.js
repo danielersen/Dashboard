@@ -2,7 +2,7 @@ export async function EDhomeworks(env, informations, filter) {
   const ED_USER_AGENT = env.USER_AGENT;
   const ED_VERSION = "4.75.0";
   function normalizeCookieHeader(rawCookies) {
-    if (!rawCookies) return "";
+    if (!rawCookies) return "Cookies error";
     const text = Array.isArray(rawCookies)
       ? rawCookies.join("; ")
       : String(rawCookies);
