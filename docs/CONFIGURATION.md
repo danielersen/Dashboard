@@ -7,10 +7,11 @@ The environnement secrets are manageable on your local terminal, that's the simp
 # How to deploy this repository ?
 (If you don't know things, ask AI to do ut properly.)
 
-## 1) Fork the repositoruy
+## 1) Fork the repository
 Go in the home of the repository and fork it to your personal Github account. Then you have the project and it can show you by himself the nex versions, and propose to you the version.
 
 ## 2) Create the worker
 To create the worker, you have to go on the Cloudflare dahsboard, go in the worker part, and create a new one. You can now link your github repository, keep the deploy command "npx wrangler deploy", no command is necessary for the build, and finally keep the variable part empty for the moment.
 
 ## 3) Configuration
+You have to search your project url in the cloudflare dashboard, and add /configuration then go on the website and all is explicated.
