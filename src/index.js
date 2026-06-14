@@ -54,8 +54,9 @@ export default {
     };
     try {
       // Ecole directe paths
+      let resp;
       if (url.pathname.startsWith("/api/ed/")) {
-        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
+        resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
       };
       // Return response
       return new Response(JSON.stringify({ 
