@@ -163,7 +163,7 @@ export async function EDhomeworks(env, informations, filter) {
       const matieres = detailResponse.json?.data?.matieres ?? [];
 
       for (const m of matieres) {
-        const id = m?.aFaire?.idDevoir ?? m?.id;
+        const id = m?.aFaire?.idDevoir;
 
         if (id) {
           homeworkDetails[id] = m?.aFaire?.contenu ?? null;
@@ -175,9 +175,7 @@ export async function EDhomeworks(env, informations, filter) {
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
     homeworks.json.data[date] = devoirs.map((devoir) => ({
       ...devoir,
-      contenu: devoir.contenu
-        ? atob(devoir.contenu)
-        : null,
+      contenu: homeworkDetails[devoir.idDevoir] ?? null,
     }));
   }
   if (filter !== true) {
