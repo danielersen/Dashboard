@@ -171,21 +171,30 @@ export async function EDhomeworks(env, informations, filter) {
   }
   function stripHtml(html) {
     if (!html) return null;
-    let text = html;
-    text = text.replace(/<br\s*\/?>/gi, "<<<BR>>>");
-    text = text.replace(/<[^>]*>/g, "");
+    let text = String(html)
+      .replace(/<\s*br\s*\/?\s*>/gi, "\u0000")
+      .replace(/<\/p\s*>/gi, "\u0000")
+      .replace(/<\/div\s*>/gi, "\u0000")
+      .replace(/<[^>]*>/g, "");
     text = text
-      .split("<<<BR>>>")
-      .map((part, index, arr) => {
-        const trimmed = part.trim();
-        const prev = index > 0 ? arr[index - 1].trim() : "";
-        if (!prev) return trimmed;
-        const endsWithDot = /[.!?]$/.test(prev);
-        return endsWithDot ? " " + trimmed : ". " + trimmed;
-      })
-      .join("");
-    text = text.replace(/\s+/g, " ").trim();
-    return text;
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, "\"")
+      .replace(/&#39;/g, "'");
+    const parts = text
+      .split("\u0000")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return null;
+    let result = parts[0];
+    for (let i = 1; i < parts.length; i++) {
+      const prev = result.trimEnd();
+      result += /[.!?]$/.test(prev) ? " " : ". ";
+      result += parts[i];
+    }
+    return result.replace(/\s+/g, " ").trim();
   }
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
     homeworks.json.data[date] = devoirs.map((devoir) => ({
