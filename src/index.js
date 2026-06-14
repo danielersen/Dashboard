@@ -9,10 +9,11 @@ export default {
     const url = new URL(request.url);
     const method = request.method;
     const headers = request.headers
+    let body;
     try {
-      const body = JSON.parse(await request.text);
+      body = JSON.parse(await request.text());
     } catch (e) {
-      const body = null;
+      body = null;
     }
     
     // =========================
