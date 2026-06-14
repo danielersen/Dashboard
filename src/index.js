@@ -55,18 +55,21 @@ export default {
       // Ecole directe paths
       if (url.pathname.startsWith("/api/ed/")) {
         const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
-        
+      };
       // Return response
       return new Response(JSON.stringify({ 
         resp 
       }), {
         headers: corsHeaders
       })
-      }
     } catch (e) {
       console.error("API ERROR:", e?.stack || e);
+      const match = e?.stack?.match(/at .*?\(?(.+):(\d+):(\d+)\)?/);
       return new Response(JSON.stringify({
-        error: e?.message
+        error: e?.message,
+        file: match?.[1] || null,
+        line: match?.[2] || null,
+        column: match?.[3] || null
       }), {
         status: 500,
         headers: corsHeaders
