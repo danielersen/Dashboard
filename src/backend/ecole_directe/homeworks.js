@@ -140,6 +140,26 @@ export async function EDhomeworks(env, informations, filter) {
   const invalid = homeworksCode === 520;
   const expired = homeworksCode === 525;
   const forbidden = homeworksCode === 403;
+  const homeworkDetails = {};
+  if (
+    homeworks.status >= 200 &&
+    homeworks.status < 300 &&
+    homeworks.json?.data
+  ) {
+    for (const date of Object.keys(homeworks.json.data)) {
+      const detailUrl =
+        `https://api.ecoledirecte.com/v3/Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`;
+      const detailResponse = await readResponse(
+        await postED(
+          detailUrl,
+          token,
+          cookieHeader,
+          `data=${JSON.stringify({})}`
+        )
+      );
+      homeworkDetails[date] = detailResponse.json?.data ?? null;
+    }
+  }
   if (filter !== true) {
     return {
       ok:
