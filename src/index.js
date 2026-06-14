@@ -13,7 +13,7 @@ export default {
     try {
       body = JSON.parse(await request.text());
     } catch (e) {
-      body = null;
+      body = {};
     }
     
     // =========================
