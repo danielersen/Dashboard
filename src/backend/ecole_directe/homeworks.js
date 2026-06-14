@@ -178,11 +178,18 @@ export async function EDhomeworks(env, informations, filter) {
       }
     }
   }
-
+  function stripHtml(html) {
+    if (!html) return null;
+    return html
+      .replace(/<[^>]*>/g, "")   // supprime balises HTML
+      .replace(/&nbsp;/g, " ")    // espace HTML
+      .replace(/\s+/g, " ")       // normalise espaces
+      .trim();
+  }
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
     homeworks.json.data[date] = devoirs.map((devoir) => ({
       ...devoir,
-      contenu: homeworkDetails[devoir.idDevoir] ?? null,
+      contenu: stripHtml(homeworkDetails[devoir.idDevoir] ?? null),
     }));
   }
   if (filter !== true) {
