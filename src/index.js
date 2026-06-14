@@ -47,7 +47,7 @@ export default {
         "*",
 
       "Access-Control-Allow-Methods":
-        "GET, POST"
+        "GET, POST",
 
       "Access-Control-Allow-Headers":
         "*"
