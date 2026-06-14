@@ -190,7 +190,7 @@ export async function EDhomeworks(env, informations, filter) {
         status: homeworks.status,
         raw: homeworks.raw,
         json: {
-          homeworks.json,
+          original: homeworks.json,
           data: homeworksWithContent,
         }
       },
