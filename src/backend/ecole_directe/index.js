@@ -25,7 +25,7 @@ export async function EDfunction (env, subpath, method, headers) {
     return await EDnewgrades (await EDgrades (env, informations, true))
   } else if (subpath === "homeworks" && method === "GET") {
     return await EDhomeworks (env, informations, filter)
-  } else if (subpath === "timetable" && method === "POST") {
+  } else if (subpath === "homeworks" && method === "POST") {
     return await EDhomeworksDone (env, informations, filter)
   } else if (subpath === "timetable" && method === "GET") {
     return await EDtimetable (env, informations, filter)
