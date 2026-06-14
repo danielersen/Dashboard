@@ -171,5 +171,6 @@ export async function EDhomeworks(env, informations, filter) {
       originalLogin: login ?? null,
     };
   };
+  // Filter and organize the response
   return homeworks.json
 }
