@@ -7,25 +7,10 @@ The environnement secrets are manageable on your local terminal, that's the simp
 # How to deploy this repository ?
 (If you don't know things, ask AI to do ut properly.)
 
-## 1) Create the worker
+## 1) Fork the repositoruy
+Go in the home of the repository and fork it to your personal Github account. Then you have the project and it can show you by himself the nex versions, and propose to you the version.
+
+## 2) Create the worker
 To create the worker, you have to go on the Cloudflare dahsboard, go in the worker part, and create a new one. You can now link your github repository, keep the deploy command "npx wrangler deploy", no command is necessary for the build, and finally keep the variable part empty for the moment.
 
-## 2) Add the other services
-### - Workers AI
-No manually add needed anymore, the project and Cloudflare will automatically link Workers AI.
-### - AI Gateway
-No manually add needed too.
-### - Cloudflare workflow
-No manually add needed too !
-### - Google drive
-### - Ntfy
-Create a name for your topic ntfy, an hard name. Then install ntfy on your phone, create a new topic, and write the name. After that create an environnement secret named NYFY_URL and tap the same name.
-
-## 3) Set up the securities
-### - Domain security (if you have a domain)
-### - Account
-### - Cloudflare's securities
-
-## 4) Final check
- - Go on the Cloudflare dashboard, in the build history, and check if the latest deploy failed or not.
- - Go on Cloudflare, in the workflows, and execute the API test.
+## 3) Configuration
