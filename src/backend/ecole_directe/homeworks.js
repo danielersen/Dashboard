@@ -140,33 +140,36 @@ export async function EDhomeworks(env, informations, filter) {
   const invalid = homeworksCode === 520;
   const expired = homeworksCode === 525;
   const forbidden = homeworksCode === 403;
-  return {
-    ok:
-      !invalid &&
-      !expired &&
-      !forbidden &&
-      homeworks.status >= 200 &&
-      homeworks.status < 300,
-    eleveId,
-    token,
-    gtk,
-    cookieHeader,
-    session: {
-      invalid,
-      expired,
-      forbidden,
-      homeworksCode,
-    },
-    homeworks: {
-      status: homeworks.status,
-      raw: homeworks.raw,
-      json: homeworks.json,
-    },
-    debug: {
-      homeworksAlternate: attempt.alternate,
-      homeworksEndpoint: endpointUsed,
-      schoolBounds,
-    },
-    originalLogin: login ?? null,
+  if (filter !== true) {
+    return {
+      ok:
+        !invalid &&
+        !expired &&
+        !forbidden &&
+        homeworks.status >= 200 &&
+        homeworks.status < 300,
+      eleveId,
+      token,
+      gtk,
+      cookieHeader,
+      session: {
+        invalid,
+        expired,
+        forbidden,
+        homeworksCode,
+      },
+      homeworks: {
+        status: homeworks.status,
+        raw: homeworks.raw,
+        json: homeworks.json,
+      },
+      debug: {
+        homeworksAlternate: attempt.alternate,
+        homeworksEndpoint: endpointUsed,
+        schoolBounds,
+      },
+      originalLogin: login ?? null,
+    };
   };
+  return homeworks.json
 }
