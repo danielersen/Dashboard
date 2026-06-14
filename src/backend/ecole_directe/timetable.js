@@ -179,33 +179,36 @@ export async function EDtimetable(env, informations, filter) {
   }
   const timetable = attempt.chosen;
   const timetableCode = timetable.json?.code ?? null;
-  return {
-    ok:
-      timetable.status >= 200 &&
-      timetable.status < 300 &&
-      timetableCode !== 520 &&
-      timetableCode !== 525 &&
-      timetableCode !== 403,
-    eleveId,
-    token,
-    gtk,
-    cookieHeader,
-    session: {
-      invalid: timetableCode === 520,
-      expired: timetableCode === 525,
-      forbidden: timetableCode === 403,
-      timetableCode,
-    },
-    timetable: {
-      status: timetable.status,
-      raw: timetable.raw,
-      json: timetable.json,
-    },
-    debug: {
-      timetableAlternate: attempt.alternate,
-      timetableEndpoint: endpointUsed,
-      requestedRange: range,
-    },
-    originalLogin: login ?? null,
+  if (filtered !== "true") {
+    return {
+      ok:
+        timetable.status >= 200 &&
+        timetable.status < 300 &&
+        timetableCode !== 520 &&
+        timetableCode !== 525 &&
+        timetableCode !== 403,
+      eleveId,
+      token,
+      gtk,
+      cookieHeader,
+      session: {
+        invalid: timetableCode === 520,
+        expired: timetableCode === 525,
+        forbidden: timetableCode === 403,
+        timetableCode,
+      },
+      timetable: {
+        status: timetable.status,
+        raw: timetable.raw,
+        json: timetable.json,
+      },
+      debug: {
+        timetableAlternate: attempt.alternate,
+        timetableEndpoint: endpointUsed,
+        requestedRange: range,
+      },
+      originalLogin: login ?? null,
+    };
   };
+  return "filtered"
 }
