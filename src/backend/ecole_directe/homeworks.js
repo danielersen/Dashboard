@@ -66,7 +66,6 @@ export async function EDhomeworks(env, informations, filter) {
   async function tryEndpoint(url, token, cookieHeader, primaryBody, fallbackBody) {
     const first = await readResponse(await postED(url, token, cookieHeader, primaryBody));
     const code1 = first.json?.code ?? null;
-
     if (code1 === 520 || code1 === 525) {
       const second = await readResponse(await postED(url, token, cookieHeader, fallbackBody));
       const code2 = second.json?.code ?? null;
@@ -124,7 +123,6 @@ export async function EDhomeworks(env, informations, filter) {
     const res = await tryEndpoint(url, token, cookieHeader, primaryBody, fallbackBody);
     attempt = res;
     endpointUsed = url;
-
     const code = res.chosen.json?.code ?? null;
     const valid =
       res.chosen.status >= 200 &&
@@ -132,7 +130,6 @@ export async function EDhomeworks(env, informations, filter) {
       code !== 520 &&
       code !== 525 &&
       code !== 403;
-
     if (valid) break;
   }
   const homeworks = attempt.chosen;
@@ -141,7 +138,6 @@ export async function EDhomeworks(env, informations, filter) {
   const expired = homeworksCode === 525;
   const forbidden = homeworksCode === 403;
   const homeworkDetails = {};
-
   if (
     homeworks.status >= 200 &&
     homeworks.status < 300 &&
@@ -150,7 +146,6 @@ export async function EDhomeworks(env, informations, filter) {
     for (const date of Object.keys(homeworks.json.data)) {
       const detailUrl =
         `https://api.ecoledirecte.com/v3/Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`;
-
       const detailResponse = await readResponse(
         await postED(
           detailUrl,
@@ -159,18 +154,14 @@ export async function EDhomeworks(env, informations, filter) {
           `data=${JSON.stringify({})}`
         )
       );
-
       const matieres = detailResponse.json?.data?.matieres ?? [];
-
       for (const matiere of matieres) {
         const idDevoir = matiere?.aFaire?.idDevoir ?? matiere?.id;
-
         if (idDevoir) {
           const contenuBrut =
             matiere?.aFaire?.contenu ??
             matiere?.aFaire?.contenuDeSeance?.contenu ??
             null;
-
           homeworkDetails[idDevoir] = contenuBrut
             ? atob(contenuBrut)
             : null;
@@ -180,11 +171,21 @@ export async function EDhomeworks(env, informations, filter) {
   }
   function stripHtml(html) {
     if (!html) return null;
-    return html
-      .replace(/<[^>]*>/g, "")   // supprime balises HTML
-      .replace(/&nbsp;/g, " ")    // espace HTML
-      .replace(/\s+/g, " ")       // normalise espaces
-      .trim();
+    let text = html;
+    text = text.replace(/<br\s*\/?>/gi, "<<<BR>>>");
+    text = text.replace(/<[^>]*>/g, "");
+    text = text
+      .split("<<<BR>>>")
+      .map((part, index, arr) => {
+        const trimmed = part.trim();
+        const prev = index > 0 ? arr[index - 1].trim() : "";
+        if (!prev) return trimmed;
+        const endsWithDot = /[.!?]$/.test(prev);
+        return endsWithDot ? " " + trimmed : ". " + trimmed;
+      })
+      .join("");
+    text = text.replace(/\s+/g, " ").trim();
+    return text;
   }
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
     homeworks.json.data[date] = devoirs.map((devoir) => ({
