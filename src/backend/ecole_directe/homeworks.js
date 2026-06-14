@@ -192,6 +192,7 @@ export async function EDhomeworks(env, informations, filter) {
         json: {
           homeworks.json,
           data: homeworksWithContent,
+        }
       },
       debug: {
         homeworksAlternate: attempt.alternate,
