@@ -236,6 +236,6 @@ export async function EDhomeworks(env, informations, filter) {
   // Filter and organize the response
   return homeworks.json
 }
-export async function EDhomeworksDone(env, informations, filter, id) {
+export async function EDhomeworksDone(env, informations, id, done) {
   return id
 }
