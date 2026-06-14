@@ -234,5 +234,8 @@ export async function EDhomeworks(env, informations, filter) {
     };
   };
   // Filter and organize the response
-  return homeworks.json
+  return homeworks.json.data
+}
+export async function EDhomeworksDone(env, informations, filter, id) {
+  return "None"
 }
