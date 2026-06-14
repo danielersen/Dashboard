@@ -141,6 +141,7 @@ export async function EDhomeworks(env, informations, filter) {
   const expired = homeworksCode === 525;
   const forbidden = homeworksCode === 403;
   const homeworkDetails = {};
+
   if (
     homeworks.status >= 200 &&
     homeworks.status < 300 &&
@@ -149,6 +150,7 @@ export async function EDhomeworks(env, informations, filter) {
     for (const date of Object.keys(homeworks.json.data)) {
       const detailUrl =
         `https://api.ecoledirecte.com/v3/Eleves/${eleveId}/cahierdetexte/${date}.awp?verbe=get`;
+
       const detailResponse = await readResponse(
         await postED(
           detailUrl,
@@ -157,15 +159,30 @@ export async function EDhomeworks(env, informations, filter) {
           `data=${JSON.stringify({})}`
         )
       );
-      homeworkDetails[date] = detailResponse.json?.data ?? null;
+
+      homeworkDetails[date] = detailResponse.json?.data ?? [];
     }
   }
+
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
-    homeworks.json.data[date] = devoirs.map((devoir, index) => ({
-      ...devoir,
-      contenu:
-        homeworkDetails?.[date]?.[index]?.aFaire?.contenu ?? null,
-    }));
+    const details = homeworkDetails[date] ?? [];
+
+    homeworks.json.data[date] = devoirs.map((devoir) => {
+      const detail = details.find(
+        (d) =>
+          d?.aFaire?.idDevoir === devoir.idDevoir ||
+          d?.id === devoir.idDevoir ||
+          d?.idDevoir === devoir.idDevoir
+      );
+
+      return {
+        ...devoir,
+        contenu:
+          detail?.aFaire?.contenu ??
+          detail?.contenu ??
+          null,
+      };
+    });
   }
   if (filter !== true) {
     return {
