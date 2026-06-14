@@ -47,7 +47,7 @@ export default {
         "*",
 
       "Access-Control-Allow-Methods":
-        "GET, POST, PATCH",
+        "GET, POST"
 
       "Access-Control-Allow-Headers":
         "*"
@@ -69,9 +69,6 @@ export default {
       const match = e?.stack?.match(/at .*?\(?(.+):(\d+):(\d+)\)?/);
       return new Response(JSON.stringify({
         error: e?.message,
-        file: match?.[1] || null,
-        line: match?.[2] || null,
-        column: match?.[3] || null
       }), {
         status: 500,
         headers: corsHeaders
