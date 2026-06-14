@@ -7,6 +7,7 @@ import { EDfunction } from "./backend/ecole_directe/index.js";
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const method = request.method;
     const headers = request.headers
     try {
       const body = JSON.parse(await request.text);
@@ -53,7 +54,7 @@ export default {
     try {
       // Ecole directe paths
       if (url.pathname.startsWith("/api/ed/")) {
-        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), headers);
+        const resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
         
       // Return response
       return new Response(JSON.stringify({ 
@@ -78,7 +79,6 @@ export default {
     return new Response("Not Found", { status: 404 })
   }
 }
-
 
 // Export the workflows code
 export { CheckGradesWorkflow };
