@@ -6,7 +6,7 @@ import { EDhomeworks } from "./homeworks.js"
 import { EDhomeworksDone } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
-export async function EDfunction (env, subpath, method, headers) {
+export async function EDfunction (env, subpath, method, headers, body) {
   let filter;
   if (headers.get("filter") === "true") {
     filter = true;
@@ -26,7 +26,7 @@ export async function EDfunction (env, subpath, method, headers) {
   } else if (subpath === "homeworks" && method === "GET") {
     return await EDhomeworks (env, informations, filter)
   } else if (subpath === "homeworks" && method === "POST") {
-    return await EDhomeworksDone (env, informations, filter)
+    return await EDhomeworksDone (env, informations, filter, body.get("id"))
   } else if (subpath === "timetable" && method === "GET") {
     return await EDtimetable (env, informations, filter)
   } else {
