@@ -160,33 +160,23 @@ export async function EDhomeworks(env, informations, filter) {
         )
       );
 
-      homeworkDetails[date] = detailResponse.json?.data ?? [];
+      const matieres = detailResponse.json?.data?.matieres ?? [];
+
+      for (const m of matieres) {
+        const id = m?.aFaire?.idDevoir ?? m?.id;
+
+        if (id) {
+          homeworkDetails[id] = m?.aFaire?.contenu ?? null;
+        }
+      }
     }
   }
 
   for (const [date, devoirs] of Object.entries(homeworks.json?.data ?? {})) {
-    const rawDetails = homeworkDetails?.[date];
-
-    const detailsArray = Array.isArray(rawDetails)
-      ? rawDetails
-      : Object.values(rawDetails ?? {});
-
-    homeworks.json.data[date] = devoirs.map((devoir) => {
-      const detail = detailsArray.find(
-        (d) =>
-          d?.aFaire?.idDevoir === devoir.idDevoir ||
-          d?.idDevoir === devoir.idDevoir ||
-          d?.id === devoir.idDevoir
-      );
-
-      return {
-        ...devoir,
-        contenu:
-          detail?.aFaire?.contenu ??
-          detail?.contenu ??
-          null,
-      };
-    });
+    homeworks.json.data[date] = devoirs.map((devoir) => ({
+      ...devoir,
+      contenu: homeworkDetails[devoir.idDevoir] ?? null,
+    }));
   }
   if (filter !== true) {
     return {
