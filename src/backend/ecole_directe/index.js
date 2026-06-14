@@ -15,10 +15,9 @@ export async function EDfunction (env, subpath, method, headers) {
   }
   const informations = await EDinformations(env)
   
-  if (subpath === "info") {
+  if (subpath === "info" && method === "GET") {
     return informations
-  }
-  if (subpath === "grades" && method === "GET") {
+  } else if (subpath === "grades" && method === "GET") {
     return await EDgrades (env, informations, filter)
   } else if (subpath === "averages" && method === "GET") {
     return await EDaverages (await EDgrades (env, informations, true))
@@ -31,6 +30,6 @@ export async function EDfunction (env, subpath, method, headers) {
   } else if (subpath === "timetable" && method === "GET") {
     return await EDtimetable (env, informations, filter)
   } else {
-    return "There is no ed features which match with your request"
+    return "There is no ed features matching with your request"
   }
 }
