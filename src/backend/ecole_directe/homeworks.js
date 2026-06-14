@@ -240,31 +240,24 @@ export async function EDhomeworks(env, informations, filter) {
 export async function EDhomeworksDone(env, informations, id, done) {
   const ED_USER_AGENT = env.USER_AGENT;
   const ED_VERSION = "4.75.0";
-
   function toBool(v) {
     if (typeof v === "boolean") return v;
     if (typeof v === "string") return v.toLowerCase() === "true";
     return false;
   }
-
   const source = informations?.resp ?? informations?.json ?? informations ?? {};
   const account = source?.data?.accounts?.[0] ?? null;
   const token = source?.token ?? account?.token ?? null;
-
   if (!token || !account?.id) {
     return { ok: false, error: "Missing auth" };
   }
-
   const isDone = toBool(done);
   const idNum = Number(id);
-
   const body = {
     idDevoirsEffectues: isDone ? [idNum] : [],
     idDevoirsNonEffectues: isDone ? [] : [idNum],
   };
-
   const url = `https://api.ecoledirecte.com/v3/Eleves/${account.id}/cahierdetexte.awp?verbe=put`;
-
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -275,9 +268,7 @@ export async function EDhomeworksDone(env, informations, id, done) {
     },
     body: `data=${JSON.stringify(body)}`
   });
-
   const raw = await res.text();
-
   return {
     ok: res.ok,
     raw,
