@@ -13,6 +13,12 @@ export async function EDfunction (env, subpath, method, headers, body) {
   } else {
     filter = false;
   }
+  let new_token;
+  if (headers.get("new_token") === "true") {
+    filter = true;
+  } else {
+    filter = false;
+  }
   const informations = await EDinformations(env)
   
   if (subpath === "info" && method === "GET") {
