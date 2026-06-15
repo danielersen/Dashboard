@@ -276,7 +276,54 @@ export async function EDaverages(filtered_note) {
 }
 export async function EDnewgrades(filtered_note) {
   cache = getCacheValue("edGrades");
-  
+  const new_grades = {
+    new: [],
+    delete: []
+  };
+
+  function flattenGrades(data) {
+    const grades = [];
+
+    for (const period of Object.values(data)) {
+      for (const subject of Object.values(period)) {
+        if (!Array.isArray(subject)) continue;
+
+        for (const grade of subject) {
+          grades.push(grade);
+        }
+      }
+    }
+
+    return grades;
+  }
+
+  const cacheGrades = flattenGrades(cache);
+  const filteredGrades = flattenGrades(filtered_note);
+
+  const makeKey = grade =>
+    JSON.stringify([
+      grade.dateSaisie,
+      grade.date,
+      grade.titre,
+      grade.note,
+      grade.noteSur,
+      grade.coefficient
+    ]);
+
+  const cacheSet = new Set(cacheGrades.map(makeKey));
+  const filteredSet = new Set(filteredGrades.map(makeKey));
+
+  for (const grade of filteredGrades) {
+    if (!cacheSet.has(makeKey(grade))) {
+      new_grades.new.push(grade);
+    }
+  }
+
+  for (const grade of cacheGrades) {
+    if (!filteredSet.has(makeKey(grade))) {
+      new_grades.delete.push(grade);
+    }
+  }
   setCacheValue("edGrades", filtered_note);
   return new_grades
 }
