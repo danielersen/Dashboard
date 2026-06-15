@@ -159,6 +159,7 @@ export async function EDinformations(env) {
   }
   const second = await login([{ cn: qcmJson.data.cn, cv: qcmJson.data.cv }]);
   if (second.json.code === 200) {
+    setCacheValue("ed_token": second);
     return second;
   }
   throw new Error(`Re-login après QCM échoué: ${JSON.stringify(second.json)}`);
