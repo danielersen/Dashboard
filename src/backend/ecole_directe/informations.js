@@ -1,3 +1,5 @@
+import { setCacheValue } from ".backend
+
 export async function EDinformations(env) {
   const userAgent = env.USER_AGENT;
   const apiVersion = "4.75.0";
