@@ -224,39 +224,75 @@ export async function EDtimetable(env, informations, filter) {
     semaineB: {}
   };
 
-  const lundi = startOfWeek(new Date());
+  const jours = [
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi"
+  ];
 
-  for (let semaine = 0; semaine < 2; semaine++) {
-    const semaineNom = semaine === 0 ? "semaineA" : "semaineB";
+  const edt = {
+    semaineA: {},
+    semaineB: {}
+  };
 
-    for (let jour = 0; jour < 6; jour++) {
-      const date = addDays(lundi, semaine * 7 + jour);
+  const lundiSemaineA = startOfWeek(new Date());
+  const lundiSemaineB = addDays(lundiSemaineA, 7);
+
+  for (const [nomSemaine, lundiBase] of [
+    ["semaineA", lundiSemaineA],
+    ["semaineB", lundiSemaineB]
+  ]) {
+
+    for (let i = 0; i < 6; i++) {
+
+      const date = addDays(lundiBase, i);
+      const ymd = toYMD(date);
 
       const body = `data=${JSON.stringify({
-        dateDebut: toYMD(date),
-        dateFin: toYMD(date),
-        avecTrous: range.avecTrous,
+        dateDebut: ymd,
+        dateFin: ymd,
+        avecTrous: range.avecTrous
       })}`;
 
-      const fallback = `data=${JSON.stringify({
+      const fallbackBody = `data=${JSON.stringify({
         token,
-        dateDebut: toYMD(date),
-        dateFin: toYMD(date),
-        avecTrous: range.avecTrous,
+        dateDebut: ymd,
+        dateFin: ymd,
+        avecTrous: range.avecTrous
       })}`;
 
-      const res = await tryEndpoint(
-        endpointUsed,
-        token,
-        cookieHeader,
-        body,
-        fallback
-      );
+      let jourResponse = null;
 
-      result[semaineNom][jours[jour]] =
-        res.chosen.json?.data ?? [];
+      for (const url of urls) {
+
+        const res = await tryEndpoint(
+          url,
+          token,
+          cookieHeader,
+          body,
+          fallbackBody
+        );
+
+        const code = res.chosen.json?.code ?? null;
+
+        if (
+          res.chosen.status >= 200 &&
+          res.chosen.status < 300 &&
+          code !== 520 &&
+          code !== 525 &&
+          code !== 403
+        ) {
+          jourResponse = res.chosen.json?.data ?? [];
+          break;
+        }
+      }
+
+      edt[nomSemaine][jours[i]] = jourResponse ?? [];
     }
   }
 
-  return result;
+  return edt;
 }
