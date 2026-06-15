@@ -210,5 +210,53 @@ export async function EDtimetable(env, informations, filter) {
       originalLogin: login ?? null,
     };
   };
-  return timetable.json.data
+  const jours = [
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi"
+  ];
+
+  const result = {
+    semaineA: {},
+    semaineB: {}
+  };
+
+  const lundi = startOfWeek(new Date());
+
+  for (let semaine = 0; semaine < 2; semaine++) {
+    const semaineNom = semaine === 0 ? "semaineA" : "semaineB";
+
+    for (let jour = 0; jour < 6; jour++) {
+      const date = addDays(lundi, semaine * 7 + jour);
+
+      const body = `data=${JSON.stringify({
+        dateDebut: toYMD(date),
+        dateFin: toYMD(date),
+        avecTrous: range.avecTrous,
+      })}`;
+
+      const fallback = `data=${JSON.stringify({
+        token,
+        dateDebut: toYMD(date),
+        dateFin: toYMD(date),
+        avecTrous: range.avecTrous,
+      })}`;
+
+      const res = await tryEndpoint(
+        endpointUsed,
+        token,
+        cookieHeader,
+        body,
+        fallback
+      );
+
+      result[semaineNom][jours[jour]] =
+        res.chosen.json?.data ?? [];
+    }
+  }
+
+  return result;
 }
