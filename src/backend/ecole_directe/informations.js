@@ -1,6 +1,13 @@
-import { setCacheValue } from ".backend
+import { setCacheValue } from "...index.js"
+import { getCacheValue } from "...index.js"
 
 export async function EDinformations(env) {
+  // Answering the informations if a correct and actual response is saved
+  if (Math.floor(Date.now() / 60000) - getCacheValue(edTokenTime)) {
+    return getCacheValue(edToken)
+  };
+  
+  // Collect informations
   const userAgent = env.USER_AGENT;
   const apiVersion = "4.75.0";
   const day = env.BORN_DAY;
@@ -161,7 +168,8 @@ export async function EDinformations(env) {
   }
   const second = await login([{ cn: qcmJson.data.cn, cv: qcmJson.data.cv }]);
   if (second.json.code === 200) {
-    setCacheValue("ed_token": second);
+    setCacheValue("edToken", second);
+    setCacheValue("edTokenTime", Math.floor(Date.now() / 60000))
     return second;
   }
   throw new Error(`Re-login après QCM échoué: ${JSON.stringify(second.json)}`);
