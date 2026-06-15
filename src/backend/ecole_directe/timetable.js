@@ -210,5 +210,5 @@ export async function EDtimetable(env, informations, filter) {
       originalLogin: login ?? null,
     };
   };
-  return "filtered"
+  return timetable.json.data
 }
