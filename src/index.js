@@ -8,10 +8,10 @@ import { EDfunction } from "./backend/ecole_directe/index.js";
 const worker_cache = globalThis.state ??= {
   cache: new Map()
 };
-export function setValue(key, value) {
+export function setCacheValue(key, value) {
   worker_cache.cache.set(key, value);
 }
-export function getValue(key) {
+export function getCacheValue(key) {
   return worker_cache.cache.get(key);
 }
 
