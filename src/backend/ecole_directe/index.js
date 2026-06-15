@@ -19,12 +19,12 @@ export async function EDfunction (env, subpath, method, headers, body) {
   } else {
     filter = false;
   }
-  const informations = await EDinformations(env)
   
   if (subpath === "info" && method === "GET") {
-    return informations
+    return await EDinformations(env, new_token)
     
-  } else if (
+  const informations = await EDinformations(env, false))
+  if (
     subpath === "grades" && 
     method === "GET"
   ) {
