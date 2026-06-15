@@ -204,6 +204,7 @@ export async function EDgrades(env, informations, filter) {
         break;
       }
     }
+
     if (!targetTrimestre) continue;
     const matiere = note.libelleMatiere;
     if (!filtered_note[targetTrimestre][matiere]) {
@@ -221,6 +222,20 @@ export async function EDgrades(env, informations, filter) {
       date: note.date,
       dateSaisie: note.dateSaisie,
     });
+  }
+  for (const periode of notes.json.data.periodes) {
+    if (periode.examenBlanc) continue;
+    const debut = new Date(periode.dateDebut);
+    const fin = new Date(periode.dateFin);
+    const now = new Date();
+    const dateActuel =
+      now.getFullYear() + "-" +
+      String(now.getMonth() + 1).padStart(2, "0") + "-" +
+      String(now.getDate()).padStart(2, "0");
+    if (dateActuel >= debut && dateActuel <= fin) {
+      filtered_note.trimetre = periode;
+      break;
+    }
   }
   return filtered_note
 }
