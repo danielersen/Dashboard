@@ -275,6 +275,8 @@ export async function EDaverages(filtered_note) {
   return result;
 }
 export async function EDnewgrades(filtered_note) {
-  cache = getCacheValue("edNewGrades")
+  cache = getCacheValue("edGrades");
+  
+  setCacheValue("edGrades", filtered_note);
   return new_grades
 }
