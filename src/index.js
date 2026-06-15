@@ -4,6 +4,17 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 // API functions
 import { EDfunction } from "./backend/ecole_directe/index.js";
 
+// Set cache
+const worker_cache = globalThis.state ??= {
+  cache: new Map()
+};
+export function setValue(key, value) {
+  worker_cache.cache.set(key, value);
+}
+export function getValue(key) {
+  return worker_cache.cache.get(key);
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
