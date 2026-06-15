@@ -224,15 +224,6 @@ export async function EDtimetable(env, informations, filter) {
     semaineB: {}
   };
 
-  const jours = [
-    "lundi",
-    "mardi",
-    "mercredi",
-    "jeudi",
-    "vendredi",
-    "samedi"
-  ];
-
   const edt = {
     semaineA: {},
     semaineB: {}
