@@ -5,7 +5,7 @@ export async function EDinformations(env, new_token) {
   // Answering the informations if a correct and actual response is saved
   if (
     Math.floor(Date.now() / 60000) - getCacheValue(edTokenTime) &&
-    new_token? === "false"
+    new_token? === false
   ) {
     return getCacheValue(edToken)
   };
