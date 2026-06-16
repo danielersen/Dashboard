@@ -15,9 +15,9 @@ export async function EDfunction (env, subpath, method, headers, body) {
   }
   let new_token;
   if (headers.get("new_token") === "true") {
-    filter = true;
+    new_token = true;
   } else {
-    filter = false;
+    new_token = false;
   }
   
   if (subpath === "info" && method === "GET") {
