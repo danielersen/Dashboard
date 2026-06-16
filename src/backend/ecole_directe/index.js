@@ -29,6 +29,7 @@ export async function EDfunction (env, subpath, method, headers, body) {
     subpath === "grades" && 
     method === "GET"
   ) {
+    return getCacheValue("edTokenTime")
     return await EDgrades (env, informations, filter)
   
   } else if (
