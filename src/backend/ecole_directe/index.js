@@ -6,6 +6,8 @@ import { EDhomeworks } from "./homeworks.js"
 import { EDhomeworksDone } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
+import { getCacheValue } from "../../index.js";
+
 export async function EDfunction (env, subpath, method, headers, body) {
   let filter;
   if (headers.get("filter") === "true") {
