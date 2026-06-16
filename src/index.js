@@ -1,7 +1,7 @@
 // Workflows
 import { CheckGradesWorkflow } from "./workflows/check_grades";
 
-// API functions
+// API features
 import { EDfunction } from "./backend/ecole_directe/index.js";
 
 // Set cache
