@@ -22,7 +22,8 @@ export async function EDfunction (env, subpath, method, headers, body) {
   
   if (subpath === "info" && method === "GET") {
     return await EDinformations(env, new_token)
-    
+  }
+  
   const informations = await EDinformations(env, false)
   if (
     subpath === "grades" && 
