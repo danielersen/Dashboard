@@ -1,3 +1,6 @@
+import { setCacheValue } from "...index.js"
+import { getCacheValue } from "...index.js"
+
 export async function EDgrades(env, informations, filter) {
   const ED_USER_AGENT = env.USER_AGENT;
   const ED_VERSION = "4.75.0";
