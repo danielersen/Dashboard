@@ -7,7 +7,6 @@ export async function EDinformations(env, new_token) {
     Math.floor(Date.now() / 60000) - getCacheValue("edTokenTime") &&
     new_token === false
   ) {
-    return "cache use"
     return getCacheValue(edToken)
   };
   
