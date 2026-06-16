@@ -5,8 +5,9 @@ export async function EDinformations(env, new_token) {
   // Answering the informations if a correct and actual response is saved
   if (
     Math.floor(Date.now() / 60000) - getCacheValue("edTokenTime") &&
-    new_token === false
+    new_token !== true
   ) {
+    return "cache"
     return getCacheValue(edToken)
   };
   
@@ -172,8 +173,7 @@ export async function EDinformations(env, new_token) {
   const second = await login([{ cn: qcmJson.data.cn, cv: qcmJson.data.cv }]);
   if (second.json.code === 200) {
     setCacheValue("edToken", second);
-    setCacheValue("edTokenTime", Math.floor(Date.now() / 60000))
-    return getCacheValue("edTokenTime")
+    setCacheValue("edTokenTime", Math.floor(Date.now() / 60000));
     return second;
   }
   throw new Error(`Re-login après QCM échoué: ${JSON.stringify(second.json)}`);
