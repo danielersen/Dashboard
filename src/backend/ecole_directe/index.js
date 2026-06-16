@@ -6,8 +6,6 @@ import { EDhomeworks } from "./homeworks.js"
 import { EDhomeworksDone } from "./homeworks.js"
 import { EDtimetable } from "./timetable.js"
 
-import { getCacheValue } from "../../index.js";
-
 export async function EDfunction (env, subpath, method, headers, body) {
   let filter;
   if (headers.get("filter") === "true") {
@@ -31,7 +29,6 @@ export async function EDfunction (env, subpath, method, headers, body) {
     subpath === "grades" && 
     method === "GET"
   ) {
-    return getCacheValue("edTokenTime")
     return await EDgrades (env, informations, filter)
   
   } else if (
