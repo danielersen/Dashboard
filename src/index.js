@@ -8,11 +8,15 @@ import { EDfunction } from "./backend/ecole_directe/index.js";
 const worker_cache = globalThis.state ??= {
   cache: new Map()
 };
+
 export function setCacheValue(key, value) {
   worker_cache.cache.set(key, value);
 }
-export function getCacheValue(key) {
-  return worker_cache.cache.get(key);
+
+export function getCacheValue(key, defaultValue = null) {
+  return worker_cache.cache.has(key)
+    ? worker_cache.cache.get(key)
+    : defaultValue;
 }
 
 export default {
