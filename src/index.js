@@ -5,18 +5,31 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 import { EDfunction } from "./backend/ecole_directe/index.js";
 
 // Set cache
-const worker_cache = globalThis.state ??= {
-  cache: new Map()
-};
-export function setCacheValue(key, value) {
-  worker_cache.cache.set(key, value);
+const cache = caches.default;
+function buildKey(key) {
+  return new Request(`https://internal-cache/${key}`);
 }
-export function getCacheValue(key, defaultValue = null) {
-  return worker_cache.cache.has(key)
-    ? worker_cache.cache.get(key)
-    : defaultValue;
+export async function setCacheValue(key, value, ttlSeconds = 1800) {
+  const cacheKey = buildKey(key);
+  const response = new Response(JSON.stringify(value), {
+    headers: {
+      "Cache-Control": `max-age=${ttlSeconds}`
+    }
+  });
+  await cache.put(cacheKey, response);
+}
+export async function getCacheValue(key, defaultValue = null) {
+  const cacheKey = buildKey(key);
+  const cached = await cache.match(cacheKey);
+  if (!cached) return defaultValue;
+  try {
+    return await cached.json();
+  } catch {
+    return defaultValue;
+  }
 }
 
+// API funtion
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
