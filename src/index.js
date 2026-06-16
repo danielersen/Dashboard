@@ -6,27 +6,20 @@ import { EDfunction } from "./backend/ecole_directe/index.js";
 
 // Set cache
 const cache = caches.default;
-function buildKey(key) {
-  return new Request(`https://internal-cache/${key}`);
-}
-export async function setCacheValue(key, value, ttlSeconds = 1800) {
-  const cacheKey = buildKey(key);
-  const response = new Response(JSON.stringify(value), {
+export async function setCacheValue(key, value, ttl = 1800) {
+  const req = new Request("https://cache/" + key);
+  const res = new Response(JSON.stringify(value), {
     headers: {
-      "Cache-Control": `max-age=${ttlSeconds}`
+      "Cache-Control": `max-age=${ttl}`
     }
   });
-  await cache.put(cacheKey, response);
+  await cache.put(req, res);
 }
-export async function getCacheValue(key, defaultValue = null) {
-  const cacheKey = buildKey(key);
-  const cached = await cache.match(cacheKey);
-  if (!cached) return defaultValue;
-  try {
-    return await cached.json();
-  } catch {
-    return defaultValue;
-  }
+export async function getCacheValue(key) {
+  const req = new Request("https://cache/" + key);
+  const res = await cache.match(req);
+  if (!res) return null;
+  return await res.json();
 }
 
 // API funtion
