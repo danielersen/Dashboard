@@ -14,7 +14,6 @@ export function setCacheValue(key, value) {
 export function getCacheValue(key) {
   return worker_cache.cache.get(key);
 }
-setCacheValue("edTokenTime", 0)
 
 export default {
   async fetch(request, env, ctx) {
