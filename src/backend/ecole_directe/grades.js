@@ -293,47 +293,44 @@ export async function EDaverages(filtered_note) {
   return result;
 }
 
+
 export async function EDnewgrades(filtered_note) {
     function setCacheValue(key, value) {
-        globalThis.__ED_CACHE__ ??= new Map();
-        globalThis.__ED_CACHE__.set(key, value);
+        globalThis.__ED_CACHE__ ??= {};
+        globalThis.__ED_CACHE__[key] = value;
     }
 
     function getCacheValue(key) {
-        globalThis.__ED_CACHE__ ??= new Map();
-        return globalThis.__ED_CACHE__.get(key);
+        globalThis.__ED_CACHE__ ??= {};
+        return Object.prototype.hasOwnProperty.call(globalThis.__ED_CACHE__, key)
+            ? globalThis.__ED_CACHE__[key]
+            : null;
     }
 
-    function stableStringify(value) {
-        if (value === null || typeof value !== "object") {
-            return JSON.stringify(value);
-        }
-
-        if (Array.isArray(value)) {
-            return `[${value.map(stableStringify).join(",")}]`;
-        }
-
-        const keys = Object.keys(value).sort();
-        return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
+    function normalize(value) {
+        return String(value ?? "").trim();
     }
 
-    function makeNoteId(note) {
+    function makeNoteId(periode, matiere, note) {
         return [
-            note?.dateSaisie ?? "",
-            note?.date ?? "",
-            note?.titre ?? "",
-            note?.note ?? "",
-            note?.noteSur ?? "",
-            note?.coefficient ?? "",
-            note?.min ?? "",
-            note?.max ?? ""
-        ].join("|");
+            normalize(periode),
+            normalize(matiere),
+            normalize(note?.dateSaisie),
+            normalize(note?.date),
+            normalize(note?.titre),
+            normalize(note?.note),
+            normalize(note?.noteSur),
+            normalize(note?.coefficient),
+            normalize(note?.min),
+            normalize(note?.max),
+            normalize(note?.significatif),
+            normalize(note?.moyenne)
+        ].join("||");
     }
 
-    const cacheKey = "EDnewgrades:lastSnapshot";
-    const previousSnapshot = getCacheValue(cacheKey) || {};
-    const currentSnapshot = {};
-    const delta = {};
+    const seenKey = "EDnewgrades_seen_ids";
+    const seenIds = new Set(getCacheValue(seenKey) || []);
+    const result = {};
 
     if (!filtered_note || typeof filtered_note !== "object") {
         return {};
@@ -342,42 +339,32 @@ export async function EDnewgrades(filtered_note) {
     for (const [periode, matieres] of Object.entries(filtered_note)) {
         if (!matieres || typeof matieres !== "object") continue;
 
-        currentSnapshot[periode] = {};
-        delta[periode] = {};
-
         for (const [matiere, notes] of Object.entries(matieres)) {
-            if (!Array.isArray(notes)) continue;
-
-            const currentIds = new Set();
-            const previousIds = new Set();
+            if (!Array.isArray(notes) || notes.length === 0) continue;
 
             for (const note of notes) {
-                currentIds.add(makeNoteId(note));
-            }
+                const id = makeNoteId(periode, matiere, note);
 
-            const previousNotes = previousSnapshot?.[periode]?.[matiere];
-            if (Array.isArray(previousNotes)) {
-                for (const note of previousNotes) {
-                    previousIds.add(makeNoteId(note));
+                if (seenIds.has(id)) {
+                    continue;
                 }
-            }
 
-            currentSnapshot[periode][matiere] = notes;
+                seenIds.add(id);
 
-            const newNotes = notes.filter((note) => !previousIds.has(makeNoteId(note)));
+                if (!result[periode]) {
+                    result[periode] = {};
+                }
 
-            if (newNotes.length > 0) {
-                delta[periode][matiere] = newNotes;
+                if (!result[periode][matiere]) {
+                    result[periode][matiere] = [];
+                }
+
+                result[periode][matiere].push(note);
             }
         }
     }
 
-    setCacheValue(cacheKey, currentSnapshot);
+    setCacheValue(seenKey, Array.from(seenIds));
 
-    // Si aucune nouvelle note n'a été trouvée, renvoie un objet vide
-    const hasDelta = Object.keys(delta).some(
-        (periode) => Object.keys(delta[periode] || {}).length > 0
-    );
-
-    return hasDelta ? delta : {};
+    return result;
 }
