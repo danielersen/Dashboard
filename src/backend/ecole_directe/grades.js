@@ -1,5 +1,4 @@
-import { setCacheValue } from "../../index.js";
-import { getCacheValue } from "../../index.js";
+import { setCacheValue, getCacheValue } from "../../index.js";
 
 export async function EDgrades(env, informations, filter) {
   const ED_USER_AGENT = env.USER_AGENT;
@@ -301,16 +300,14 @@ export async function EDnewgrades(filtered_note) {
 
     function getCacheValue(key) {
         globalThis.__ED_CACHE__ ??= new Map();
-        return globalThis.__ED_CACHE__.has(key)
-            ? globalThis.__ED_CACHE__.get(key)
-            : null;
+        return globalThis.__ED_CACHE__.has(key) ? globalThis.__ED_CACHE__.get(key) : null;
     }
 
     function norm(v) {
         return String(v ?? "").trim();
     }
 
-    function makeNoteKey(periode, matiere, note) {
+    function makeNoteId(periode, matiere, note) {
         return [
             norm(periode),
             norm(matiere),
@@ -319,16 +316,13 @@ export async function EDnewgrades(filtered_note) {
             norm(note?.titre),
             norm(note?.note),
             norm(note?.noteSur),
-            norm(note?.coefficient),
-            norm(note?.min),
-            norm(note?.max),
-            norm(note?.significatif),
-            norm(note?.moyenne)
+            norm(note?.coefficient)
         ].join("||");
     }
 
+    const seenKey = "EDnewgrades_seen_notes";
+    const seen = new Set(getCacheValue(seenKey) || []);
     const result = {};
-    const localSeen = new Set();
 
     if (!filtered_note || typeof filtered_note !== "object") {
         return {};
@@ -338,19 +332,14 @@ export async function EDnewgrades(filtered_note) {
         if (!matieres || typeof matieres !== "object") continue;
 
         for (const [matiere, notes] of Object.entries(matieres)) {
-            if (!Array.isArray(notes) || notes.length === 0) continue;
+            if (!Array.isArray(notes)) continue;
 
             for (const note of notes) {
-                const noteKey = `EDnewgrades:seen:${makeNoteKey(periode, matiere, note)}`;
+                const id = makeNoteId(periode, matiere, note);
 
-                if (localSeen.has(noteKey)) continue;
-                localSeen.add(noteKey);
+                if (seen.has(id)) continue;
 
-                if (getCacheValue(noteKey)) {
-                    continue;
-                }
-
-                setCacheValue(noteKey, true);
+                seen.add(id);
 
                 if (!result[periode]) result[periode] = {};
                 if (!result[periode][matiere]) result[periode][matiere] = [];
@@ -359,6 +348,8 @@ export async function EDnewgrades(filtered_note) {
             }
         }
     }
+
+    setCacheValue(seenKey, Array.from(seen));
 
     return result;
 }
