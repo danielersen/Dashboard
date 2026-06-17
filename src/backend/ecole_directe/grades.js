@@ -243,6 +243,56 @@ export async function EDgrades(env, informations, filter) {
   return filtered_note
 }
 
+export async function EDaverages(filtered_note) {
+  const result = {};
+  for (const [trimestre, matieres] of Object.entries(filtered_note)) {
+    let totalGeneral = 0;
+    let coefGeneral = 0;
+    result[trimestre] = {
+      matieres: {},
+      moyenne_generale: null
+    };
+    for (const [matiere, notes] of Object.entries(matieres)) {
+      let total = 0;
+      let coefTotal = 0;
+      for (const note of notes) {
+        const valeur = parseFloat(
+          String(note.note).replace(",", ".")
+        );
+        const noteSur = parseFloat(
+          String(note.noteSur).replace(",", ".")
+        );
+        const coef = parseFloat(
+          String(note.coefficient).replace(",", ".")
+        );
+        if (
+          (isNaN(valeur) ||
+          isNaN(noteSur) ||
+          isNaN(coef)) &&
+          String(note.significatif).replace(",", ".") === "false"
+        ) {
+          continue;
+        }
+        const note20 = (valeur / noteSur) * 20;
+        total += note20 * coef;
+        coefTotal += coef;
+      }
+      const moyenneMatiere =
+        coefTotal > 0 ? total / coefTotal : null;
+      result[trimestre].matieres[matiere] = moyenneMatiere;
+      if (moyenneMatiere !== null) {
+        totalGeneral += moyenneMatiere;
+        coefGeneral += 1;
+      }
+    }
+    result[trimestre].moyenne_generale =
+      coefGeneral > 0
+        ? totalGeneral / coefGeneral
+        : null;
+  }
+  return result;
+}
+
 export async function EDnewgrades(filtered_note) {
     function setCacheValue(key, value) {
         globalThis.__ED_CACHE__ ??= new Map();
