@@ -294,7 +294,6 @@ export async function EDaverages(filtered_note) {
 
 export async function EDnewgrades(filtered_note) {
     const CACHE_SEEN = "EDnewgrades:seen_ids:v2";
-
     function norm(v) {
         return String(v ?? "").trim();
     }
@@ -371,8 +370,7 @@ export async function EDnewgrades(filtered_note) {
             }
         }
     }
-
-    setCacheValue(CACHE_SEEN, Array.from(seenIds));
+    setCacheValue(CACHE_SEEN, result);
 
     return result;
 }
