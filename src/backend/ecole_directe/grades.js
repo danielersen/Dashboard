@@ -293,10 +293,23 @@ export async function EDaverages(filtered_note) {
 }
 
 export async function EDnewgrades(filtered_note) {
-    const CACHE_KEY = "EDnewgrades:seen_notes:v1";
+    const CACHE_SEEN = "EDnewgrades:seen_ids:v2";
 
     function norm(v) {
         return String(v ?? "").trim();
+    }
+
+    function stableStringify(value) {
+        if (value === null || typeof value !== "object") {
+            return JSON.stringify(value);
+        }
+
+        if (Array.isArray(value)) {
+            return `[${value.map(stableStringify).join(",")}]`;
+        }
+
+        const keys = Object.keys(value).sort();
+        return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
     }
 
     function makeNoteId(periode, matiere, note) {
@@ -316,22 +329,28 @@ export async function EDnewgrades(filtered_note) {
         ].join("||");
     }
 
-    const cached = getCacheValue(CACHE_KEY);
-    const seenIds = new Set(Array.isArray(cached) ? cached : []);
+    function isObject(value) {
+        return value !== null && typeof value === "object" && !Array.isArray(value);
+    }
+
+    const rawSeen = getCacheValue(CACHE_SEEN);
+    const seenIds = new Set(Array.isArray(rawSeen) ? rawSeen : []);
 
     const result = {};
 
-    if (!filtered_note || typeof filtered_note !== "object") {
+    if (!isObject(filtered_note)) {
         return {};
     }
 
     for (const [periode, matieres] of Object.entries(filtered_note)) {
-        if (!matieres || typeof matieres !== "object") continue;
+        if (!isObject(matieres)) continue;
 
         for (const [matiere, notes] of Object.entries(matieres)) {
-            if (!Array.isArray(notes)) continue;
+            if (!Array.isArray(notes) || notes.length === 0) continue;
 
             for (const note of notes) {
+                if (!isObject(note)) continue;
+
                 const id = makeNoteId(periode, matiere, note);
 
                 if (seenIds.has(id)) {
@@ -340,14 +359,20 @@ export async function EDnewgrades(filtered_note) {
 
                 seenIds.add(id);
 
-                if (!result[periode]) result[periode] = {};
-                if (!result[periode][matiere]) result[periode][matiere] = [];
+                if (!result[periode]) {
+                    result[periode] = {};
+                }
+
+                if (!result[periode][matiere]) {
+                    result[periode][matiere] = [];
+                }
 
                 result[periode][matiere].push(note);
             }
         }
     }
 
-    setCacheValue(CACHE_KEY, Array.from(seenIds));
+    setCacheValue(CACHE_SEEN, Array.from(seenIds));
+
     return result;
 }
