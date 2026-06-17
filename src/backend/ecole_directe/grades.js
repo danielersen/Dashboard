@@ -293,55 +293,70 @@ export async function EDaverages(filtered_note) {
   return result;
 }
 export async function EDnewgrades(filtered_note) {
-  const cache = getCacheValue("edGrades");
+  const oldNotes = getCacheValue("filtered_note");
+
+  if (!oldNotes) {
+
+    setCacheValue("filtered_note", filtered_note);
+
+    return { new: [] };
+
+  }
+
   const new_grades = {
-    new: [],
-    delete: []
+
+    new: []
+
   };
 
-  function flattenGrades(data) {
-    const grades = [];
+  for (const period in filtered_note) {
 
-    for (const period of Object.values(data)) {
-      for (const subject of Object.values(period)) {
-        if (!Array.isArray(subject)) continue;
+    for (const subject in filtered_note[period]) {
 
-        for (const grade of subject) {
-          grades.push(grade);
+      const currentGrades = filtered_note[period][subject];
+
+      const oldGrades = oldNotes?.[period]?.[subject] || [];
+
+      for (const grade of currentGrades) {
+
+        const alreadyExists = oldGrades.some(
+
+          oldGrade =>
+
+            oldGrade.dateSaisie === grade.dateSaisie &&
+
+            oldGrade.date === grade.date &&
+
+            oldGrade.titre === grade.titre &&
+
+            oldGrade.note === grade.note &&
+
+            oldGrade.noteSur === grade.noteSur &&
+
+            oldGrade.coefficient === grade.coefficient
+
+        );
+
+        if (!alreadyExists) {
+
+          new_grades.new.push({
+
+            periode: period,
+
+            matiere: subject,
+
+            ...grade
+
+          });
+
         }
+
       }
+
     }
 
-    return grades;
   }
 
-  const cacheGrades = flattenGrades(cache);
-  const filteredGrades = flattenGrades(filtered_note);
+  setCacheValue("filtered_note", filtered_note);
 
-  const makeKey = grade =>
-    JSON.stringify([
-      grade.dateSaisie,
-      grade.date,
-      grade.titre,
-      grade.note,
-      grade.noteSur,
-      grade.coefficient
-    ]);
-
-  const cacheSet = new Set(cacheGrades.map(makeKey));
-  const filteredSet = new Set(filteredGrades.map(makeKey));
-
-  for (const grade of filteredGrades) {
-    if (!cacheSet.has(makeKey(grade))) {
-      new_grades.new.push(grade);
-    }
-  }
-
-  for (const grade of cacheGrades) {
-    if (!filteredSet.has(makeKey(grade))) {
-      new_grades.delete.push(grade);
-    }
-  }
-  setCacheValue("edGrades", filtered_note);
-  return new_grades
-}
+  return new_grades;
