@@ -293,15 +293,7 @@ export async function EDaverages(filtered_note) {
 }
 
 export async function EDnewgrades(filtered_note) {
-    function setCacheValue(key, value) {
-        globalThis.__ED_CACHE__ ??= new Map();
-        globalThis.__ED_CACHE__.set(key, value);
-    }
-
-    function getCacheValue(key) {
-        globalThis.__ED_CACHE__ ??= new Map();
-        return globalThis.__ED_CACHE__.has(key) ? globalThis.__ED_CACHE__.get(key) : null;
-    }
+    const CACHE_KEY = "EDnewgrades:seen_notes:v1";
 
     function norm(v) {
         return String(v ?? "").trim();
@@ -316,12 +308,17 @@ export async function EDnewgrades(filtered_note) {
             norm(note?.titre),
             norm(note?.note),
             norm(note?.noteSur),
-            norm(note?.coefficient)
+            norm(note?.coefficient),
+            norm(note?.min),
+            norm(note?.max),
+            norm(note?.significatif),
+            norm(note?.moyenne)
         ].join("||");
     }
 
-    const seenKey = "EDnewgrades_seen_notes";
-    const seen = new Set(getCacheValue(seenKey) || []);
+    const cached = getCacheValue(CACHE_KEY);
+    const seenIds = new Set(Array.isArray(cached) ? cached : []);
+
     const result = {};
 
     if (!filtered_note || typeof filtered_note !== "object") {
@@ -337,9 +334,11 @@ export async function EDnewgrades(filtered_note) {
             for (const note of notes) {
                 const id = makeNoteId(periode, matiere, note);
 
-                if (seen.has(id)) continue;
+                if (seenIds.has(id)) {
+                    continue;
+                }
 
-                seen.add(id);
+                seenIds.add(id);
 
                 if (!result[periode]) result[periode] = {};
                 if (!result[periode][matiere]) result[periode][matiere] = [];
@@ -349,7 +348,6 @@ export async function EDnewgrades(filtered_note) {
         }
     }
 
-    setCacheValue(seenKey, Array.from(seen));
-
+    setCacheValue(CACHE_KEY, Array.from(seenIds));
     return result;
 }
