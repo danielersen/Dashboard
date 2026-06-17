@@ -293,7 +293,7 @@ export async function EDaverages(filtered_note) {
   return result;
 }
 export async function EDnewgrades(filtered_note) {
-  cache = getCacheValue("edGrades");
+  const cache = getCacheValue("edGrades");
   const new_grades = {
     new: [],
     delete: []
