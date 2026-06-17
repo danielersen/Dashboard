@@ -243,121 +243,91 @@ export async function EDgrades(env, informations, filter) {
   return filtered_note
 }
 
-export async function EDaverages(filtered_note) {
-  const result = {};
-  for (const [trimestre, matieres] of Object.entries(filtered_note)) {
-    let totalGeneral = 0;
-    let coefGeneral = 0;
-    result[trimestre] = {
-      matieres: {},
-      moyenne_generale: null
-    };
-    for (const [matiere, notes] of Object.entries(matieres)) {
-      let total = 0;
-      let coefTotal = 0;
-      for (const note of notes) {
-        const valeur = parseFloat(
-          String(note.note).replace(",", ".")
-        );
-        const noteSur = parseFloat(
-          String(note.noteSur).replace(",", ".")
-        );
-        const coef = parseFloat(
-          String(note.coefficient).replace(",", ".")
-        );
-        if (
-          (isNaN(valeur) ||
-          isNaN(noteSur) ||
-          isNaN(coef)) &&
-          String(note.significatif).replace(",", ".") === "false"
-        ) {
-          continue;
-        }
-        const note20 = (valeur / noteSur) * 20;
-        total += note20 * coef;
-        coefTotal += coef;
-      }
-      const moyenneMatiere =
-        coefTotal > 0 ? total / coefTotal : null;
-      result[trimestre].matieres[matiere] = moyenneMatiere;
-      if (moyenneMatiere !== null) {
-        totalGeneral += moyenneMatiere;
-        coefGeneral += 1;
-      }
-    }
-    result[trimestre].moyenne_generale =
-      coefGeneral > 0
-        ? totalGeneral / coefGeneral
-        : null;
-  }
-  return result;
-}
 export async function EDnewgrades(filtered_note) {
-  const oldNotes = getCacheValue("filtered_note");
-
-  if (!oldNotes) {
-
-    setCacheValue("filtered_note", filtered_note);
-
-    return { new: [] };
-
-  }
-
-  const new_grades = {
-
-    new: []
-
-  };
-
-  for (const period in filtered_note) {
-
-    for (const subject in filtered_note[period]) {
-
-      const currentGrades = filtered_note[period][subject];
-
-      const oldGrades = oldNotes?.[period]?.[subject] || [];
-
-      for (const grade of currentGrades) {
-
-        const alreadyExists = oldGrades.some(
-
-          oldGrade =>
-
-            oldGrade.dateSaisie === grade.dateSaisie &&
-
-            oldGrade.date === grade.date &&
-
-            oldGrade.titre === grade.titre &&
-
-            oldGrade.note === grade.note &&
-
-            oldGrade.noteSur === grade.noteSur &&
-
-            oldGrade.coefficient === grade.coefficient
-
-        );
-
-        if (!alreadyExists) {
-
-          new_grades.new.push({
-
-            periode: period,
-
-            matiere: subject,
-
-            ...grade
-
-          });
-
-        }
-
-      }
-
+    function setCacheValue(key, value) {
+        globalThis.__ED_CACHE__ ??= new Map();
+        globalThis.__ED_CACHE__.set(key, value);
     }
 
-  }
+    function getCacheValue(key) {
+        globalThis.__ED_CACHE__ ??= new Map();
+        return globalThis.__ED_CACHE__.get(key);
+    }
 
-  setCacheValue("filtered_note", filtered_note);
+    function stableStringify(value) {
+        if (value === null || typeof value !== "object") {
+            return JSON.stringify(value);
+        }
 
-  return new_grades;
+        if (Array.isArray(value)) {
+            return `[${value.map(stableStringify).join(",")}]`;
+        }
+
+        const keys = Object.keys(value).sort();
+        return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
+    }
+
+    function makeNoteId(note) {
+        return [
+            note?.dateSaisie ?? "",
+            note?.date ?? "",
+            note?.titre ?? "",
+            note?.note ?? "",
+            note?.noteSur ?? "",
+            note?.coefficient ?? "",
+            note?.min ?? "",
+            note?.max ?? ""
+        ].join("|");
+    }
+
+    const cacheKey = "EDnewgrades:lastSnapshot";
+    const previousSnapshot = getCacheValue(cacheKey) || {};
+    const currentSnapshot = {};
+    const delta = {};
+
+    if (!filtered_note || typeof filtered_note !== "object") {
+        return {};
+    }
+
+    for (const [periode, matieres] of Object.entries(filtered_note)) {
+        if (!matieres || typeof matieres !== "object") continue;
+
+        currentSnapshot[periode] = {};
+        delta[periode] = {};
+
+        for (const [matiere, notes] of Object.entries(matieres)) {
+            if (!Array.isArray(notes)) continue;
+
+            const currentIds = new Set();
+            const previousIds = new Set();
+
+            for (const note of notes) {
+                currentIds.add(makeNoteId(note));
+            }
+
+            const previousNotes = previousSnapshot?.[periode]?.[matiere];
+            if (Array.isArray(previousNotes)) {
+                for (const note of previousNotes) {
+                    previousIds.add(makeNoteId(note));
+                }
+            }
+
+            currentSnapshot[periode][matiere] = notes;
+
+            const newNotes = notes.filter((note) => !previousIds.has(makeNoteId(note)));
+
+            if (newNotes.length > 0) {
+                delta[periode][matiere] = newNotes;
+            }
+        }
+    }
+
+    setCacheValue(cacheKey, currentSnapshot);
+
+    // Si aucune nouvelle note n'a été trouvée, renvoie un objet vide
+    const hasDelta = Object.keys(delta).some(
+        (periode) => Object.keys(delta[periode] || {}).length > 0
+    );
+
+    return hasDelta ? delta : {};
 }
