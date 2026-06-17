@@ -293,44 +293,42 @@ export async function EDaverages(filtered_note) {
   return result;
 }
 
-
 export async function EDnewgrades(filtered_note) {
     function setCacheValue(key, value) {
-        globalThis.__ED_CACHE__ ??= {};
-        globalThis.__ED_CACHE__[key] = value;
+        globalThis.__ED_CACHE__ ??= new Map();
+        globalThis.__ED_CACHE__.set(key, value);
     }
 
     function getCacheValue(key) {
-        globalThis.__ED_CACHE__ ??= {};
-        return Object.prototype.hasOwnProperty.call(globalThis.__ED_CACHE__, key)
-            ? globalThis.__ED_CACHE__[key]
+        globalThis.__ED_CACHE__ ??= new Map();
+        return globalThis.__ED_CACHE__.has(key)
+            ? globalThis.__ED_CACHE__.get(key)
             : null;
     }
 
-    function normalize(value) {
-        return String(value ?? "").trim();
+    function norm(v) {
+        return String(v ?? "").trim();
     }
 
-    function makeNoteId(periode, matiere, note) {
+    function makeNoteKey(periode, matiere, note) {
         return [
-            normalize(periode),
-            normalize(matiere),
-            normalize(note?.dateSaisie),
-            normalize(note?.date),
-            normalize(note?.titre),
-            normalize(note?.note),
-            normalize(note?.noteSur),
-            normalize(note?.coefficient),
-            normalize(note?.min),
-            normalize(note?.max),
-            normalize(note?.significatif),
-            normalize(note?.moyenne)
+            norm(periode),
+            norm(matiere),
+            norm(note?.dateSaisie),
+            norm(note?.date),
+            norm(note?.titre),
+            norm(note?.note),
+            norm(note?.noteSur),
+            norm(note?.coefficient),
+            norm(note?.min),
+            norm(note?.max),
+            norm(note?.significatif),
+            norm(note?.moyenne)
         ].join("||");
     }
 
-    const seenKey = "EDnewgrades_seen_ids";
-    const seenIds = new Set(getCacheValue(seenKey) || []);
     const result = {};
+    const localSeen = new Set();
 
     if (!filtered_note || typeof filtered_note !== "object") {
         return {};
@@ -343,28 +341,24 @@ export async function EDnewgrades(filtered_note) {
             if (!Array.isArray(notes) || notes.length === 0) continue;
 
             for (const note of notes) {
-                const id = makeNoteId(periode, matiere, note);
+                const noteKey = `EDnewgrades:seen:${makeNoteKey(periode, matiere, note)}`;
 
-                if (seenIds.has(id)) {
+                if (localSeen.has(noteKey)) continue;
+                localSeen.add(noteKey);
+
+                if (getCacheValue(noteKey)) {
                     continue;
                 }
 
-                seenIds.add(id);
+                setCacheValue(noteKey, true);
 
-                if (!result[periode]) {
-                    result[periode] = {};
-                }
-
-                if (!result[periode][matiere]) {
-                    result[periode][matiere] = [];
-                }
+                if (!result[periode]) result[periode] = {};
+                if (!result[periode][matiere]) result[periode][matiere] = [];
 
                 result[periode][matiere].push(note);
             }
         }
     }
-
-    setCacheValue(seenKey, Array.from(seenIds));
 
     return result;
 }
