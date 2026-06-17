@@ -370,7 +370,10 @@ export async function EDnewgrades(filtered_note) {
             }
         }
     }
-    setCacheValue(CACHE_SEEN, result);
+    if (getCacheValue(CACHE_SEEN) === filtered_note) {
+      return "equal"
+    }
+    setCacheValue(CACHE_SEEN, filtered_note);
 
     return result;
 }
