@@ -360,3 +360,4 @@ export async function EDnewgrades(filtered_note) {
   setCacheValue("filtered_note", filtered_note);
 
   return new_grades;
+}
