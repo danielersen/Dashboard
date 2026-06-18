@@ -293,7 +293,8 @@ export async function EDaverages(filtered_note) {
 }
 
 export async function EDnewgrades(filtered_note) {
-    const CACHE_SEEN = "EDnewgrades:seen_ids:v2";
+    const CACHE_SEEN = "edGrades";
+
     function norm(v) {
         return String(v ?? "").trim();
     }
@@ -332,7 +333,7 @@ export async function EDnewgrades(filtered_note) {
         return value !== null && typeof value === "object" && !Array.isArray(value);
     }
 
-    const rawSeen = getCacheValue(CACHE_SEEN);
+    const rawSeen = await getCacheValue(CACHE_SEEN);
     const seenIds = new Set(Array.isArray(rawSeen) ? rawSeen : []);
 
     const result = {};
@@ -370,10 +371,8 @@ export async function EDnewgrades(filtered_note) {
             }
         }
     }
-    if (getCacheValue(CACHE_SEEN) === 1) {
-      return "equal"
-    }
-    setCacheValue(CACHE_SEEN, 1);
 
-    return "not equal"
+    await setCacheValue(CACHE_SEEN, Array.from(seenIds));
+
+    return result;
 }
