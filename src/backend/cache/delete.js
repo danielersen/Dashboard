@@ -4,6 +4,9 @@ export async function deleteCacheValue(key) {
   return await cache.delete(req);
 }
 export async function deleteCache() {
-  const req = new Request("https://cache/" + key);
-  return await cache.delete(req);
+  const keys = getCacheValue("cache_keys")
+  for (const key in keys) {
+    await deleteCacheValue(key)
+  }
+  return "ok"
 }
