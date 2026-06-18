@@ -1,3 +1,4 @@
+import { getCacheValue } from "./get.js"
 export async function setCacheValue(key, value, ttl = 1800) {
   // Save all the keys
   const req1 = new Request("https://cache/" + "cache_keys");
