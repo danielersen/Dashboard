@@ -4,7 +4,7 @@ export async function setCacheValue(key, value, ttl = 1800) {
   const res1 = await cache.match(req1);
   let cache_keys;
   if (!res1) {
-    cache_keys = [];
+    cache_keys = ["cache_keys"];
   } else {
     cache_keys = res.json();
   }
