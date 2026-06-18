@@ -1,4 +1,5 @@
-import { setCacheValue, getCacheValue } from "../../index.js";
+import { setCacheValue } from "../cache/set.js";
+import { getCacheValue } from "../cache/get.js";
 
 export async function EDgrades(env, informations, filter) {
   const ED_USER_AGENT = env.USER_AGENT;
