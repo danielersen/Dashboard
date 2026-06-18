@@ -17,6 +17,9 @@ export async function setCacheValue(key, value, ttl = 1800) {
   });
   await cache.put(req2, res2);
   // Set the value
+  if (key === "cache_keys") {
+    return "Error, this key is forbidden"
+  }
   const req3 = new Request("https://cache/" + key);
   const res3 = new Response(JSON.stringify(value), {
     headers: {
