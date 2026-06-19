@@ -3,7 +3,7 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 
 // API features
 import { EDfunction } from "./backend/ecole_directe/index.js";
-import { workerCache } from "./backend/cache/index.js";
+import { Cache } from "./backend/cache/index.js";
 
 // API funtion
 export default {
@@ -60,7 +60,7 @@ export default {
       if (url.pathname.startsWith("/api/ed/")) {
         resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
       }; else if (url.pathname.startsWith("/api/ed/")) {
-        resp = await workerCache(url.pathname.slice("/api/ed/".length), method, body)
+        resp = await Cache(url.pathname.slice("/api/ed/".length), method, body)
       };
       // Return response
       return new Response(JSON.stringify({ 
