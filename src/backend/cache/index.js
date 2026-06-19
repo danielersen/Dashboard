@@ -6,5 +6,6 @@ export async function Cache(method, path) {
   let resp
   if (method === "GET") {
     resp = await getCacheValue(path)
-  } else if (method === "PATCH")
+  } else if (method === "PATCH") {
+    resp = delete deleteCacheValue(path)
 }
