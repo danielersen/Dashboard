@@ -1,5 +1,5 @@
 import { getCacheValue } from "./get.js"
-async function setValue (functionKey, functionValue, ttl = 1800) {
+async function setValue (functionKey, functionValue, ttl = 84600) {
   const req = new Request("https://cache/" + functionKey);
   const res = new Response(JSON.stringify(functionValue), {
     headers: {
