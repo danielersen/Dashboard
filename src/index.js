@@ -3,24 +3,7 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 
 // API features
 import { EDfunction } from "./backend/ecole_directe/index.js";
-
-// Set cache
-const cache = caches.default;
-export async function setCacheValue(key, value, ttl = 1800) {
-  const req = new Request("https://cache/" + key);
-  const res = new Response(JSON.stringify(value), {
-    headers: {
-      "Cache-Control": `max-age=${ttl}`
-    }
-  });
-  await cache.put(req, res);
-}
-export async function getCacheValue(key) {
-  const req = new Request("https://cache/" + key);
-  const res = await cache.match(req);
-  if (!res) return null;
-  return await res.json();
-}
+import { workerCache } from "./backend/cache/index.js";
 
 // API funtion
 export default {
