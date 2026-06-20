@@ -6,7 +6,7 @@ async function setValue (functionKey, functionValue, ttl = 84600) {
       "Cache-Control": `max-age=${ttl}`
     }
   });
-  return await cache.put(req, res);
+  return await caches.default.put(req, res);
 }
 export async function setCacheValue(key, value) {
   if (key === "cache_keys") {
