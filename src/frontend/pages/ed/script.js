@@ -1,4 +1,4 @@
-const API_ROOT = `${window.location.origin}/api/ed`;
+const API_ROOT = `/api/ed`;
 
 const state = {
   currentView: "home",
