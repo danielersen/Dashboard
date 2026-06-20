@@ -17,7 +17,7 @@ export async function setCacheValue(key, value) {
   if (!cache_keys) {
     cache_keys = ["cache_keys"];
   } else {
-    cache_keys = res.json();
+    cache_keys = cache_keys.json();
   }
   cache_keys.push(key);
   await setValue("cache_keys", cache_keys);
