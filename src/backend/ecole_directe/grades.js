@@ -350,8 +350,11 @@ export async function EDnewgrades(filtered_note) {
                 if (!result[periode][matiere]) {
                     result[periode][matiere] = [];
                 }
-                note["periode"] = periode
-                result.push(note);
+                result[periode][matiere].push({
+                    ...note,
+                    periode,
+                    matiere
+                });
             }
         }
     }
