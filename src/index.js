@@ -31,9 +31,17 @@ export default {
     if (
       (url.pathname === "/" ||
       url.pathname === "" ||
-      url.pathname.startsWith("/assets"))&&
-      env.SITE === "production"
+      url.pathname === "/ed" ||
+      url.pathname === "/ed/" ||
+      url.pathname.startsWith("/assets") ||
+      url.pathname.startsWith("/pages/ed/")) &&
+      (env.SITE === "production" || env.SITE === "enabled")
     ) {
+      if (url.pathname === "/ed" || url.pathname === "/ed/") {
+        const assetUrl = new URL(request.url);
+        assetUrl.pathname = "/pages/ed/index.html";
+        return env.ASSETS.fetch(new Request(assetUrl, request));
+      }
       return env.ASSETS.fetch(request)
     }
 
@@ -59,8 +67,8 @@ export default {
       let resp;
       if (url.pathname.startsWith("/api/ed/")) {
         resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
-      }; else if (url.pathname.startsWith("/api/ed/")) {
-        resp = await Cache(url.pathname.slice("/api/ed/".length), method, body)
+      } else if (url.pathname.startsWith("/api/cache/")) {
+        resp = await Cache(url.pathname.slice("/api/cache/".length), method, body)
       };
       // Return response
       return new Response(JSON.stringify({ 
