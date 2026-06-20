@@ -1,4 +1,5 @@
-export async function driveWrite(path, body) {
+export async function driveWrite(env, path, body) {
+  const accessToken = env.DRIVE_TOKEN;
   if (!accessToken) throw new Error("Missing Google Drive access token");
   if (!path || typeof path !== "string") throw new Error("Invalid path");
   const headers = {
