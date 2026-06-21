@@ -1,1 +1,62 @@
- 
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08100f">
+    <title>Home</title>
+    <link rel="stylesheet" href="/pages/home/style.css">
+    <script type="module" src="/components/navbar/navbar.js"></script>
+  </head>
+  <body>
+    <site-navbar current="home"></site-navbar>
+
+    <main class="home-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Dashboard</p>
+          <h1>Home</h1>
+          <p class="lede">
+            Le point d'entrée du site. La barre du haut te permet de passer d'une feature à l'autre sans changer le rythme de l'interface.
+          </p>
+          <div class="hero-meta">
+            <span class="meta-pill" id="syncLabel">Synchronisé</span>
+            <span class="meta-pill meta-pill-soft" id="clockLabel">--:--</span>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <img src="/assets/icons/logo.png" alt="" class="hero-logo">
+        </div>
+      </section>
+
+      <section class="feature-grid" aria-label="Accès rapide">
+        <a class="feature-card is-primary" href="/pages/workspace">
+          <span class="card-kicker">Workspace</span>
+          <strong>Suivi scolaire</strong>
+          <p>Notes, devoirs et planning dans un seul écran.</p>
+        </a>
+
+        <a class="feature-card" href="/pages/artificial-intelligence">
+          <span class="card-kicker">Intelligence</span>
+          <strong>Artificial intelligence</strong>
+          <p>Les outils d'IA regroupés dans une zone claire.</p>
+        </a>
+
+        <a class="feature-card" href="/pages/files">
+          <span class="card-kicker">Files</span>
+          <strong>Base of files</strong>
+          <p>Accès aux fichiers et aux ressources du projet.</p>
+        </a>
+
+        <a class="feature-card" href="/pages/tools">
+          <span class="card-kicker">Tools</span>
+          <strong>Useful tools</strong>
+          <p>Les utilitaires et raccourcis du site.</p>
+        </a>
+      </section>
+    </main>
+
+    <script type="module" src="/pages/home/script.js"></script>
+  </body>
+</html>
