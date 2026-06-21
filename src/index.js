@@ -29,16 +29,11 @@ export default {
     // 🌐 SITE (Cloudflare assets)
     // =========================
     if (
-<<<<<<< HEAD
       (url.pathname === "/" ||
       url.pathname === "" ||
       url.pathname.startsWith("/assets") ||
       url.pathname.startsWith("/components/") ||
       url.pathname.startsWith("/pages/")) &&
-=======
-      url.pathname.startsWith("/assets") ||
-      url.pathname.startsWith("/pages")) &&
->>>>>>> b508cf2c9dc079ad6c86041e20524a65e8fba44f
       (env.SITE === "production" || env.SITE === "enabled")
     ) {
       if (url.pathname === "/" || url.pathname === "") {
