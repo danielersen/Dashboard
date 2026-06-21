@@ -28,7 +28,18 @@ binding = "AI"
 # Worker executed before assets
 run_worker_first = [
   "/api/ed",
-  "/ed"
+  "/pages/home",
+  "/pages/home/",
+  "/pages/workspace",
+  "/pages/workspace/",
+  "/pages/artificial-intelligence",
+  "/pages/artificial-intelligence/",
+  "/pages/files",
+  "/pages/files/",
+  "/pages/tools",
+  "/pages/tools/",
+  "/pages/settings",
+  "/pages/settings/"
 ]
 
 # Workflows

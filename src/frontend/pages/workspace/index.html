@@ -4,18 +4,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#101820">
-    <title>École directe</title>
-    <link rel="stylesheet" href="/pages/ed/style.css">
+    <title>Workspace</title>
+    <link rel="stylesheet" href="/pages/workspace/style.css">
+    <script type="module" src="/components/navbar/navbar.js"></script>
   </head>
   <body>
+    <site-navbar current="workspace"></site-navbar>
     <div class="app-shell" data-menu-state="closed">
-      <aside class="side-menu" id="sideMenu" aria-label="Menu École directe">
+      <aside class="side-menu" id="sideMenu" aria-label="Menu Workspace">
         <div class="brand-block">
           <div class="brand-mark" aria-hidden="true">
-            <span>ED</span>
+            <span>W</span>
           </div>
           <div class="brand-copy">
-            <strong>École directe</strong>
+            <strong>Workspace</strong>
             <span>Dashboard scolaire</span>
           </div>
         </div>
@@ -209,6 +211,6 @@
       <div class="toast-zone" id="toastZone" aria-live="polite" aria-atomic="true"></div>
     </div>
 
-    <script src="/pages/ed/script.js" defer></script>
+    <script src="/pages/workspace/script.js" defer></script>
   </body>
 </html>

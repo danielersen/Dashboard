@@ -31,15 +31,20 @@ export default {
     if (
       (url.pathname === "/" ||
       url.pathname === "" ||
-      url.pathname === "/ed" ||
-      url.pathname === "/ed/" ||
       url.pathname.startsWith("/assets") ||
-      url.pathname.startsWith("/pages/ed/")) &&
+      url.pathname.startsWith("/components/") ||
+      url.pathname.startsWith("/pages/")) &&
       (env.SITE === "production" || env.SITE === "enabled")
     ) {
-      if (url.pathname === "/ed" || url.pathname === "/ed/") {
+      if (url.pathname === "/" || url.pathname === "") {
         const assetUrl = new URL(request.url);
-        assetUrl.pathname = "/pages/ed/index.html";
+        assetUrl.pathname = "/pages/home/index.html";
+        return env.ASSETS.fetch(new Request(assetUrl, request));
+      }
+      const pageMatch = url.pathname.match(/^\/pages\/([^/]+)\/?$/);
+      if (pageMatch) {
+        const assetUrl = new URL(request.url);
+        assetUrl.pathname = `/pages/${pageMatch[1]}/index.html`;
         return env.ASSETS.fetch(new Request(assetUrl, request));
       }
       return env.ASSETS.fetch(request)

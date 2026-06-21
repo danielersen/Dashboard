@@ -70,6 +70,10 @@ document.addEventListener("DOMContentLoaded", () => {
   loadHome();
 });
 
+window.addEventListener("site-navbar:refresh", () => {
+  void refreshWorkspace();
+});
+
 function collectDom() {
   dom.shell = document.querySelector(".app-shell");
   dom.sideMenu = document.getElementById("sideMenu");
@@ -124,7 +128,7 @@ function bindEvents() {
   });
 
   dom.refreshViewButton.addEventListener("click", () => {
-    refreshView(state.currentView);
+    void refreshWorkspace();
   });
 
   dom.refreshButtons.forEach((button) => {
@@ -160,6 +164,57 @@ function bindEvents() {
       setMenu(false);
     }
   });
+}
+
+async function refreshWorkspace() {
+  if (Object.values(state.loading).some(Boolean)) return;
+
+  state.activeTerm = "trimestre1";
+  state.homeworkFilter = "all";
+  state.homeworkSearch = "";
+  state.selectedGradeId = null;
+  state.loading = {
+    home: false,
+    grades: false,
+    homeworks: false,
+    planning: false,
+  };
+  state.loaded = {
+    home: false,
+    grades: false,
+    homeworks: false,
+    planning: false,
+  };
+  state.data = {
+    newGrades: null,
+    grades: null,
+    homeworks: null,
+    timetable: null,
+  };
+  state.optimisticDone = new Map();
+
+  if (dom.homeworkSearch) {
+    dom.homeworkSearch.value = "";
+  }
+
+  renderTermButtons();
+  renderHomeworkFilters();
+  setHomeLoading();
+  dom.gradesList.innerHTML = loadingMarkup("Chargement des notes");
+  dom.homeworksList.innerHTML = loadingMarkup("Chargement des devoirs");
+  dom.tomorrowSubjects.innerHTML = loadingInlineMarkup();
+  dom.weekA.innerHTML = loadingMarkup("Chargement de la semaine actuelle");
+  dom.weekB.innerHTML = loadingMarkup("Chargement de la semaine prochaine");
+
+  setMenu(false);
+  switchView("home");
+
+  await Promise.all([
+    loadGrades(true),
+    loadHomeworks(true),
+    loadPlanning(true),
+  ]);
+  await loadHome();
 }
 
 function setMenu(open) {
