@@ -1,4 +1,8 @@
+<<<<<<< HEAD:src/frontend/pages/workspace/script.js
 const API_ROOT = "/api/ed";
+=======
+const API_ROOT = `/api/ed`;
+>>>>>>> b508cf2c9dc079ad6c86041e20524a65e8fba44f:src/frontend/pages/ed/script.js
 
 const state = {
   currentView: "home",
