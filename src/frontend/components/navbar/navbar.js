@@ -283,7 +283,7 @@ const NAVBAR_TEMPLATE = `
   <div class="bar">
     <div class="inner">
       <a class="brand" data-home-link href="/pages/home" aria-label="Aller à l'accueil">
-        <img class="brand-icon" src="/assets/icons/logo.png" alt="">
+        <img class="brand-icon" src="/assets/icons/websitelogo.jpg" alt="">
         <span class="brand-text">
           <strong>home</strong>
           <span>Dashboard</span>
