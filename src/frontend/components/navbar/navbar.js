@@ -54,23 +54,21 @@ const NAVBAR_STYLE = `
   }
 
   .bar {
-    min-height: 80px;
-    padding: 14px 18px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-      linear-gradient(135deg, rgba(8, 14, 14, 0.88), rgba(11, 20, 21, 0.82)),
-      rgba(8, 14, 14, 0.96);
+    min-height: 52px;
+    padding: 6px 14px;
+    border-bottom: none;
+    background: transparent;
     backdrop-filter: blur(18px);
-    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+    -webkit-backdrop-filter: blur(18px);
   }
 
   .inner {
     width: min(100%, 1600px);
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 14px;
+    display: flex;
     align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
   }
 
   .brand,
@@ -93,13 +91,18 @@ const NAVBAR_STYLE = `
   .brand {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px 10px 10px;
-    border-color: rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
+    gap: 10px;
+    padding: 8px 12px;
+    border-color: transparent;
+    background: transparent;
+    flex-shrink: 0;
   }
 
-  .brand:hover,
+  .brand:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: transparent;
+  }
+
   .action:hover,
   .feature:hover,
   .quick:hover {
@@ -115,11 +118,8 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    object-fit: cover;
-    display: block;
+    border-radius: 0;
+    object-fit: contain;
   }
 
   .brand-text {
@@ -139,14 +139,21 @@ const NAVBAR_STYLE = `
   }
 
   .center {
+    flex: 1;
     min-width: 0;
     display: flex;
     justify-content: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .center::-webkit-scrollbar {
+    display: none;
   }
 
   .feature-list {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     gap: 8px;
   }
@@ -155,10 +162,11 @@ const NAVBAR_STYLE = `
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 8px 12px;
     border-color: rgba(255, 255, 255, 0.06);
     background: rgba(255, 255, 255, 0.03);
     color: rgba(237, 245, 242, 0.82);
+    flex-shrink: 0;
   }
 
   .feature[data-active="true"] {
@@ -168,9 +176,10 @@ const NAVBAR_STYLE = `
   }
 
   .feature-icon,
-  .action-icon {
-    width: 18px;
-    height: 18px;
+  .action-icon,
+  .brand-icon {
+    width: 20px;
+    height: 20px;
     display: inline-grid;
     place-items: center;
     flex: 0 0 auto;
@@ -178,8 +187,8 @@ const NAVBAR_STYLE = `
 
   .feature-icon svg,
   .action-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     fill: currentColor;
   }
 
@@ -199,17 +208,20 @@ const NAVBAR_STYLE = `
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
   }
 
   .action,
   .quick {
-    min-width: 44px;
-    min-height: 44px;
-    display: inline-grid;
-    place-items: center;
-    padding: 0 12px;
-    border-color: rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
+    min-width: 0;
+    min-height: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-color: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(237, 245, 242, 0.82);
   }
 
   .action[aria-label] {
@@ -220,44 +232,10 @@ const NAVBAR_STYLE = `
     display: none;
   }
 
-  .quick {
-    gap: 10px;
-  }
-
-  .quick[data-kind="refresh"] {
-    color: #89f0c4;
-  }
-
-  @media (max-width: 1180px) {
-    .inner {
-      grid-template-columns: 1fr;
-    }
-
-    .center {
-      justify-content: flex-start;
-      overflow-x: auto;
-      padding-bottom: 2px;
-      scrollbar-width: none;
-    }
-
-    .center::-webkit-scrollbar {
-      display: none;
-    }
-
-    .feature-list {
-      justify-content: flex-start;
-      flex-wrap: nowrap;
-    }
-
-    .right {
-      justify-content: flex-end;
-    }
-  }
-
   @media (max-width: 640px) {
     .bar {
-      min-height: 74px;
-      padding: 12px 12px 13px;
+      min-height: 48px;
+      padding: 6px 10px;
     }
 
     .brand-text span,
@@ -270,7 +248,7 @@ const NAVBAR_STYLE = `
     }
 
     .feature {
-      padding: 10px 12px;
+      padding: 8px 12px;
     }
 
     .brand {
@@ -303,12 +281,12 @@ const NAVBAR_TEMPLATE = `
       </div>
 
       <div class="right">
-        <a class="quick" data-kind="settings" href="/pages/settings" aria-label="Ouvrir les paramètres">
-          <span class="action-icon">${ICONS.settings}</span>
-        </a>
         <button class="quick" data-kind="refresh" type="button" aria-label="Rafraîchir la page">
           <span class="action-icon">${ICONS.refresh}</span>
         </button>
+        <a class="quick" data-kind="settings" href="/pages/settings" aria-label="Ouvrir les paramètres">
+          <span class="action-icon">${ICONS.settings}</span>
+        </a>
       </div>
     </div>
   </div>
@@ -375,7 +353,7 @@ class SiteNavbar extends HTMLElement {
   }
 
   _updateHeight() {
-    const height = Math.ceil(this.getBoundingClientRect().height || 80);
+    const height = Math.ceil(this.getBoundingClientRect().height || 52);
     document.documentElement.style.setProperty("--navbar-height", `${height}px`);
     document.body?.style.setProperty("--navbar-height", `${height}px`);
   }
