@@ -8,7 +8,7 @@ function pickRandomShape() {
 
 function getShapeGeometry(type) {
   if (type === "pyramid") {
-    const s = 2;
+    const s = 1;
     return {
       vertices: [
         [-s, -s, -s],
@@ -31,9 +31,9 @@ function getShapeGeometry(type) {
   }
 
   if (type === "prism") {
-    const w = 1.5;
-    const h = 1;
-    const d = 2;
+    const w = 0.85;
+    const h = 0.6;
+    const d = 1;
     return {
       vertices: [
         [-w, -h, -d / 2],
@@ -62,7 +62,7 @@ function getShapeGeometry(type) {
     };
   }
 
-  const s = 2;
+  const s = 1;
   return {
     vertices: [
       [-s, -s, -s],
