@@ -206,8 +206,8 @@ const NAVBAR_STYLE = `
   .feature-icon,
   .action-icon,
   .brand-icon-wrap {
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     display: inline-grid;
     place-items: center;
     flex: 0 0 auto;
@@ -268,7 +268,7 @@ const NAVBAR_STYLE = `
 
     .bar {
       min-height: 48px;
-      padding: 6px 10px;
+      padding: 10px 10px;
       border-radius: 16px;
     }
 
@@ -287,6 +287,7 @@ const NAVBAR_STYLE = `
 
     .brand {
       padding-right: 12px;
+      padding-left: 12px;
     }
   }
 `;
