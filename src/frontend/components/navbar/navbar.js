@@ -39,7 +39,7 @@ const ICONS = {
   `,
   refresh: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M7 7h4V3L6 8l5 5V9H7a4 4 0 0 0 0 8h2v2H7a6 6 0 0 1 0-12zm10 0h-2V5h2a6 6 0 0 1 0 12h-4v4l-5-5 5-5v4h4a4 4 0 0 0 0-8z"></path>
+      <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.99 5.99 0 0 1-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path>
     </svg>
   `,
 };
@@ -47,19 +47,39 @@ const ICONS = {
 const NAVBAR_STYLE = `
   :host {
     position: fixed;
-    inset: 0 0 auto 0;
+    inset: 10px 14px auto 14px;
     z-index: 1200;
     display: block;
     color: #edf5f2;
+    box-sizing: border-box;
+    pointer-events: none;
   }
 
   .bar {
     min-height: 52px;
-    padding: 6px 14px;
-    border-bottom: none;
-    background: transparent;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    padding: 6px 12px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 16, 17, 0.28);
+    backdrop-filter: blur(22px) saturate(1.15);
+    -webkit-backdrop-filter: blur(22px) saturate(1.15);
+    box-shadow:
+      0 10px 40px rgba(0, 0, 0, 0.18),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    pointer-events: auto;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.03);
+    mask-image: radial-gradient(ellipse 120% 100% at 50% 0%, #000 55%, transparent 100%);
   }
 
   .inner {
@@ -69,6 +89,8 @@ const NAVBAR_STYLE = `
     align-items: center;
     gap: 8px;
     flex-wrap: nowrap;
+    position: relative;
+    z-index: 1;
   }
 
   .brand,
@@ -118,8 +140,14 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon {
-    border-radius: 0;
-    object-fit: contain;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    transform: scale(1.18);
+    transform-origin: center;
   }
 
   .brand-text {
@@ -177,12 +205,13 @@ const NAVBAR_STYLE = `
 
   .feature-icon,
   .action-icon,
-  .brand-icon {
+  .brand-icon-wrap {
     width: 20px;
     height: 20px;
     display: inline-grid;
     place-items: center;
     flex: 0 0 auto;
+    overflow: hidden;
   }
 
   .feature-icon svg,
@@ -233,9 +262,14 @@ const NAVBAR_STYLE = `
   }
 
   @media (max-width: 640px) {
+    :host {
+      inset: 8px 10px auto 10px;
+    }
+
     .bar {
       min-height: 48px;
       padding: 6px 10px;
+      border-radius: 16px;
     }
 
     .brand-text span,
@@ -261,7 +295,9 @@ const NAVBAR_TEMPLATE = `
   <div class="bar">
     <div class="inner">
       <a class="brand" data-home-link href="/pages/home" aria-label="Aller à l'accueil">
-        <img class="brand-icon" src="/assets/icons/websitelogo.jpeg" alt="">
+        <span class="brand-icon-wrap">
+          <img class="brand-icon" src="/assets/icons/websitelogo.jpeg" alt="">
+        </span>
         <span class="brand-text">
           <span>Dashboard</span>
         </span>
@@ -351,7 +387,7 @@ class SiteNavbar extends HTMLElement {
   }
 
   _updateHeight() {
-    const height = Math.ceil(this.getBoundingClientRect().height || 52);
+    const height = Math.ceil(this.getBoundingClientRect().height || 72);
     document.documentElement.style.setProperty("--navbar-height", `${height}px`);
     document.body?.style.setProperty("--navbar-height", `${height}px`);
   }
