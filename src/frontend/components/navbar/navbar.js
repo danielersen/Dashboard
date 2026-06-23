@@ -295,7 +295,6 @@ const NAVBAR_TEMPLATE = `
             <a class="feature" data-route="${item.slug}" href="${item.href}">
               <span class="feature-icon">${iconFor(item.icon)}</span>
               <span>${item.label}</span>
-              <em>${item.slug}</em>
             </a>
           `).join("")}
         </div>
