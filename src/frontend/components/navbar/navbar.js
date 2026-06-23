@@ -34,12 +34,12 @@ const ICONS = {
   `,
   settings: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m12 8.6 1.4.8 1.8-.7.9-1.8 2.2 1.3-.2 2 .9 1.6 1.8.9v2.6l-1.8.9-.9 1.6.2 2-2.2 1.3-.9-1.8-1.8-.7-1.4.8-1.4-.8-1.8.7-.9 1.8-2.2-1.3.2-2-.9-1.6-1.8-.9V12l1.8-.9.9-1.6-.2-2 2.2-1.3.9 1.8 1.8.7zM12 9.9A2.1 2.1 0 1 0 12 14a2.1 2.1 0 0 0 0-4.1z"></path>
+      <path d="M10 2h4v3l2 .8 2.1-2.1 2.8 2.8-2.1 2.1.8 2H23v4h-3l-.8 2 2.1 2.1-2.8 2.8-2.1-2.1-2 .8V23h-4v-3l-2-.8-2.1 2.1-2.8-2.8 2.1-2.1-.8-2H1v-4h3l.8-2-2.1-2.1 2.8-2.8 2.1 2.1 2-.8zm2 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
     </svg>
   `,
   refresh: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M20 12a8 8 0 0 1-13.6 5.7L4 20v-6h6l-2.3 2.3A5.9 5.9 0 1 0 6 12H3a9 9 0 1 1 17 0z"></path>
+      <path d="M7 7h4V3L6 8l5 5V9H7a4 4 0 0 0 0 8h2v2H7a6 6 0 0 1 0-12zm10 0h-2V5h2a6 6 0 0 1 0 12h-4v4l-5-5 5-5v4h4a4 4 0 0 0 0-8z"></path>
     </svg>
   `,
 };
@@ -261,9 +261,8 @@ const NAVBAR_TEMPLATE = `
   <div class="bar">
     <div class="inner">
       <a class="brand" data-home-link href="/pages/home" aria-label="Aller à l'accueil">
-        <img class="brand-icon" src="/assets/icons/logo.png" alt="">
+        <img class="brand-icon" src="/assets/icons/websitelogo.jpeg" alt="">
         <span class="brand-text">
-          <strong>home</strong>
           <span>Dashboard</span>
         </span>
       </a>
@@ -274,7 +273,6 @@ const NAVBAR_TEMPLATE = `
             <a class="feature" data-route="${item.slug}" href="${item.href}">
               <span class="feature-icon">${iconFor(item.icon)}</span>
               <span>${item.label}</span>
-              <em>${item.slug}</em>
             </a>
           `).join("")}
         </div>
