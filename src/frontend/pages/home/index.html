@@ -12,49 +12,56 @@
     <site-navbar current="home"></site-navbar>
 
     <main class="home-shell">
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Dashboard</p>
-          <h1>Home</h1>
-          <p class="lede">
-            Do whatever you want !
+      <section class="bento-grid" aria-label="Accueil">
+        <article class="bento-block block-greeting">
+          <p class="block-eyebrow">Bienvenue</p>
+          <h1>Hello Daniel</h1>
+        </article>
+
+        <article class="bento-block block-mesh" aria-label="Forme 3D animée">
+          <canvas id="meshCanvas" aria-hidden="true"></canvas>
+        </article>
+
+        <article class="bento-block block-status">
+          <p class="block-eyebrow">Home</p>
+          <strong class="status-title">Tableau de bord</strong>
+          <p class="status-sync">
+            Dernière synchronisation&nbsp;:
+            <span id="syncLabel">--:--</span>
           </p>
-          <div class="hero-meta">
-            <span class="meta-pill" id="syncLabel">Synchronisé</span>
-            <span class="meta-pill meta-pill-soft" id="clockLabel">--:--</span>
-          </div>
-        </div>
+        </article>
 
-        <div class="hero-visual">
-          <img src="/assets/icons/logo.png" alt="" class="hero-logo">
-        </div>
-      </section>
+        <article class="bento-block block-logo">
+          <img src="/assets/icons/logo.png" alt="Logo Dashboard" class="home-logo">
+        </article>
 
-      <section class="feature-grid" aria-label="Accès rapide">
-        <a class="feature-card is-primary" href="/pages/workspace">
-          <span class="card-kicker">Workspace</span>
+        <a class="bento-block block-link" href="/pages/workspace">
+          <span class="block-eyebrow">Workspace</span>
           <strong>School</strong>
-          <p>Grades, averages, tometables, notes... in one screen !</p>
         </a>
 
-        <a class="feature-card" href="/pages/artificial-intelligence">
-          <span class="card-kicker">Intelligence</span>
-          <strong>Artificial intelligence</strong>
-          <p>Some AI features and models.</p>
+        <a class="bento-block block-link" href="/pages/artificial-intelligence">
+          <span class="block-eyebrow">Artificial Intelligence</span>
+          <strong>Intelligence</strong>
         </a>
 
-        <a class="feature-card" href="/pages/files">
-          <span class="card-kicker">Files</span>
+        <a class="bento-block block-link" href="/pages/files">
+          <span class="block-eyebrow">Files storage</span>
           <strong>Base of files</strong>
-          <p>Place where you can store files.</p>
         </a>
 
-        <a class="feature-card" href="/pages/tools">
-          <span class="card-kicker">Tools</span>
-          <strong>Useful tools</strong>
-          <p>Calculators, converters, code compiler...</p>
+        <a class="bento-block block-link" href="/pages/tools">
+          <span class="block-eyebrow">Useful tools</span>
+          <strong>Tools</strong>
+        </a>
+
+        <a class="bento-block block-link" href="/pages/personalisation">
+          <span class="block-eyebrow">Personnalisation</span>
+          <strong>Settings</strong>
         </a>
       </section>
+
+      <p class="home-footer">Designed by AI and managed by Daniel Ersen</p>
     </main>
     <script type="module" src="/pages/home/script.js"></script>
   </body>
