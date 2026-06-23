@@ -277,7 +277,7 @@ const NAVBAR_STYLE = `
     fill: currentColor;
   }
 
-  .feature span,
+  .feature-label,
   .quick span {
     font-size: 0.85rem;
     white-space: nowrap;
@@ -333,7 +333,7 @@ const NAVBAR_STYLE = `
       border-radius: 16px;
     }
 
-    .feature span {
+    .feature-label {
       display: none;
     }
 
@@ -367,7 +367,7 @@ const NAVBAR_TEMPLATE = `
             ${NAV_ITEMS.map((item) => `
               <a class="feature" data-route="${item.slug}" href="${item.href}">
                 <span class="feature-icon">${iconFor(item.icon)}</span>
-                <span>${item.label}</span>
+                <span class="feature-label">${item.label}</span>
               </a>
             `).join("")}
           </div>
