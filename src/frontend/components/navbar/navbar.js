@@ -83,12 +83,11 @@ const NAVBAR_STYLE = `
   }
 
   .inner {
-    width: min(100%, 1600px);
-    margin: 0 auto;
-    display: flex;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
     position: relative;
     z-index: 1;
   }
@@ -114,10 +113,12 @@ const NAVBAR_STYLE = `
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 4px 8px;
+    padding: 4px 8px 4px 0;
     border-color: transparent;
     background: transparent;
     flex-shrink: 0;
+    grid-column: 1;
+    justify-self: start;
   }
 
   .brand:hover {
@@ -167,10 +168,11 @@ const NAVBAR_STYLE = `
   }
 
   .center {
-    flex: 1;
+    grid-column: 2;
     min-width: 0;
     display: flex;
     justify-content: center;
+    justify-self: center;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -234,8 +236,11 @@ const NAVBAR_STYLE = `
   }
 
   .right {
+    grid-column: 3;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
     gap: 8px;
     flex-shrink: 0;
   }
@@ -247,10 +252,14 @@ const NAVBAR_STYLE = `
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
+    padding: 8px 12px 8px 12px;
     border-color: rgba(255, 255, 255, 0.06);
     background: rgba(255, 255, 255, 0.03);
     color: rgba(237, 245, 242, 0.82);
+  }
+
+  .right .quick:last-child {
+    padding-right: 0;
   }
 
   .action[aria-label] {
@@ -286,8 +295,8 @@ const NAVBAR_STYLE = `
     }
 
     .brand {
-      padding-right: 12px;
-      padding-left: 12px;
+      padding-right: 8px;
+      padding-left: 0;
     }
   }
 `;
