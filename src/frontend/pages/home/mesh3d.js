@@ -1,7 +1,6 @@
 const SHAPES = ["cube", "pyramid", "prism"];
-const EDGE_COLOR = "#4da6ff";
-const VERTEX_COLOR = "#7ec8ff";
-const BG_COLOR = "#000000";
+const EDGE_COLOR = "#ffffff";
+const VERTEX_COLOR = "#ffffff";
 
 function pickRandomShape() {
   return SHAPES[Math.floor(Math.random() * SHAPES.length)];
@@ -166,8 +165,7 @@ export function createMesh3D(canvas) {
     angleY += speed * 1.18;
     angleZ += speed * 0.74;
 
-    ctx.fillStyle = BG_COLOR;
-    ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height);
 
     const scale = Math.min(width, height) * 0.42;
     const rotated = geometry.vertices.map((vertex) =>
