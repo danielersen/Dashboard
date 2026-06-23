@@ -5,7 +5,7 @@ const NAV_ITEMS = [
   { slug: "files", label: "Files", href: "/pages/files", icon: "database" },
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
-
+ 
 const ICONS = {
   home: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
