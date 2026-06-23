@@ -112,8 +112,7 @@ const NAVBAR_STYLE = `
   .brand {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 4px 8px 4px 0;
+    padding: 4px 0;
     border-color: transparent;
     background: transparent;
     flex-shrink: 0;
@@ -141,30 +140,14 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 4px;
     object-fit: cover;
     object-position: center;
     display: block;
-    transform: scale(1.18);
+    transform: scale(1.2);
     transform-origin: center;
-  }
-
-  .brand-text {
-    display: grid;
-    gap: 2px;
-    line-height: 1.05;
-  }
-
-  .brand-text strong {
-    font-size: 0.95rem;
-    letter-spacing: 0;
-  }
-
-  .brand-text span {
-    color: rgba(237, 245, 242, 0.65);
-    font-size: 0.74rem;
   }
 
   .center {
@@ -208,11 +191,15 @@ const NAVBAR_STYLE = `
   .feature-icon,
   .action-icon,
   .brand-icon-wrap {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     display: inline-grid;
     place-items: center;
     flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .brand-icon-wrap {
     overflow: hidden;
   }
 
@@ -243,6 +230,7 @@ const NAVBAR_STYLE = `
     justify-self: end;
     gap: 8px;
     flex-shrink: 0;
+    padding-right: 2px;
   }
 
   .action,
@@ -251,15 +239,12 @@ const NAVBAR_STYLE = `
     min-height: 0;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
-    padding: 8px 12px 8px 12px;
+    padding: 8px 10px;
     border-color: rgba(255, 255, 255, 0.06);
     background: rgba(255, 255, 255, 0.03);
     color: rgba(237, 245, 242, 0.82);
-  }
-
-  .right .quick:last-child {
-    padding-right: 0;
   }
 
   .action[aria-label] {
@@ -281,7 +266,6 @@ const NAVBAR_STYLE = `
       border-radius: 16px;
     }
 
-    .brand-text span,
     .feature span {
       display: none;
     }
@@ -306,10 +290,7 @@ const NAVBAR_TEMPLATE = `
     <div class="inner">
       <a class="brand" data-home-link href="/pages/home" aria-label="Aller à l'accueil">
         <span class="brand-icon-wrap">
-          <img class="brand-icon" src="/assets/icons/websitelogo.jpeg" alt="">
-        </span>
-        <span class="brand-text">
-          <span>Dashboard</span>
+          <img class="brand-icon" src="/assets/icons/websitelogo.jpeg" alt="Dashboard">
         </span>
       </a>
 
