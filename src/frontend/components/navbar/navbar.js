@@ -56,7 +56,7 @@ const NAVBAR_STYLE = `
   }
 
   .bar {
-    min-height: 52px;
+    min-height: 42px;
     padding: 6px 12px;
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -114,7 +114,7 @@ const NAVBAR_STYLE = `
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
+    padding: 4px 8px;
     border-color: transparent;
     background: transparent;
     flex-shrink: 0;
@@ -140,8 +140,8 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon {
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     border-radius: 4px;
     object-fit: cover;
     object-position: center;
