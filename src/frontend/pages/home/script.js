@@ -1,14 +1,39 @@
-const syncLabel = document.getElementById("syncLabel");
-const clockLabel = document.getElementById("clockLabel");
+import { createMesh3D } from "./mesh3d.js";
 
-function bootHome() {
+const syncLabel = document.getElementById("syncLabel");
+const meshCanvas = document.getElementById("meshCanvas");
+let mesh = null;
+
+function updateSyncTime() {
   const now = new Date();
-  syncLabel.textContent = "Synchronisé";
-  clockLabel.textContent = now.toLocaleTimeString("fr-FR", {
+  syncLabel.textContent = now.toLocaleTimeString("fr-FR", {
     hour: "2-digit",
     minute: "2-digit",
   });
 }
 
+function bootHome() {
+  updateSyncTime();
+
+  if (!mesh && meshCanvas) {
+    mesh = createMesh3D(meshCanvas);
+    mesh.start();
+    return;
+  }
+
+  mesh?.refresh();
+}
+
 document.addEventListener("DOMContentLoaded", bootHome);
 window.addEventListener("site-navbar:refresh", bootHome);
+
+document.addEventListener("visibilitychange", () => {
+  if (!mesh) {
+    return;
+  }
+  if (document.hidden) {
+    mesh.stop();
+  } else {
+    mesh.start();
+  }
+});
