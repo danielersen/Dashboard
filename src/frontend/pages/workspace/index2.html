@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#08100f">
-    <title>Dashboard - Homework</title>
-    <meta name="description" content="Homework from EcoleDirecte.">
+    <title>Dashboard - Grades</title>
+    <meta name="description" content="Grades and averages from EcoleDirecte.">
     <link rel="stylesheet" href="/pages/workspace/style.css">
     <style>
       body {
@@ -21,17 +21,25 @@
   <body>
     <div class="solo-shell">
       <main class="ws-main">
-        <!-- ===================== HOMEWORK ===================== -->
-        <section id="homeworks" class="ws-section" aria-label="Homework">
+        <!-- ===================== GRADES ===================== -->
+        <section id="notes" class="ws-section" aria-label="Grades">
           <header class="section-head">
-            <h1>Homework</h1>
+            <h1>Grades</h1>
+            <div class="segmented" role="tablist" aria-label="Choose the term" data-trimester>
+              <span class="segmented-thumb" data-thumb></span>
+              <button class="segmented-btn" type="button" role="tab" data-period="trimestre1" data-active="true">Term 1</button>
+              <button class="segmented-btn" type="button" role="tab" data-period="trimestre2">Term 2</button>
+              <button class="segmented-btn" type="button" role="tab" data-period="trimestre3">Term 3</button>
+            </div>
           </header>
-          <div class="homeworks-body" data-homeworks-body>
-            <p class="state-msg">Loading homework…</p>
+          <div class="notes-body" data-notes-body>
+            <p class="state-msg">Loading grades…</p>
           </div>
         </section>
       </main>
     </div>
+
+    <div class="note-tooltip" data-note-tooltip hidden></div>
 
     <script type="module" src="/pages/workspace/index2.js"></script>
   </body>
