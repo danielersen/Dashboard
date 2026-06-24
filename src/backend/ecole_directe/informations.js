@@ -167,7 +167,7 @@ export async function EDinformations(env, new_token) {
 
   // Answering informations if they exist
   if (qcmJson.code !== 200 || !qcmJson.data?.cn || !qcmJson.data?.cv) {
-    throw new Error(`Échec QCM: ${JSON.stringify(qcmJson)}`);
+    throw new Error(`Échec QCM: ${JSON.stringify(qcmJson)}, question: ${q}, propositions: ${propositions}, reponse: ${p}`);
   }
   const second = await login([{ cn: qcmJson.data.cn, cv: qcmJson.data.cv }]);
   if (second.json.code === 200) {
