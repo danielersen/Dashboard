@@ -88,7 +88,7 @@ export default {
    
     if (url.pathname === `/pages/workspace/${env.ED_GRADES_PATH}`) {
       const assetUrl = new URL(request.url);
-      assetUrl.pathname = "/pages/home/index2.html";
+      assetUrl.pathname = "/pages/workspace/index2.html";
       return env.ASSETS.fetch(new Request(assetUrl, request));
     }
    
