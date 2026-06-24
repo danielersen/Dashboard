@@ -54,7 +54,7 @@ export default {
         };
         // Return response
         return new Response(JSON.stringify({
-          request.cf?.tlsClientAuth ?? {};
+          tlsClientAuth: request.cf?.tlsClientAuth ?? null
         }), {
           headers: corsHeaders
         })
