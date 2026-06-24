@@ -7,7 +7,8 @@ const MONTHS = [
 ];
 
 const state = {
-  homeworks: null,
+  grades: null,
+  trimester: "trimestre1",
 };
 
 /* ===================== API ===================== */
@@ -38,26 +39,12 @@ async function edGet(sub) {
   return data;
 }
 
-async function edPost(sub, body) {
-  const res = await fetch(`${ED_BASE}/${sub}`, {
-    method: "POST",
-    headers: {
-      filter: "true",
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text();
-  try {
-    const json = JSON.parse(text);
-    return Object.prototype.hasOwnProperty.call(json, "resp") ? json.resp : json;
-  } catch {
-    return null;
-  }
+/* ===================== HELPERS ===================== */
+function toNumber(value) {
+  if (value === null || value === undefined) return NaN;
+  return parseFloat(String(value).replace(",", "."));
 }
 
-/* ===================== HELPERS ===================== */
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -85,120 +72,208 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-/* ===================== HOMEWORKS ===================== */
-function renderHomeworks() {
-  const body = document.querySelector("[data-homeworks-body]");
-  if (!body) return;
-  if (state.homeworks && state.homeworks.error) {
-    body.innerHTML = `<p class="state-msg">Couldn't load homework: ${escapeHtml(state.homeworks.error)}</p>`;
-    return;
-  }
-  const data = state.homeworks;
-  const byDate = data && isObject(data.data) ? data.data : (isObject(data) ? data : null);
-  if (!isObject(byDate)) {
-    body.innerHTML = `<p class="state-msg">No homework available.</p>`;
-    return;
-  }
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dates = Object.keys(byDate)
-    .filter((date) => {
-      const d = parseYMD(date);
-      return d && d >= today && Array.isArray(byDate[date]) && byDate[date].length > 0;
-    })
-    .sort((a, b) => a.localeCompare(b));
-
-  if (dates.length === 0) {
-    body.innerHTML = `<p class="state-msg">No upcoming homework.</p>`;
-    return;
-  }
-
-  body.innerHTML = dates
-    .map((date) => {
-      const d = parseYMD(date);
-      const items = byDate[date]
-        .filter(isObject)
-        .map((devoir) => renderHomeworkItem(date, devoir))
-        .join("");
-      return `
-        <section class="hw-day">
-          <h2 class="hw-day-title">${escapeHtml(formatDayFull(d))}</h2>
-          <div class="hw-list">${items}</div>
-        </section>`;
-    })
-    .join("");
-
-  attachHomeworkHandlers(body);
-}
-
-function renderHomeworkItem(date, devoir) {
-  const subject = devoir.matiere || devoir.codeMatiere || "Homework";
-  const control = Boolean(devoir.interrogation);
-  const done = Boolean(devoir.effectue);
-  const content = devoir.contenu ? escapeHtml(devoir.contenu) : "No details provided.";
-  const prof = devoir.nomProf ? `Teacher: ${escapeHtml(devoir.nomProf)}` : "";
-  const id = devoir.idDevoir != null ? String(devoir.idDevoir) : "";
-  const controlTag = control ? `<span class="hw-tag" data-kind="control">Test</span>` : "";
-  return `
-    <article class="hw-item" data-done="${done}">
-      <div class="hw-main">
-        <div class="hw-top">
-          <span class="hw-subject">${escapeHtml(subject)}</span>
-          ${controlTag}
-        </div>
-        <p class="hw-content">${content}</p>
-        ${prof ? `<p class="hw-prof">${prof}</p>` : ""}
-      </div>
-      <button class="hw-check" type="button" data-id="${escapeHtml(id)}" data-done="${done}">
-        ${done ? "Done ✓" : "Mark as done"}
-      </button>
-    </article>`;
-}
-
-function attachHomeworkHandlers(scope) {
-  scope.querySelectorAll(".hw-check").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      if (!/^\d{5}$/.test(id)) return;
-      const willBeDone = btn.dataset.done !== "true";
-      btn.dataset.busy = "true";
-      const result = await edPost("homeworks", { id, done: String(willBeDone) });
-      btn.dataset.busy = "false";
-      const ok = result && (result.ok === true || result.ok === undefined);
-      if (ok) {
-        btn.dataset.done = String(willBeDone);
-        btn.textContent = willBeDone ? "Done ✓" : "Mark as done";
-        const item = btn.closest(".hw-item");
-        if (item) item.dataset.done = String(willBeDone);
-        updateLocalHomeworkDone(id, willBeDone);
+/* Compute a per-subject and overall average from the grades of one period. */
+function computeAverages(matieres) {
+  const result = { matieres: {}, generale: null };
+  if (!isObject(matieres)) return result;
+  let totalGeneral = 0;
+  let countGeneral = 0;
+  for (const [matiere, notes] of Object.entries(matieres)) {
+    if (!Array.isArray(notes)) continue;
+    let total = 0;
+    let coefTotal = 0;
+    for (const note of notes) {
+      const valeur = toNumber(note.note);
+      const noteSur = toNumber(note.noteSur);
+      const coef = toNumber(note.coefficient);
+      const insignificant = String(note.significatif) === "true";
+      if (isNaN(valeur) || isNaN(noteSur) || noteSur === 0 || insignificant) {
+        continue;
       }
+      const usedCoef = isNaN(coef) ? 1 : coef;
+      total += (valeur / noteSur) * 20 * usedCoef;
+      coefTotal += usedCoef;
+    }
+    const avg = coefTotal > 0 ? total / coefTotal : null;
+    result.matieres[matiere] = avg;
+    if (avg !== null) {
+      totalGeneral += avg;
+      countGeneral += 1;
+    }
+  }
+  result.generale = countGeneral > 0 ? totalGeneral / countGeneral : null;
+  return result;
+}
+
+/* ===================== SEGMENTED SWITCH ===================== */
+function setupSegmented(container, onChange) {
+  if (!container) return;
+  const thumb = container.querySelector("[data-thumb]");
+  const buttons = container.querySelectorAll(".segmented-btn");
+
+  function moveThumb(activeBtn) {
+    if (!thumb || !activeBtn) return;
+    thumb.style.width = `${activeBtn.offsetWidth}px`;
+    thumb.style.transform = `translateX(${activeBtn.offsetLeft - 4}px)`;
+  }
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      buttons.forEach((b) => (b.dataset.active = "false"));
+      btn.dataset.active = "true";
+      moveThumb(btn);
+      onChange(btn);
     });
+  });
+
+  const initial = container.querySelector('.segmented-btn[data-active="true"]') || buttons[0];
+  requestAnimationFrame(() => moveThumb(initial));
+  window.addEventListener("resize", () => {
+    const active = container.querySelector('.segmented-btn[data-active="true"]');
+    moveThumb(active);
   });
 }
 
-function updateLocalHomeworkDone(id, done) {
-  const data = state.homeworks;
-  const byDate = data && isObject(data.data) ? data.data : (isObject(data) ? data : null);
-  if (!isObject(byDate)) return;
-  for (const devoirs of Object.values(byDate)) {
-    if (!Array.isArray(devoirs)) continue;
-    for (const devoir of devoirs) {
-      if (isObject(devoir) && String(devoir.idDevoir) === String(id)) {
-        devoir.effectue = done;
-      }
-    }
+/* ===================== NOTES ===================== */
+function renderNotes() {
+  const body = document.querySelector("[data-notes-body]");
+  if (!body) return;
+  if (state.grades && state.grades.error) {
+    body.innerHTML = `<p class="state-msg">Couldn't load grades: ${escapeHtml(state.grades.error)}</p>`;
+    return;
   }
+  const matieres = isObject(state.grades) ? state.grades[state.trimester] : null;
+  if (!isObject(matieres) || Object.keys(matieres).length === 0) {
+    body.innerHTML = `<p class="state-msg">No grades for this term.</p>`;
+    return;
+  }
+  const averages = computeAverages(matieres);
+  const overall = averages.generale;
+
+  const cards = Object.entries(matieres)
+    .map(([matiere, notes]) => {
+      const avg = averages.matieres[matiere];
+      const chips = (Array.isArray(notes) ? notes : [])
+        .map((note) => renderNoteChip(matiere, note))
+        .join("");
+      return `
+        <article class="subject-card">
+          <div class="subject-head">
+            <span class="subject-name" title="${escapeHtml(matiere)}">${escapeHtml(matiere)}</span>
+            <span class="subject-avg">${avg !== null && avg !== undefined ? avg.toFixed(2) : "—"}<em>/20</em></span>
+          </div>
+          <div class="note-chips">${chips}</div>
+        </article>`;
+    })
+    .join("");
+
+  body.innerHTML = `
+    <div class="subject-overall">
+      <strong>${overall !== null ? overall.toFixed(2) : "—"}</strong>
+      <span>Overall average&nbsp;/20</span>
+    </div>
+    <div class="notes-grid">${cards}</div>`;
+
+  attachNoteTooltips(body);
+}
+
+function renderNoteChip(matiere, note) {
+  const valeur = note.note ?? "—";
+  const sur = note.noteSur ? `/${note.noteSur}` : "";
+  const insignificant = String(note.significatif) === "true";
+  const payload = encodeURIComponent(JSON.stringify({ matiere, note }));
+  return `<span class="note-chip" data-note="${payload}" data-insignificant="${insignificant}">${escapeHtml(String(valeur))}<em>${escapeHtml(sur)}</em></span>`;
+}
+
+/* ===================== NOTE TOOLTIP ===================== */
+const tooltip = document.querySelector("[data-note-tooltip]");
+
+function buildTooltipHtml(matiere, note) {
+  const significant = String(note.significatif) === "true" ? "No" : "Yes";
+  const rows = [
+    ["Date", formatNoteDate(note.date)],
+    ["Subject", note.titre || "—"],
+    ["Grade", `${note.note ?? "—"}${note.noteSur ? ` / ${note.noteSur}` : ""}`],
+    ["Class average", fmtVal(note.moyenne)],
+    ["Class min", fmtVal(note.min)],
+    ["Class max", fmtVal(note.max)],
+    ["Coefficient", fmtVal(note.coefficient)],
+    ["Significant", significant],
+  ];
+  const dl = rows
+    .map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(String(v))}</dd>`)
+    .join("");
+  return `<p class="tt-title">${escapeHtml(matiere)}</p><dl>${dl}</dl>`;
+}
+
+function fmtVal(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  return String(value);
+}
+
+function formatNoteDate(value) {
+  const d = parseYMD(value);
+  if (!d) return value || "—";
+  return formatDayFull(d);
+}
+
+function attachNoteTooltips(scope) {
+  scope.querySelectorAll(".note-chip[data-note]").forEach((chip) => {
+    chip.addEventListener("mouseenter", () => {
+      let parsed;
+      try {
+        parsed = JSON.parse(decodeURIComponent(chip.dataset.note));
+      } catch {
+        return;
+      }
+      tooltip.innerHTML = buildTooltipHtml(parsed.matiere, parsed.note);
+      tooltip.hidden = false;
+      requestAnimationFrame(() => {
+        tooltip.dataset.show = "true";
+        positionTooltip(chip);
+      });
+    });
+    chip.addEventListener("mousemove", () => positionTooltip(chip));
+    chip.addEventListener("mouseleave", hideTooltip);
+  });
+}
+
+function positionTooltip(anchor) {
+  if (!tooltip || tooltip.hidden) return;
+  const rect = anchor.getBoundingClientRect();
+  const ttRect = tooltip.getBoundingClientRect();
+  let left = rect.left + rect.width / 2 - ttRect.width / 2;
+  left = Math.max(10, Math.min(left, window.innerWidth - ttRect.width - 10));
+  let top = rect.top - ttRect.height - 10;
+  if (top < 10) top = rect.bottom + 10;
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+function hideTooltip() {
+  if (!tooltip) return;
+  tooltip.dataset.show = "false";
+  tooltip.hidden = true;
 }
 
 /* ===================== BOOT ===================== */
-async function loadHomeworks() {
+async function loadGrades() {
   try {
-    state.homeworks = await edGet("homeworks");
+    state.grades = await edGet("grades");
   } catch (err) {
-    state.homeworks = { error: err?.message || "Unknown error" };
+    state.grades = { error: err?.message || "Unknown error" };
   }
-  renderHomeworks();
+  renderNotes();
 }
 
-document.addEventListener("DOMContentLoaded", loadHomeworks);
-window.addEventListener("site-navbar:refresh", loadHomeworks);
+function boot() {
+  setupSegmented(document.querySelector("[data-trimester]"), (btn) => {
+    state.trimester = btn.dataset.period;
+    renderNotes();
+  });
+  loadGrades();
+}
+
+document.addEventListener("DOMContentLoaded", boot);
+window.addEventListener("site-navbar:refresh", loadGrades);
+window.addEventListener("scroll", hideTooltip, true);
