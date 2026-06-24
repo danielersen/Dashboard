@@ -318,6 +318,23 @@ const NAVBAR_STYLE = `
     position: relative;
   }
 
+  .quick[data-cooldown="true"] {
+    opacity: 0.3;
+    filter: grayscale(1);
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
+  @keyframes navbar-refresh-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .quick[data-cooldown="true"] .action-icon svg {
+    animation: navbar-refresh-spin 1s linear infinite;
+  }
+
   .action-label {
     display: none;
   }
@@ -405,7 +422,10 @@ class SiteNavbar extends HTMLElement {
     this._centerScrollCleanup = null;
     this._boundRefresh = this._handleRefresh.bind(this);
     this._boundUpdateHeight = this._updateHeight.bind(this);
+    this._refreshCooldownTimer = null;
   }
+
+  static REFRESH_COOLDOWN_MS = 10000;
 
   connectedCallback() {
     if (!this.shadowRoot) {
@@ -431,6 +451,10 @@ class SiteNavbar extends HTMLElement {
   }
 
   disconnectedCallback() {
+    if (this._refreshCooldownTimer) {
+      clearTimeout(this._refreshCooldownTimer);
+      this._refreshCooldownTimer = null;
+    }
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
       this._resizeObserver = null;
@@ -576,6 +600,21 @@ class SiteNavbar extends HTMLElement {
   }
 
   _handleRefresh() {
+    const button = this.shadowRoot?.querySelector("[data-kind='refresh']");
+    if (button) {
+      if (button.dataset.cooldown === "true") return;
+      button.dataset.cooldown = "true";
+      button.disabled = true;
+      button.setAttribute("aria-disabled", "true");
+      if (this._refreshCooldownTimer) clearTimeout(this._refreshCooldownTimer);
+      this._refreshCooldownTimer = setTimeout(() => {
+        button.dataset.cooldown = "false";
+        button.disabled = false;
+        button.removeAttribute("aria-disabled");
+        this._refreshCooldownTimer = null;
+      }, SiteNavbar.REFRESH_COOLDOWN_MS);
+    }
+
     window.dispatchEvent(new CustomEvent("site-navbar:refresh", {
       detail: { current: this.getAttribute("current") || "home" },
     }));
