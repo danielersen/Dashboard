@@ -26,33 +26,6 @@ export default {
     }
 
     // =========================
-    // 🌐 SITE (Cloudflare assets)
-    // =========================
-    if (url.pathname === `/${env.GOOGLE_SITE_VERIFICATION}`) {
-      return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
-        headers: { "content-type": "text/html" }
-      });
-    } else if (
-      url.pathname === "/" ||
-      url.pathname === "" ||
-      url.pathname.startsWith("/assets") ||
-      url.pathname.startsWith("/components/") ||
-      url.pathname.startsWith("/pages/")
-    ) {
-      const assetUrl = new URL(request.url);
-      assetUrl.pathname = "/pages/home/index.html";
-      return env.ASSETS.fetch(new Request(assetUrl, request));
-     
-      const pageMatch = url.pathname.match(/^\/pages\/([^/]+)\/?$/);
-      if (pageMatch) {
-        const assetUrl = new URL(request.url);
-        assetUrl.pathname = `/pages/${pageMatch[1]}/index.html`;
-        return env.ASSETS.fetch(new Request(assetUrl, request));
-      }
-    }
-    return env.ASSETS.fetch(request)
-
-    // =========================
     // 📶 MAIN API
     // =========================
     /// CORS
@@ -69,35 +42,55 @@ export default {
       "Access-Control-Allow-Headers":
         "*"
     };
-    try {
-      // Ecole directe paths
-      let resp;
-      if (url.pathname.startsWith("/api/ed/")) {
-        resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
-      } else if (url.pathname.startsWith("/api/cache/")) {
-        resp = await Cache(url.pathname.slice("/api/cache/".length), method, body)
-      };
-      // Return response
-      return new Response(JSON.stringify({ 
-        resp 
-      }), {
-        headers: corsHeaders
-      })
-    } catch (e) {
-      console.error("API ERROR:", e?.stack || e);
-      const match = e?.stack?.match(/at .*?\(?(.+):(\d+):(\d+)\)?/);
-      return new Response(JSON.stringify({
-        error: e?.message,
-      }), {
-        status: 500,
-        headers: corsHeaders
-      });
+    if (url.pathname.startsWith("/api/")) {
+      try {
+        // Ecole directe paths
+        let resp;
+        if (url.pathname.startsWith("/api/ed/")) {
+          resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
+        } else if (url.pathname.startsWith("/api/cache/")) {
+          resp = await Cache(url.pathname.slice("/api/cache/".length), method, body)
+        };
+        // Return response
+        return new Response(JSON.stringify({
+          resp
+        }), {
+          headers: corsHeaders
+        })
+      } catch (e) {
+        console.error("API ERROR:", e?.stack || e);
+        return new Response(JSON.stringify({
+          error: e?.message,
+        }), {
+          status: 500,
+          headers: corsHeaders
+        });
+      }
     }
 
     // =========================
-    // ❌ 404 NOT FOUND
+    // 🌐 SITE (Cloudflare assets)
     // =========================
-    return new Response("Not Found", { status: 404 })
+    if (url.pathname === `/${env.GOOGLE_SITE_VERIFICATION}`) {
+      return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
+        headers: { "content-type": "text/html" }
+      });
+    }
+
+    if (url.pathname === "/" || url.pathname === "") {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = "/pages/home/index.html";
+      return env.ASSETS.fetch(new Request(assetUrl, request));
+    }
+
+    const pageMatch = url.pathname.match(/^\/pages\/([^/]+)\/?$/);
+    if (pageMatch) {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = `/pages/${pageMatch[1]}/index.html`;
+      return env.ASSETS.fetch(new Request(assetUrl, request));
+    }
+
+    return env.ASSETS.fetch(request)
   }
 }
 
