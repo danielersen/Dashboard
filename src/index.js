@@ -98,6 +98,9 @@ export default {
     // =========================
     // ❌ 404 NOT FOUND
     // =========================
+    return new Response("google-site-verification: ${env.GOOGLE-SITE-VERIFICATION}", {
+      headers: { "content-type": "text/html" }
+    });
     return new Response("Not Found", { status: 404 })
   }
 }
