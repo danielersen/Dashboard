@@ -37,7 +37,7 @@ export default {
       url.pathname === "" ||
       url.pathname.startsWith("/assets") ||
       url.pathname.startsWith("/components/") ||
-      url.pathname.startsWith("/pages/")) &&
+      url.pathname.startsWith("/pages/") &&
       (env.SITE === "production" || env.SITE === "enabled")
     ) {
       const assetUrl = new URL(request.url);
