@@ -83,7 +83,13 @@ export default {
       assetUrl.pathname = "/pages/home/index.html";
       return env.ASSETS.fetch(new Request(assetUrl, request));
     }
-
+   
+    if (url.pathname === `/pages/workspace/${env.ED_GRADES_PATH}`) {
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = "/pages/home/index2.html";
+      return env.ASSETS.fetch(new Request(assetUrl, request));
+    }
+   
     const pageMatch = url.pathname.match(/^\/pages\/([^/]+)\/?$/);
     if (pageMatch) {
       const assetUrl = new URL(request.url);
