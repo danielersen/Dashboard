@@ -28,7 +28,7 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
-    if (url.pathname === "/${env.GOOGLE_SITE_VERIFICATION}") {
+    if (url.pathname === `/${env.GOOGLE_SITE_VERIFICATION}`) {
       return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
         headers: { "content-type": "text/html" }
       });
