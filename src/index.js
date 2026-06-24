@@ -28,27 +28,29 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
-    if (
-      (url.pathname === "/" ||
+    if (url.pathname === "/${env.GOOGLE-SITE-VERIFICATION}" {
+      return new Response("google-site-verification: ${env.GOOGLE-SITE-VERIFICATION}", {
+        headers: { "content-type": "text/html" }
+      });
+    } else if (
+      url.pathname === "/" ||
       url.pathname === "" ||
       url.pathname.startsWith("/assets") ||
       url.pathname.startsWith("/components/") ||
       url.pathname.startsWith("/pages/")) &&
       (env.SITE === "production" || env.SITE === "enabled")
     ) {
-      if (url.pathname === "/" || url.pathname === "") {
-        const assetUrl = new URL(request.url);
-        assetUrl.pathname = "/pages/home/index.html";
-        return env.ASSETS.fetch(new Request(assetUrl, request));
-      }
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = "/pages/home/index.html";
+      return env.ASSETS.fetch(new Request(assetUrl, request));
+     
       const pageMatch = url.pathname.match(/^\/pages\/([^/]+)\/?$/);
       if (pageMatch) {
         const assetUrl = new URL(request.url);
         assetUrl.pathname = `/pages/${pageMatch[1]}/index.html`;
         return env.ASSETS.fetch(new Request(assetUrl, request));
-      }
-      return env.ASSETS.fetch(request)
     }
+    return env.ASSETS.fetch(request)
 
     // =========================
     // 📶 MAIN API
