@@ -596,23 +596,29 @@ function escapeHtml(value) {
 async function loadAll() {
   updateSyncTime();
 
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
   const tasks = [
     ["grades", () => edGet("grades")],
     ["timetable", () => edGet("timetable")],
     ["homeworks", () => edGet("homeworks")],
     ["newGrades", () => edGet("new-grades")],
   ];
+  for (let i = 0; i < tasks.length; i++) {
+    const [key, fn] = tasks[i];
 
-  await Promise.all(
-    tasks.map(async ([key, fn]) => {
-      try {
-        state[key] = await fn();
-      } catch (err) {
-        state[key] = { error: err?.message || "Unknown error" };
-      }
-    })
-  );
+    try {
+      state[key] = await fn();
+    } catch (err) {
+      state[key] = { error: err?.message || "Unknown error" };
+    }
 
+    if (i < tasks.length - 1) {
+      await sleep(2500);
+    }
+  }
+  
   renderNewGradesCard();
   renderHomeworksCard();
   renderTomorrowCard();
