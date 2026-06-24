@@ -605,18 +605,13 @@ async function loadAll() {
     ["homeworks", () => edGet("homeworks")],
     ["newGrades", () => edGet("new-grades")],
   ];
-  for (let i = 0; i < tasks.length; i++) {
-    const [key, fn] = tasks[i];
-
+  for (const [key, fn] of tasks) {
     try {
       state[key] = await fn();
     } catch (err) {
       state[key] = { error: err?.message || "Unknown error" };
     }
-
-    if (i < tasks.length - 1) {
-      await sleep(2500);
-    }
+    await sleep(5);
   }
   
   renderNewGradesCard();
