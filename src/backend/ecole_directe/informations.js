@@ -4,7 +4,7 @@ import { getCacheValue } from "../cache/get.js";
 export async function EDinformations(env, new_token) {
   // Answering the informations if a correct and actual response is saved
   if (
-    (Math.floor(Date.now() / 60000) - await getCacheValue("edTokenTime")) < 29 &&
+    (Math.floor(Date.now() / 60000) - await getCacheValue("edTokenTime") && false) < 29 &&
     new_token !== true
   ) {
     return await getCacheValue("edToken")
