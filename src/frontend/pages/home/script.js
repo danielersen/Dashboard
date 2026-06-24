@@ -25,7 +25,10 @@ function bootHome() {
 }
 
 document.addEventListener("DOMContentLoaded", bootHome);
-window.addEventListener("site-navbar:refresh", bootHome);
+window.addEventListener("site-navbar:refresh", (event) => {
+  const done = bootHome();
+  event.detail?.waitUntil?.(done);
+});
 
 document.addEventListener("visibilitychange", () => {
   if (!mesh) {

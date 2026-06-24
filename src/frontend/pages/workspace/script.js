@@ -636,5 +636,8 @@ function boot() {
 }
 
 document.addEventListener("DOMContentLoaded", boot);
-window.addEventListener("site-navbar:refresh", loadAll);
+window.addEventListener("site-navbar:refresh", (event) => {
+  const done = loadAll();
+  event.detail?.waitUntil?.(done);
+});
 window.addEventListener("scroll", hideTooltip, true);
