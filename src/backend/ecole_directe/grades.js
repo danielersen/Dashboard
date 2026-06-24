@@ -351,7 +351,7 @@ export async function EDnewgrades(filtered_note) {
                     result[periode][matiere] = [];
                 }
                 note["periode"] = periode
-                result.push(note);
+                result[periode][matiere].push(note);
             }
         }
     }
