@@ -357,7 +357,7 @@ const NAVBAR_TEMPLATE = `
     <div class="inner">
       <a class="brand" data-home-link href="/pages/home" aria-label="Aller à l'accueil">
         <span class="brand-icon-wrap">
-          <img class="brand-icon" src="/assets/icons/websitelogo.jpeg" alt="Dashboard">
+          <img class="brand-icon" src="/assets/icons/websitelogo.png" alt="Dashboard">
         </span>
       </a>
 
