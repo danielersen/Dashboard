@@ -275,5 +275,8 @@ function boot() {
 }
 
 document.addEventListener("DOMContentLoaded", boot);
-window.addEventListener("site-navbar:refresh", loadGrades);
+window.addEventListener("site-navbar:refresh", (event) => {
+  const done = loadGrades();
+  event.detail?.waitUntil?.(done);
+});
 window.addEventListener("scroll", hideTooltip, true);

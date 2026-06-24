@@ -331,7 +331,7 @@ const NAVBAR_STYLE = `
     }
   }
 
-  .quick[data-cooldown="true"] .action-icon svg {
+  .quick[data-refreshing="true"] .action-icon svg {
     animation: navbar-refresh-spin 1s linear infinite;
   }
 
@@ -604,6 +604,7 @@ class SiteNavbar extends HTMLElement {
     if (button) {
       if (button.dataset.cooldown === "true") return;
       button.dataset.cooldown = "true";
+      button.dataset.refreshing = "true";
       button.disabled = true;
       button.setAttribute("aria-disabled", "true");
       if (this._refreshCooldownTimer) clearTimeout(this._refreshCooldownTimer);
@@ -615,12 +616,20 @@ class SiteNavbar extends HTMLElement {
       }, SiteNavbar.REFRESH_COOLDOWN_MS);
     }
 
-    window.dispatchEvent(new CustomEvent("site-navbar:refresh", {
-      detail: { current: this.getAttribute("current") || "home" },
-    }));
-    document.dispatchEvent(new CustomEvent("site-navbar:refresh", {
-      detail: { current: this.getAttribute("current") || "home" },
-    }));
+    const pending = [];
+    const detail = {
+      current: this.getAttribute("current") || "home",
+      waitUntil: (promise) => {
+        if (promise) pending.push(Promise.resolve(promise));
+      },
+    };
+
+    window.dispatchEvent(new CustomEvent("site-navbar:refresh", { detail }));
+    document.dispatchEvent(new CustomEvent("site-navbar:refresh", { detail }));
+
+    Promise.allSettled(pending).then(() => {
+      if (button) button.dataset.refreshing = "false";
+    });
   }
 }
 
