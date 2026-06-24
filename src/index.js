@@ -77,9 +77,7 @@ export default {
         headers: { "content-type": "text/html" }
       });
     }
-    const assetUrl = new URL(request.url);
-    assetUrl.pathname = "/pages/home/index2.html";
-    return env.ASSETS.fetch(new Request(assetUrl, request));
+
     if (url.pathname === "/" || url.pathname === "") {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = "/pages/home/index.html";
