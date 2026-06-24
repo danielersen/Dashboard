@@ -28,6 +28,9 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
+    return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
+      headers: { "content-type": "text/html" }
+    });
     if (url.pathname === "/${env.GOOGLE_SITE_VERIFICATION}") {
       return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
         headers: { "content-type": "text/html" }
