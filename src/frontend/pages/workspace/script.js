@@ -1,9 +1,11 @@
 const ED_BASE = "/api/ed";
 
-const JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-const MOIS = [
-  "janvier", "février", "mars", "avril", "mai", "juin",
-  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+// Day keys match the EcoleDirecte timetable response (semaine[jour]); names are for display.
+const DAY_KEYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
 const state = {
@@ -29,7 +31,7 @@ async function edGet(sub) {
   try {
     json = JSON.parse(text);
   } catch {
-    throw new Error("Réponse invalide de l'API");
+    throw new Error("Invalid API response");
   }
   if (json && json.error) {
     throw new Error(json.error);
@@ -82,8 +84,8 @@ function parseYMD(value) {
 
 function formatDayFull(date) {
   if (!date) return "";
-  const dayName = JOURS[(date.getDay() + 6) % 7] ?? "";
-  return `${dayName} ${date.getDate()} ${MOIS[date.getMonth()]}`;
+  const dayName = DAY_NAMES[(date.getDay() + 6) % 7] ?? "";
+  return `${dayName}, ${MONTHS[date.getMonth()]} ${date.getDate()}`;
 }
 
 function timePart(value) {
@@ -183,7 +185,7 @@ function setupSegmented(container, onChange) {
 function updateSyncTime() {
   const label = document.getElementById("syncLabel");
   if (!label) return;
-  label.textContent = new Date().toLocaleTimeString("fr-FR", {
+  label.textContent = new Date().toLocaleTimeString("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -213,15 +215,15 @@ function renderNewGradesCard() {
   const descEl = card.querySelector("[data-desc]");
   if (state.newGrades && state.newGrades.error) {
     valueEl.textContent = "—";
-    descEl.textContent = "Notes nouvelles indisponibles.";
+    descEl.textContent = "New grades unavailable.";
     return;
   }
   const count = countNewGrades(state.newGrades);
   valueEl.textContent = String(count);
   valueEl.dataset.tone = count > 0 ? "accent" : "";
   descEl.textContent = count > 0
-    ? (count > 1 ? `${count} nouvelles notes depuis la dernière visite.` : "1 nouvelle note depuis la dernière visite.")
-    : "Aucune nouvelle note.";
+    ? (count > 1 ? `${count} new grades since your last visit.` : "1 new grade since your last visit.")
+    : "No new grades.";
 }
 
 function collectUpcomingHomeworks() {
@@ -252,8 +254,8 @@ function renderHomeworksCard() {
   valueEl.textContent = String(upcoming.length);
   valueEl.dataset.tone = upcoming.length > 0 ? "accent" : "";
   descEl.textContent = upcoming.length > 0
-    ? "Devoirs à venir non faits."
-    : "Aucun devoir à venir à faire.";
+    ? "Upcoming homework still to do."
+    : "No upcoming homework to do.";
 }
 
 function flattenTimetable() {
@@ -290,14 +292,14 @@ function renderTomorrowCard() {
   const map = flattenTimetable();
   const courses = (map[key] || []).filter((c) => !c.isAnnule);
   if (courses.length === 0) {
-    list.innerHTML = `<p class="card-desc">Aucun cours prévu demain.</p>`;
+    list.innerHTML = `<p class="card-desc">No classes scheduled tomorrow.</p>`;
     return;
   }
   list.innerHTML = courses
     .map((c) => {
       const time = `${timePart(c.start_date)}–${timePart(c.end_date)}`;
-      const name = c.matiere || c.text || "Cours";
-      const room = c.salle ? `Salle ${c.salle}` : "";
+      const name = c.matiere || c.text || "Class";
+      const room = c.salle ? `Room ${c.salle}` : "";
       return `
         <div class="tomorrow-row">
           <span class="t-time">${time}</span>
@@ -313,12 +315,12 @@ function renderNotes() {
   const body = document.querySelector("[data-notes-body]");
   if (!body) return;
   if (state.grades && state.grades.error) {
-    body.innerHTML = `<p class="state-msg">Impossible de charger les notes : ${escapeHtml(state.grades.error)}</p>`;
+    body.innerHTML = `<p class="state-msg">Couldn't load grades: ${escapeHtml(state.grades.error)}</p>`;
     return;
   }
   const matieres = isObject(state.grades) ? state.grades[state.trimester] : null;
   if (!isObject(matieres) || Object.keys(matieres).length === 0) {
-    body.innerHTML = `<p class="state-msg">Aucune note pour ce trimestre.</p>`;
+    body.innerHTML = `<p class="state-msg">No grades for this term.</p>`;
     return;
   }
   const averages = computeAverages(matieres);
@@ -344,7 +346,7 @@ function renderNotes() {
   body.innerHTML = `
     <div class="subject-overall">
       <strong>${overall !== null ? overall.toFixed(2) : "—"}</strong>
-      <span>Moyenne générale&nbsp;/20</span>
+      <span>Overall average&nbsp;/20</span>
     </div>
     <div class="notes-grid">${cards}</div>`;
 
@@ -363,16 +365,16 @@ function renderNoteChip(matiere, note) {
 const tooltip = document.querySelector("[data-note-tooltip]");
 
 function buildTooltipHtml(matiere, note) {
-  const significatif = String(note.significatif) === "true" ? "Non" : "Oui";
+  const significant = String(note.significatif) === "true" ? "No" : "Yes";
   const rows = [
     ["Date", formatNoteDate(note.date)],
-    ["Sujet", note.titre || "—"],
-    ["Note", `${note.note ?? "—"}${note.noteSur ? ` / ${note.noteSur}` : ""}`],
-    ["Moyenne classe", fmtVal(note.moyenne)],
-    ["Min classe", fmtVal(note.min)],
-    ["Max classe", fmtVal(note.max)],
+    ["Subject", note.titre || "—"],
+    ["Grade", `${note.note ?? "—"}${note.noteSur ? ` / ${note.noteSur}` : ""}`],
+    ["Class average", fmtVal(note.moyenne)],
+    ["Class min", fmtVal(note.min)],
+    ["Class max", fmtVal(note.max)],
     ["Coefficient", fmtVal(note.coefficient)],
-    ["Significatif", significatif],
+    ["Significant", significant],
   ];
   const dl = rows
     .map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${escapeHtml(String(v))}</dd>`)
@@ -435,15 +437,15 @@ function renderTimetable() {
   const body = document.querySelector("[data-timetable-body]");
   if (!body) return;
   if (state.timetable && state.timetable.error) {
-    body.innerHTML = `<p class="state-msg">Impossible de charger l'emploi du temps : ${escapeHtml(state.timetable.error)}</p>`;
+    body.innerHTML = `<p class="state-msg">Couldn't load the timetable: ${escapeHtml(state.timetable.error)}</p>`;
     return;
   }
   const semaine = isObject(state.timetable) ? state.timetable[state.semaine] : null;
   if (!isObject(semaine)) {
-    body.innerHTML = `<p class="state-msg">Aucun emploi du temps disponible.</p>`;
+    body.innerHTML = `<p class="state-msg">No timetable available.</p>`;
     return;
   }
-  const cols = JOURS.map((jour) => {
+  const cols = DAY_KEYS.map((jour, i) => {
     const courses = Array.isArray(semaine[jour]) ? [...semaine[jour]] : [];
     courses.sort((a, b) => String(a.start_date).localeCompare(String(b.start_date)));
     const items = courses.length
@@ -451,7 +453,7 @@ function renderTimetable() {
       : `<p class="day-empty">—</p>`;
     return `
       <div class="day-col">
-        <div class="day-name">${jour}</div>
+        <div class="day-name">${DAY_NAMES[i]}</div>
         ${items}
       </div>`;
   }).join("");
@@ -460,9 +462,9 @@ function renderTimetable() {
 
 function renderCourse(course) {
   const time = `${timePart(course.start_date)} – ${timePart(course.end_date)}`;
-  const name = course.matiere || course.text || "Cours";
+  const name = course.matiere || course.text || "Class";
   const prof = course.prof ? escapeHtml(course.prof) : "";
-  const salle = course.salle ? `Salle ${escapeHtml(course.salle)}` : "";
+  const salle = course.salle ? `Room ${escapeHtml(course.salle)}` : "";
   const meta = [salle, prof].filter(Boolean)
     .map((m) => `<span>${m}</span>`)
     .join("");
@@ -479,13 +481,13 @@ function renderHomeworks() {
   const body = document.querySelector("[data-homeworks-body]");
   if (!body) return;
   if (state.homeworks && state.homeworks.error) {
-    body.innerHTML = `<p class="state-msg">Impossible de charger les devoirs : ${escapeHtml(state.homeworks.error)}</p>`;
+    body.innerHTML = `<p class="state-msg">Couldn't load homework: ${escapeHtml(state.homeworks.error)}</p>`;
     return;
   }
   const data = state.homeworks;
   const byDate = data && isObject(data.data) ? data.data : (isObject(data) ? data : null);
   if (!isObject(byDate)) {
-    body.innerHTML = `<p class="state-msg">Aucun devoir disponible.</p>`;
+    body.innerHTML = `<p class="state-msg">No homework available.</p>`;
     return;
   }
   const today = new Date();
@@ -498,7 +500,7 @@ function renderHomeworks() {
     .sort((a, b) => a.localeCompare(b));
 
   if (dates.length === 0) {
-    body.innerHTML = `<p class="state-msg">Aucun devoir à venir.</p>`;
+    body.innerHTML = `<p class="state-msg">No upcoming homework.</p>`;
     return;
   }
 
@@ -521,13 +523,13 @@ function renderHomeworks() {
 }
 
 function renderHomeworkItem(date, devoir) {
-  const subject = devoir.matiere || devoir.codeMatiere || "Devoir";
+  const subject = devoir.matiere || devoir.codeMatiere || "Homework";
   const control = Boolean(devoir.interrogation);
   const done = Boolean(devoir.effectue);
-  const content = devoir.contenu ? escapeHtml(devoir.contenu) : "Pas de détail fourni.";
-  const prof = devoir.nomProf ? `Prof : ${escapeHtml(devoir.nomProf)}` : "";
+  const content = devoir.contenu ? escapeHtml(devoir.contenu) : "No details provided.";
+  const prof = devoir.nomProf ? `Teacher: ${escapeHtml(devoir.nomProf)}` : "";
   const id = devoir.idDevoir != null ? String(devoir.idDevoir) : "";
-  const controlTag = control ? `<span class="hw-tag" data-kind="control">Contrôle</span>` : "";
+  const controlTag = control ? `<span class="hw-tag" data-kind="control">Test</span>` : "";
   return `
     <article class="hw-item" data-done="${done}">
       <div class="hw-main">
@@ -539,7 +541,7 @@ function renderHomeworkItem(date, devoir) {
         ${prof ? `<p class="hw-prof">${prof}</p>` : ""}
       </div>
       <button class="hw-check" type="button" data-id="${escapeHtml(id)}" data-done="${done}">
-        ${done ? "Fait ✓" : "Marquer fait"}
+        ${done ? "Done ✓" : "Mark as done"}
       </button>
     </article>`;
 }
@@ -556,7 +558,7 @@ function attachHomeworkHandlers(scope) {
       const ok = result && (result.ok === true || result.ok === undefined);
       if (ok) {
         btn.dataset.done = String(willBeDone);
-        btn.textContent = willBeDone ? "Fait ✓" : "Marquer fait";
+        btn.textContent = willBeDone ? "Done ✓" : "Mark as done";
         const item = btn.closest(".hw-item");
         if (item) item.dataset.done = String(willBeDone);
         updateLocalHomeworkDone(id, willBeDone);
@@ -606,7 +608,7 @@ async function loadAll() {
       try {
         state[key] = await fn();
       } catch (err) {
-        state[key] = { error: err?.message || "Erreur inconnue" };
+        state[key] = { error: err?.message || "Unknown error" };
       }
     })
   );
