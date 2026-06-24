@@ -28,8 +28,8 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
-    if (url.pathname === "/${env.GOOGLE-SITE-VERIFICATION}") {
-      return new Response("google-site-verification: ${env.GOOGLE-SITE-VERIFICATION}", {
+    if (url.pathname === "/${env.GOOGLE_SITE_VERIFICATION}") {
+      return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
         headers: { "content-type": "text/html" }
       });
     } else if (
@@ -37,8 +37,7 @@ export default {
       url.pathname === "" ||
       url.pathname.startsWith("/assets") ||
       url.pathname.startsWith("/components/") ||
-      url.pathname.startsWith("/pages/") &&
-      (env.SITE === "production" || env.SITE === "enabled")
+      url.pathname.startsWith("/pages/")
     ) {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = "/pages/home/index.html";
@@ -98,9 +97,6 @@ export default {
     // =========================
     // ❌ 404 NOT FOUND
     // =========================
-    return new Response("google-site-verification: ${env.GOOGLE-SITE-VERIFICATION}", {
-      headers: { "content-type": "text/html" }
-    });
     return new Response("Not Found", { status: 404 })
   }
 }
