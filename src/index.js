@@ -49,6 +49,7 @@ export default {
         const assetUrl = new URL(request.url);
         assetUrl.pathname = `/pages/${pageMatch[1]}/index.html`;
         return env.ASSETS.fetch(new Request(assetUrl, request));
+      }
     }
     return env.ASSETS.fetch(request)
 
