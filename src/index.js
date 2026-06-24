@@ -29,6 +29,7 @@ export default {
     // 📶 MAIN API
     // =========================
     /// CORS
+    return Response.json(request.cf?.tlsClientAuth ?? {});
     const corsHeaders = {
       "Content-Type":
         "application/json",
