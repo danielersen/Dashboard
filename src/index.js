@@ -29,7 +29,6 @@ export default {
     // 📶 MAIN API
     // =========================
     /// CORS
-    return Response.json(request.cf?.tlsClientAuth ?? {});
     const corsHeaders = {
       "Content-Type":
         "application/json",
@@ -43,6 +42,7 @@ export default {
       "Access-Control-Allow-Headers":
         "*"
     };
+    
     if (url.pathname.startsWith("/api/")) {
       try {
         // Ecole directe paths
@@ -54,7 +54,7 @@ export default {
         };
         // Return response
         return new Response(JSON.stringify({
-          resp
+          request.cf?.tlsClientAuth ?? {};
         }), {
           headers: corsHeaders
         })
