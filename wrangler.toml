@@ -28,6 +28,9 @@ binding = "AI"
 # Worker executed before assets
 run_worker_first = [
   "/api/ed",
+  "/api/config",
+  "/pages/auth",
+  "/pages/auth/",
   "/pages/home",
   "/pages/home/",
   "/pages/workspace",
