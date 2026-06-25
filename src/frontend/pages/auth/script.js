@@ -56,7 +56,7 @@ async function startOAuth(provider, button) {
       throw error;
     }
   } catch (err) {
-    showMessage(err?.message || "La connexion a échoué. Réessayez.");
+    showMessage(err?.message || "Login failed, try again.");
     setBusy(button, false);
   }
 }
@@ -93,7 +93,7 @@ emailForm.addEventListener("submit", async (event) => {
   const password = String(data.get("password") || "");
 
   if (!email || !password) {
-    showMessage("Renseignez votre email et votre mot de passe.");
+    showMessage("Put your email and password");
     return;
   }
 
@@ -108,7 +108,7 @@ emailForm.addEventListener("submit", async (event) => {
         window.location.href = "/pages/";
         return;
       }
-      showMessage("Compte créé. Vérifiez votre email pour confirmer l'inscription.", "success");
+      showMessage("Account created, check your mails.", "success");
     } else {
       const { error } = await signInWithEmail(email, password);
       if (error) {
