@@ -2,6 +2,8 @@ import { getCacheValue } from "./get.js"
 import { setCacheValue } from "./set.js"
 import { deleteCacheValue, deleteCache } from "./delete.js"
 
+export { getCacheValue, setCacheValue, deleteCacheValue, deleteCache }
+
 export async function Cache(method, path, body) {
   let resp
   if (method === "GET") {

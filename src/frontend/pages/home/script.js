@@ -1,4 +1,5 @@
 import { createMesh3D } from "./mesh3d.js";
+import { navigateWithAuth } from "/lib/auth.js";
 
 const syncLabel = document.getElementById("syncLabel");
 const meshCanvas = document.getElementById("meshCanvas");
@@ -24,7 +25,19 @@ function bootHome() {
   mesh?.refresh();
 }
 
-document.addEventListener("DOMContentLoaded", bootHome);
+function wireInternalLinks() {
+  document.querySelectorAll('a[href^="/pages/"]').forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      navigateWithAuth(link.getAttribute("href"));
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  bootHome();
+  wireInternalLinks();
+});
 window.addEventListener("site-navbar:refresh", (event) => {
   const done = bootHome();
   event.detail?.waitUntil?.(done);
