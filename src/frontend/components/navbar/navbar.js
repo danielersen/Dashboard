@@ -1,3 +1,5 @@
+import { appendAuthParams } from "/lib/auth.js";
+
 const NAV_ITEMS = [
   { slug: "home", label: "Home", href: "/pages/home", icon: "home" },
   { slug: "workspace", label: "Workspace", href: "/pages/workspace", icon: "grid" },
@@ -434,13 +436,17 @@ class SiteNavbar extends HTMLElement {
       this.shadowRoot.querySelector("[data-kind='refresh']").addEventListener("click", this._boundRefresh);
       this.shadowRoot.querySelector("[data-home-link]").addEventListener("click", (event) => {
         event.preventDefault();
-        window.location.href = "/pages/home";
+        window.location.href = appendAuthParams("/pages/home");
       });
       this.shadowRoot.querySelectorAll("[data-route]").forEach((item) => {
         item.addEventListener("click", (event) => {
           event.preventDefault();
-          window.location.href = item.getAttribute("href");
+          window.location.href = appendAuthParams(item.getAttribute("href"));
         });
+      });
+      this.shadowRoot.querySelector("[data-kind='settings']").addEventListener("click", (event) => {
+        event.preventDefault();
+        window.location.href = appendAuthParams(event.currentTarget.getAttribute("href"));
       });
     }
 

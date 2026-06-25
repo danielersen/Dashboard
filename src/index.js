@@ -4,6 +4,7 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 // API features
 import { EDfunction } from "./backend/ecole_directe/index.js";
 import { Cache } from "./backend/cache/index.js";
+import { Auth } from "./backend/auth/index.js";
  
 // API funtion
 export default {
@@ -51,6 +52,20 @@ export default {
       }), {
         headers: corsHeaders
       });
+    }
+
+    // Auth: verify Supabase token + issue/validate server session tokens.
+    if (url.pathname.startsWith("/api/auth/")) {
+      try {
+        const resp = await Auth(env, url.pathname.slice("/api/auth/".length), method, body);
+        return new Response(JSON.stringify(resp), { headers: corsHeaders });
+      } catch (e) {
+        console.error("AUTH ERROR:", e?.stack || e);
+        return new Response(JSON.stringify({ valid: false, error: e?.message }), {
+          status: 500,
+          headers: corsHeaders,
+        });
+      }
     }
 
     if (url.pathname.startsWith("/api/")) {

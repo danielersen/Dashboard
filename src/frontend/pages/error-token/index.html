@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08100f">
+    <title>Access denied - Dashboard</title>
+    <meta name="description" content="Your session could not be verified.">
+    <link rel="stylesheet" href="/pages/error-token/style.css">
+    <link rel="icon" href="/assets/icons/websitelogo.png">
+  </head>
+  <body>
+    <main class="error-shell">
+      <section class="error-card" role="alert">
+        <span class="error-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2 1 21h22L12 2z"></path>
+            <path d="M12 9v5" class="error-bang"></path>
+            <circle cx="12" cy="17.5" r="1.1" class="error-dot"></circle>
+          </svg>
+        </span>
+        <p class="error-eyebrow">Access denied</p>
+        <h1>We couldn't verify your session</h1>
+        <p class="error-text">
+          Your authentication token is missing, expired, or invalid. For your
+          security, this page can't be shown. Please sign in again to continue.
+        </p>
+        <div class="error-actions">
+          <a class="error-btn error-btn-primary" href="/pages/auth">Sign in again</a>
+        </div>
+        <p class="error-hint">Error code: <span>INVALID_SESSION_TOKEN</span></p>
+      </section>
+    </main>
+  </body>
+</html>
