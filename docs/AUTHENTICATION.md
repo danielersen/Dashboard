@@ -13,6 +13,7 @@
  - The login page calls `checkConfig()` on load and, if `SUPABASE_URL`/`SUPABASE_ANON_KEY` are missing, disables the form and shows which variables are absent instead of attempting a login.
  - The OAuth providers shown are listed in `OAUTH_PROVIDERS` in `src/frontend/pages/auth/script.js`. Each provider must also be enabled in Supabase -> Authentication -> Providers.
  - After OAuth login Supabase redirects to the Site URL configured in Supabase -> Authentication -> URL Configuration (set to `/pages/`). After email/password login the page redirects to `/pages/` itself.
+ - "Se souvenir de cet appareil" checkbox controls session persistence for email/password login: checked stores the session in `localStorage` (survives browser restarts); unchecked uses `sessionStorage` (cleared when the tab/browser closes, so the device is not remembered).
  - Token verification / route gating is intentionally not implemented yet.
 
 ## By Cloudflare
