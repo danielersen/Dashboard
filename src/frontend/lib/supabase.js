@@ -4,21 +4,43 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // environment variables: GET /api/config -> { supabaseUrl, supabaseAnonKey }.
 let configPromise;
 
+async function loadConfig() {
+  const res = await fetch("/api/config");
+  if (!res.ok) {
+    throw new Error("Impossible de charger la configuration Supabase (/api/config).");
+  }
+  const { supabaseUrl, supabaseAnonKey } = await res.json();
+  const missing = [];
+  if (!supabaseUrl) missing.push("SUPABASE_URL");
+  if (!supabaseAnonKey) missing.push("SUPABASE_ANON_KEY");
+  return { supabaseUrl, supabaseAnonKey, missing };
+}
+
+// Checks that the required env variables exist, without throwing, so the UI can
+// show a clear message before attempting any login. Returns { ok, missing }.
+export async function checkConfig() {
+  try {
+    const { missing } = await loadConfig();
+    return { ok: missing.length === 0, missing };
+  } catch (err) {
+    return { ok: false, missing: ["SUPABASE_URL", "SUPABASE_ANON_KEY"], error: err?.message };
+  }
+}
+
 async function getConfig() {
   if (!configPromise) {
     configPromise = (async () => {
-      const res = await fetch("/api/config");
-      if (!res.ok) {
-        throw new Error("Impossible de charger la configuration Supabase.");
+      const { supabaseUrl, supabaseAnonKey, missing } = await loadConfig();
+      if (missing.length) {
+        throw new Error(`Configuration Supabase manquante : ${missing.join(", ")}.`);
       }
-      const { supabaseUrl, supabaseAnonKey } = await res.json();
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error("Configuration Supabase manquante (SUPABASE_URL / SUPABASE_ANON_KEY).");
-      }
+      // supabase-js expects the base project URL (https://<ref>.supabase.co).
+      // Strip any path (e.g. the Data API "/rest/v1" URL) so /auth/v1 routes work.
+      const baseUrl = new URL(supabaseUrl).origin;
       return {
-        supabaseUrl,
+        baseUrl,
         supabaseAnonKey,
-        client: createClient(supabaseUrl, supabaseAnonKey),
+        client: createClient(baseUrl, supabaseAnonKey),
       };
     })();
   }
