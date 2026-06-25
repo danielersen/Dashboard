@@ -1,4 +1,5 @@
 import {
+  checkConfig,
   signInWithProvider,
   signInWithEmail,
   signUpWithEmail,
@@ -124,4 +125,27 @@ emailForm.addEventListener("submit", async (event) => {
   }
 });
 
-renderProviders();
+function setFormDisabled(disabled) {
+  for (const el of emailForm.querySelectorAll("input, button")) {
+    el.disabled = disabled;
+  }
+  for (const el of providersEl.querySelectorAll("button")) {
+    el.disabled = disabled;
+  }
+}
+
+// Verify the required env variables exist before allowing any login attempt.
+// If they are missing, disable the form and tell the user exactly what's wrong.
+async function init() {
+  renderProviders();
+  const { ok, missing } = await checkConfig();
+  if (!ok) {
+    setFormDisabled(true);
+    const list = missing.length ? ` : ${missing.join(", ")}` : "";
+    showMessage(
+      `Configuration Supabase manquante${list}. Définissez ces variables d'environnement sur le Worker avant de vous connecter.`,
+    );
+  }
+}
+
+init();
