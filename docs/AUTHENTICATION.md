@@ -7,11 +7,10 @@
  - The website must have a real account security. So you can log in with Github.
 
 ### Supabase Auth (login page)
- - The login page lives at `/pages/auth` (`src/frontend/pages/auth/`). It shows one button per OAuth provider and starts the flow with Supabase `signInWithOAuth`.
- - Configure your project in `src/frontend/lib/supabase-config.js`:
-   - `SUPABASE_URL` and `SUPABASE_ANON_KEY` from Supabase Dashboard -> Project Settings -> API (the anon key is public and safe to expose).
-   - `AUTH_PROVIDERS` lists the providers to display (e.g. `["github", "google"]`). Each one must also be enabled in Supabase -> Authentication -> Providers.
- - After a successful login Supabase redirects to the Site URL configured in Supabase -> Authentication -> URL Configuration (set to `/pages/`), so no redirect/callback handling is done in the frontend.
+ - The login page lives at `/pages/auth` (`src/frontend/pages/auth/`). It offers email/password (sign in + sign up) and OAuth buttons (GitHub, Google).
+ - Config is read at runtime from the Worker: set `SUPABASE_URL` and `SUPABASE_ANON_KEY` as environment variables (the anon key is public, safe to expose). The Worker exposes them to the frontend via `GET /api/config` -> `{ supabaseUrl, supabaseAnonKey }`.
+ - The OAuth providers shown are listed in `OAUTH_PROVIDERS` in `src/frontend/pages/auth/script.js`. Each provider must also be enabled in Supabase -> Authentication -> Providers.
+ - After OAuth login Supabase redirects to the Site URL configured in Supabase -> Authentication -> URL Configuration (set to `/pages/`). After email/password login the page redirects to `/pages/` itself.
  - Token verification / route gating is intentionally not implemented yet.
 
 ## By Cloudflare

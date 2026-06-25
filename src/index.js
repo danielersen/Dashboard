@@ -43,6 +43,16 @@ export default {
         "*"
     };
     
+    // Public Supabase config for the frontend (anon key is public).
+    if (url.pathname === "/api/config") {
+      return new Response(JSON.stringify({
+        supabaseUrl: env.SUPABASE_URL ?? null,
+        supabaseAnonKey: env.SUPABASE_ANON_KEY ?? null,
+      }), {
+        headers: corsHeaders
+      });
+    }
+
     if (url.pathname.startsWith("/api/")) {
       try {
         // Ecole directe paths
