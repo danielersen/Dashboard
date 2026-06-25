@@ -91,6 +91,7 @@ emailForm.addEventListener("submit", async (event) => {
   const data = new FormData(emailForm);
   const email = String(data.get("email") || "").trim();
   const password = String(data.get("password") || "");
+  const remember = data.get("remember") != null;
 
   if (!email || !password) {
     showMessage("Put your email and password");
@@ -100,7 +101,7 @@ emailForm.addEventListener("submit", async (event) => {
   setBusy(button, true);
   try {
     if (action === "signup") {
-      const { data: result, error } = await signUpWithEmail(email, password);
+      const { data: result, error } = await signUpWithEmail(email, password, remember);
       if (error) {
         throw error;
       }
@@ -110,7 +111,7 @@ emailForm.addEventListener("submit", async (event) => {
       }
       showMessage("Account created, check your mails.", "success");
     } else {
-      const { error } = await signInWithEmail(email, password);
+      const { error } = await signInWithEmail(email, password, remember);
       if (error) {
         throw error;
       }
