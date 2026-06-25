@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08100f">
+    <title>Dashboard - Connexion</title>
+    <meta name="description" content="Connexion au Dashboard via vos providers Supabase.">
+    <link rel="stylesheet" href="/pages/auth/style.css">
+    <link rel="icon" href="/assets/icons/websitelogo.png">
+  </head>
+  <body>
+    <main class="auth-shell">
+      <section class="auth-card" aria-label="Connexion">
+        <img src="/assets/icons/logo.png" alt="Logo Dashboard" class="auth-logo">
+        <h1 class="auth-title">Dashboard</h1>
+        <p class="auth-subtitle">Connectez-vous pour accéder à votre espace.</p>
+
+        <div id="providers" class="auth-providers" role="group" aria-label="Fournisseurs de connexion"></div>
+
+        <p id="authError" class="auth-error" hidden></p>
+      </section>
+
+      <p class="auth-footer">Designed by AI and managed by Daniel Ersen</p>
+    </main>
+    <script type="module" src="/pages/auth/script.js"></script>
+  </body>
+</html>
