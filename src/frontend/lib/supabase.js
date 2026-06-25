@@ -51,6 +51,19 @@ async function getClient() {
   return (await getConfig()).client;
 }
 
+// Builds a client whose session storage depends on whether the user wants this
+// device remembered. localStorage survives browser restarts (remembered);
+// sessionStorage is cleared when the tab/browser closes (not remembered).
+async function getClientForRemember(remember) {
+  const { baseUrl, supabaseAnonKey } = await getConfig();
+  return createClient(baseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      storage: remember ? window.localStorage : window.sessionStorage,
+    },
+  });
+}
+
 // Starts the OAuth flow for the given provider. The Supabase `/auth/v1/authorize`
 // endpoint requires the anon key, but a browser navigation cannot send the
 // `apikey` header, so we build the URL ourselves and pass the key as a query
@@ -73,13 +86,13 @@ export async function signInWithProvider(provider) {
   return { error: null };
 }
 
-export async function signInWithEmail(email, password) {
-  const supabase = await getClient();
+export async function signInWithEmail(email, password, remember = false) {
+  const supabase = await getClientForRemember(remember);
   return supabase.auth.signInWithPassword({ email, password });
 }
 
-export async function signUpWithEmail(email, password) {
-  const supabase = await getClient();
+export async function signUpWithEmail(email, password, remember = false) {
+  const supabase = await getClientForRemember(remember);
   return supabase.auth.signUp({ email, password });
 }
 
