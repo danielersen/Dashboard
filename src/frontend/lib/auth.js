@@ -3,12 +3,15 @@
 // The Supabase access token arrives in the URL hash (#access_token=...) after
 // login. The hash is never sent to the server, so gating happens here: we read
 // the token, ask the API to verify it and issue a short-lived server session
-// token, and redirect to the error page if it is invalid or missing. The server
-// token is then used for every API call, and re-requested automatically when it
-// expires. Navigation re-appends the params to the URL so the next page is
-// accepted too.
+// token. If it is invalid or missing we remember where the user was heading in a
+// cookie and send them to the login page; once authenticated we redirect back to
+// that page and clear the cookie. The server token is then used for every API
+// call, and re-requested automatically when it expires. Navigation re-appends
+// the params to the URL so the next page is accepted too.
 
-const ERROR_PAGE = "/pages/error-token/";
+const AUTH_PAGE = "/pages/auth";
+const REDIRECT_COOKIE = "post_auth_redirect";
+const REDIRECT_COOKIE_TTL = 600; // seconds
 
 const STORAGE_KEYS = {
   access: "sb_access_token",
@@ -118,24 +121,74 @@ export async function ensureSessionToken() {
   return getValidSessionToken() || (await requestSessionToken());
 }
 
-function redirectToError() {
-  if (window.location.pathname.replace(/\/?$/, "/") === ERROR_PAGE) return;
-  window.location.replace(ERROR_PAGE);
+// --- post-auth redirect cookie ----------------------------------------------
+
+function normalizePath(path) {
+  return path.replace(/\/?$/, "/");
+}
+
+function setCookie(name, value, maxAgeSeconds) {
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax${secure}`;
+}
+
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function deleteCookie(name) {
+  document.cookie = `${name}=; Path=/; Max-Age=0; SameSite=Lax`;
+}
+
+function isAuthPage() {
+  return normalizePath(window.location.pathname) === normalizePath(AUTH_PAGE);
+}
+
+// Remember the page the user was trying to reach, then send them to login.
+function redirectToAuth() {
+  if (isAuthPage()) return;
+  const target = window.location.pathname + window.location.search;
+  if (target && !normalizePath(target).startsWith(normalizePath(AUTH_PAGE))) {
+    setCookie(REDIRECT_COOKIE, target, REDIRECT_COOKIE_TTL);
+  }
+  window.location.replace(AUTH_PAGE);
+}
+
+// After a successful guard, send the user back to the page they originally
+// wanted (set before login) and clear the cookie. Returns true if it triggered
+// a navigation, so the caller can keep the current page hidden meanwhile.
+function consumePostAuthRedirect() {
+  const target = getCookie(REDIRECT_COOKIE);
+  if (!target) return false;
+  deleteCookie(REDIRECT_COOKIE);
+  if (!target.startsWith("/pages/")) return false;
+  if (normalizePath(target).startsWith(normalizePath(AUTH_PAGE))) return false;
+  if (normalizePath(target) === normalizePath(window.location.pathname + window.location.search)) {
+    return false;
+  }
+  navigateWithAuth(target);
+  return true;
 }
 
 // --- page guard --------------------------------------------------------------
 
 // Run before showing protected content. Resolves to true if authenticated;
-// otherwise redirects to the error page and resolves to false.
+// otherwise redirects to the login page and resolves to false.
 export async function guardPage() {
   captureHashTokens();
   if (!getAccessToken()) {
-    redirectToError();
+    redirectToAuth();
     return false;
   }
   const token = await ensureSessionToken();
   if (!token) {
-    redirectToError();
+    redirectToAuth();
+    return false;
+  }
+  // Authenticated: if the user was sent here from login, bounce them back to the
+  // page they originally wanted. Keep the page hidden while navigating.
+  if (consumePostAuthRedirect()) {
     return false;
   }
   return true;
@@ -146,7 +199,7 @@ export async function guardPage() {
 export async function authedFetch(input, init = {}) {
   let token = await ensureSessionToken();
   if (!token) {
-    redirectToError();
+    redirectToAuth();
     throw new Error("Not authenticated");
   }
   const withAuth = (t) => ({
@@ -160,7 +213,7 @@ export async function authedFetch(input, init = {}) {
     store().removeItem(STORAGE_KEYS.sessionExp);
     token = await requestSessionToken();
     if (!token) {
-      redirectToError();
+      redirectToAuth();
       throw new Error("Not authenticated");
     }
     res = await fetch(input, withAuth(token));

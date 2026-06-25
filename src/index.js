@@ -12,6 +12,18 @@ export default {
     const url = new URL(request.url);
     const method = request.method;
     const headers = request.headers
+
+    // =========================
+    // ✅ GOOGLE SITE VERIFICATION
+    // =========================
+    // Must stay reachable without any gating (no login, no production-mode
+    // block) so Google can verify domain ownership at any time.
+    if (env.GOOGLE_SITE_VERIFICATION && url.pathname === `/${env.GOOGLE_SITE_VERIFICATION}`) {
+      return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
+        headers: { "content-type": "text/html" }
+      });
+    }
+
     let body;
     try {
       body = JSON.parse(await request.text());
@@ -97,12 +109,6 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
-    if (url.pathname === `/${env.GOOGLE_SITE_VERIFICATION}`) {
-      return new Response(`google-site-verification: ${env.GOOGLE_SITE_VERIFICATION}`, {
-        headers: { "content-type": "text/html" }
-      });
-    }
-
     if (url.pathname === "/" || url.pathname === "") {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = "/pages/home/index.html";

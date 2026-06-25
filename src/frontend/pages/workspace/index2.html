@@ -1,11 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-auth-pending>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#08100f">
     <title>Dashboard - Grades</title>
     <meta name="description" content="Grades and averages from EcoleDirecte.">
+    <style>html[data-auth-pending] body { visibility: hidden; }</style>
+    <script type="module">
+      import { guardPage } from "/lib/auth.js";
+      guardPage().then((ok) => {
+        if (ok) document.documentElement.removeAttribute("data-auth-pending");
+      });
+    </script>
     <link rel="stylesheet" href="/pages/workspace/style.css">
     <link rel="icon" href="/assets/logo/websitelogo.png">
     <style>
