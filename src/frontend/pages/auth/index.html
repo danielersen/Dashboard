@@ -16,9 +16,26 @@
         <h1 class="auth-title">Dashboard</h1>
         <p class="auth-subtitle">Connectez-vous pour accéder à votre espace.</p>
 
+        <form id="emailForm" class="auth-form" novalidate>
+          <label class="auth-field">
+            <span>Email</span>
+            <input type="email" name="email" autocomplete="email" required placeholder="vous@exemple.com">
+          </label>
+          <label class="auth-field">
+            <span>Mot de passe</span>
+            <input type="password" name="password" autocomplete="current-password" required placeholder="••••••••">
+          </label>
+          <div class="auth-form-actions">
+            <button type="submit" class="auth-submit" data-action="signin">Se connecter</button>
+            <button type="submit" class="auth-submit auth-submit-ghost" data-action="signup">Créer un compte</button>
+          </div>
+        </form>
+
+        <div class="auth-divider"><span>ou</span></div>
+
         <div id="providers" class="auth-providers" role="group" aria-label="Fournisseurs de connexion"></div>
 
-        <p id="authError" class="auth-error" hidden></p>
+        <p id="authMessage" class="auth-message" hidden></p>
       </section>
 
       <p class="auth-footer">Designed by AI and managed by Daniel Ersen</p>

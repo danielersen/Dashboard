@@ -1,5 +1,11 @@
-import { signInWithProvider } from "/lib/supabase.js";
-import { AUTH_PROVIDERS } from "/lib/supabase-config.js";
+import {
+  signInWithProvider,
+  signInWithEmail,
+  signUpWithEmail,
+} from "/lib/supabase.js";
+
+// OAuth providers enabled in Supabase (Authentication -> Providers).
+const OAUTH_PROVIDERS = ["github", "google"];
 
 const PROVIDER_META = {
   github: {
@@ -22,45 +28,100 @@ function metaFor(provider) {
 }
 
 const providersEl = document.getElementById("providers");
-const errorEl = document.getElementById("authError");
+const messageEl = document.getElementById("authMessage");
+const emailForm = document.getElementById("emailForm");
 
-function showError(message) {
-  errorEl.textContent = message;
-  errorEl.hidden = false;
+function showMessage(text, kind = "error") {
+  messageEl.textContent = text;
+  messageEl.dataset.kind = kind;
+  messageEl.hidden = false;
 }
 
-async function startLogin(provider, button) {
-  errorEl.hidden = true;
-  button.disabled = true;
-  button.classList.add("is-loading");
+function clearMessage() {
+  messageEl.hidden = true;
+}
+
+function setBusy(button, busy) {
+  button.disabled = busy;
+  button.classList.toggle("is-loading", busy);
+}
+
+async function startOAuth(provider, button) {
+  clearMessage();
+  setBusy(button, true);
   try {
     const { error } = await signInWithProvider(provider);
     if (error) {
       throw error;
     }
   } catch (err) {
-    showError(err?.message || "La connexion a échoué. Réessayez.");
-    button.disabled = false;
-    button.classList.remove("is-loading");
+    showMessage(err?.message || "La connexion a échoué. Réessayez.");
+    setBusy(button, false);
   }
 }
 
 function renderProviders() {
-  if (!AUTH_PROVIDERS.length) {
-    showError("Aucun fournisseur de connexion n'est configuré.");
-    return;
-  }
-
-  for (const provider of AUTH_PROVIDERS) {
+  for (const provider of OAUTH_PROVIDERS) {
     const meta = metaFor(provider);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "auth-provider";
     button.dataset.provider = provider;
     button.innerHTML = `<span class="auth-provider-icon">${meta.icon}</span><span class="auth-provider-label">${meta.label}</span>`;
-    button.addEventListener("click", () => startLogin(provider, button));
+    button.addEventListener("click", () => startOAuth(provider, button));
     providersEl.appendChild(button);
   }
 }
+
+let submitter = null;
+emailForm.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (button) {
+    submitter = button;
+  }
+});
+
+emailForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  clearMessage();
+
+  const action = submitter?.dataset.action || "signin";
+  const button = submitter || emailForm.querySelector('[data-action="signin"]');
+  const data = new FormData(emailForm);
+  const email = String(data.get("email") || "").trim();
+  const password = String(data.get("password") || "");
+
+  if (!email || !password) {
+    showMessage("Renseignez votre email et votre mot de passe.");
+    return;
+  }
+
+  setBusy(button, true);
+  try {
+    if (action === "signup") {
+      const { data: result, error } = await signUpWithEmail(email, password);
+      if (error) {
+        throw error;
+      }
+      if (result?.session) {
+        window.location.href = "/pages/";
+        return;
+      }
+      showMessage("Compte créé. Vérifiez votre email pour confirmer l'inscription.", "success");
+    } else {
+      const { error } = await signInWithEmail(email, password);
+      if (error) {
+        throw error;
+      }
+      window.location.href = "/pages/";
+      return;
+    }
+  } catch (err) {
+    showMessage(err?.message || "La connexion a échoué. Réessayez.");
+  } finally {
+    setBusy(button, false);
+    submitter = null;
+  }
+});
 
 renderProviders();
