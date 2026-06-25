@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08100f">
+    <title>Dashboard - Connexion</title>
+    <meta name="description" content="Connexion au Dashboard via vos providers Supabase.">
+    <link rel="stylesheet" href="/pages/auth/style.css">
+    <link rel="icon" href="/assets/icons/websitelogo.png">
+  </head>
+  <body>
+    <main class="auth-shell">
+      <section class="auth-card" aria-label="Connexion">
+        <img src="/assets/icons/logo.png" alt="Logo Dashboard" class="auth-logo">
+        <h1 class="auth-title">Dashboard</h1>
+        <p class="auth-subtitle">Connectez-vous pour accéder à votre espace.</p>
+
+        <form id="emailForm" class="auth-form" novalidate>
+          <label class="auth-field">
+            <span>Email</span>
+            <input type="email" name="email" autocomplete="email" required placeholder="vous@exemple.com">
+          </label>
+          <label class="auth-field">
+            <span>Mot de passe</span>
+            <input type="password" name="password" autocomplete="current-password" required placeholder="••••••••">
+          </label>
+          <div class="auth-form-actions">
+            <button type="submit" class="auth-submit" data-action="signin">Se connecter</button>
+            <button type="submit" class="auth-submit auth-submit-ghost" data-action="signup">Créer un compte</button>
+          </div>
+        </form>
+
+        <div class="auth-divider"><span>ou</span></div>
+
+        <div id="providers" class="auth-providers" role="group" aria-label="Fournisseurs de connexion"></div>
+
+        <p id="authMessage" class="auth-message" hidden></p>
+      </section>
+
+      <p class="auth-footer">Designed by AI and managed by Daniel Ersen</p>
+    </main>
+    <script type="module" src="/pages/auth/script.js"></script>
+  </body>
+</html>
