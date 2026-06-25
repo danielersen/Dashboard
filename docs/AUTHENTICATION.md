@@ -9,6 +9,8 @@
 ### Supabase Auth (login page)
  - The login page lives at `/pages/auth` (`src/frontend/pages/auth/`). It offers email/password (sign in + sign up) and OAuth buttons (GitHub, Google).
  - Config is read at runtime from the Worker: set `SUPABASE_URL` and `SUPABASE_ANON_KEY` as environment variables (the anon key is public, safe to expose). The Worker exposes them to the frontend via `GET /api/config` -> `{ supabaseUrl, supabaseAnonKey }`.
+ - `SUPABASE_URL` must be the **base project URL** (Supabase -> Project Settings -> API -> Project URL), e.g. `https://<ref>.supabase.co`. Do NOT use the Data API URL (`.../rest/v1`); supabase-js appends `/auth/v1` itself, so a `/rest/v1` suffix sends auth calls to PostgREST and yields `PGRST125 "Invalid path specified in request URL"`. As a safeguard, the client strips any path and uses the URL origin.
+ - The login page calls `checkConfig()` on load and, if `SUPABASE_URL`/`SUPABASE_ANON_KEY` are missing, disables the form and shows which variables are absent instead of attempting a login.
  - The OAuth providers shown are listed in `OAUTH_PROVIDERS` in `src/frontend/pages/auth/script.js`. Each provider must also be enabled in Supabase -> Authentication -> Providers.
  - After OAuth login Supabase redirects to the Site URL configured in Supabase -> Authentication -> URL Configuration (set to `/pages/`). After email/password login the page redirects to `/pages/` itself.
  - Token verification / route gating is intentionally not implemented yet.
