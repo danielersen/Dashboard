@@ -16,11 +16,22 @@ async function loadConfig() {
   if (!res.ok) {
     throw new Error("Impossible de charger la configuration Supabase (/api/config).");
   }
-  const { supabaseUrl, supabaseAnonKey } = await res.json();
+  const { supabaseUrl, supabaseAnonKey, turnstileSiteKey } = await res.json();
   const missing = [];
   if (!supabaseUrl) missing.push("SUPABASE_URL");
   if (!supabaseAnonKey) missing.push("SUPABASE_ANON_KEY");
-  return { supabaseUrl, supabaseAnonKey, missing };
+  return { supabaseUrl, supabaseAnonKey, turnstileSiteKey, missing };
+}
+
+// Public Turnstile site key (or null when not configured). Used by the login
+// page to render the invisible Turnstile widget.
+export async function getTurnstileSiteKey() {
+  try {
+    const { turnstileSiteKey } = await loadConfig();
+    return turnstileSiteKey || null;
+  } catch (e) {
+    return null;
+  }
 }
 
 // Checks that the required env variables exist, without throwing, so the UI can

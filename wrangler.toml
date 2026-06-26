@@ -9,6 +9,10 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 MODE = "production" # -> "production" if enabled, or any other name if disabled
 SITE = "enabled" # -> "enabled" if enabled, or any other name if disabled
+# Public Cloudflare Turnstile site key (safe to expose). Paste the value from
+# the Turnstile widget. The private secret goes in `wrangler secret put
+# TURNSTILE_SECRET_KEY` and must never be committed here.
+TURNSTILE_SITE_KEY = "" # -> paste your Turnstile site key
 
 # Static site
 [assets]

@@ -61,6 +61,7 @@ export default {
       return new Response(JSON.stringify({
         supabaseUrl: env.SUPABASE_URL ?? null,
         supabaseAnonKey: env.SUPABASE_ANON_KEY ?? null,
+        turnstileSiteKey: env.TURNSTILE_SITE_KEY ?? null,
       }), {
         headers: corsHeaders
       });
@@ -69,7 +70,7 @@ export default {
     // Auth: verify Supabase token + issue/validate server session tokens.
     if (url.pathname.startsWith("/api/auth/")) {
       try {
-        const resp = await Auth(env, url.pathname.slice("/api/auth/".length), method, body);
+        const resp = await Auth(env, url.pathname.slice("/api/auth/".length), method, body, request);
         return new Response(JSON.stringify(resp), { headers: corsHeaders });
       } catch (e) {
         console.error("AUTH ERROR:", e?.stack || e);
