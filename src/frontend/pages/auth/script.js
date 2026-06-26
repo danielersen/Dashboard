@@ -4,6 +4,7 @@ import {
   signInWithEmail,
 } from "/lib/supabase.js";
 import { redirectIfAuthenticated } from "/lib/auth.js";
+import { getTurnstileToken, preloadTurnstile } from "/lib/turnstile.js";
 
 // OAuth providers enabled in Supabase (Authentication -> Providers).
 const OAUTH_PROVIDERS = ["github", "google"];
@@ -63,6 +64,25 @@ function rememberChecked() {
   return document.getElementById("rememberDevice")?.checked === true;
 }
 
+// Run the invisible Turnstile challenge and have the Worker verify the token.
+// Returns true when human-verification passes (or Turnstile is disabled), false
+// when the challenge is required but fails.
+async function passTurnstile() {
+  const token = await getTurnstileToken();
+  if (!token) return true; // Turnstile not configured / unavailable: don't block.
+  try {
+    const res = await fetch("/api/auth/turnstile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const data = await res.json();
+    return data?.success === true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // Show/hide the password like classic login forms.
 function setupPasswordToggle() {
   const toggle = document.querySelector("[data-password-toggle]");
@@ -84,6 +104,9 @@ async function startOAuth(provider, button) {
   clearMessage();
   setBusy(button, true);
   try {
+    if (!(await passTurnstile())) {
+      throw new Error("Human verification failed, please try again.");
+    }
     const { error } = await signInWithProvider(provider, rememberChecked());
     if (error) {
       throw error;
@@ -132,6 +155,9 @@ emailForm.addEventListener("submit", async (event) => {
 
   setBusy(button, true);
   try {
+    if (!(await passTurnstile())) {
+      throw new Error("Human verification failed, please try again.");
+    }
     const { error } = await signInWithEmail(email, password, remember);
     if (error) {
       throw error;
@@ -163,6 +189,7 @@ async function init() {
 
   renderProviders();
   setupPasswordToggle();
+  preloadTurnstile();
   const { ok, missing } = await checkConfig();
   if (!ok) {
     setFormDisabled(true);
