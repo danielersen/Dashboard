@@ -109,7 +109,15 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
-    if (url.pathname === "/" || url.pathname === "") {
+    // "/", "/pages" and "/pages/" all land on home. Supabase sends users to
+    // "/pages/" after login; serving home there lets the client guard run and
+    // bounce to the originally-requested page (post-auth redirect cookie).
+    if (
+      url.pathname === "/" ||
+      url.pathname === "" ||
+      url.pathname === "/pages" ||
+      url.pathname === "/pages/"
+    ) {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = "/pages/home/index.html";
       return env.ASSETS.fetch(new Request(assetUrl, request));
