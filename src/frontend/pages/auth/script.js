@@ -32,6 +32,18 @@ const providersEl = document.getElementById("providers");
 const messageEl = document.getElementById("authMessage");
 const emailForm = document.getElementById("emailForm");
 
+// Remove every whitespace character (including non-breaking and zero-width ones
+// often added by autofill / mobile keyboards) before validating. Supabase
+// rejects any email containing whitespace with "Unable to validate email
+// address: invalid format", and a plain .trim() does not strip these.
+function sanitizeEmail(value) {
+  return value.replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, "");
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 function showMessage(text, kind = "error") {
   messageEl.textContent = text;
   messageEl.dataset.kind = kind;
@@ -89,7 +101,7 @@ emailForm.addEventListener("submit", async (event) => {
   const action = submitter?.dataset.action || "signin";
   const button = submitter || emailForm.querySelector('[data-action="signin"]');
   const data = new FormData(emailForm);
-  const email = String(data.get("email") || "").trim();
+  const email = sanitizeEmail(String(data.get("email") || ""));
   const password = String(data.get("password") || "");
   const remember = data.get("remember") != null;
 
@@ -97,6 +109,14 @@ emailForm.addEventListener("submit", async (event) => {
     showMessage("Put your email and password");
     return;
   }
+
+  if (!isValidEmail(email)) {
+    showMessage("Enter a valid email address (e.g. name@example.com).");
+    return;
+  }
+
+  const emailInput = emailForm.querySelector('input[name="email"]');
+  if (emailInput) emailInput.value = email;
 
   setBusy(button, true);
   try {
