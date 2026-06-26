@@ -136,7 +136,7 @@ export default {
       return env.ASSETS.fetch(new Request(assetUrl, request));
     }
    
-    if (url.pathname === `/pages/workspace/${env.ED_GRADES_PATH}`) {
+    if (url.pathname === `/pages/parent`) {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = "/pages/workspace/index2.html";
       return env.ASSETS.fetch(new Request(assetUrl, request));
