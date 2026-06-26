@@ -1,3 +1,5 @@
+import { authedFetch } from "/lib/auth.js";
+
 const ED_BASE = "/api/ed";
 
 const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -13,7 +15,7 @@ const state = {
 
 /* ===================== API ===================== */
 async function edGet(sub) {
-  const res = await fetch(`${ED_BASE}/${sub}`, {
+  const res = await authedFetch(`${ED_BASE}/${sub}`, {
     method: "GET",
     headers: {
       filter: "true",

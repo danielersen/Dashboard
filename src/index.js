@@ -4,7 +4,7 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 // API features
 import { EDfunction } from "./backend/ecole_directe/index.js";
 import { Cache } from "./backend/cache/index.js";
-import { Auth } from "./backend/auth/index.js";
+import { Auth, verifySessionToken } from "./backend/auth/index.js";
  
 // API funtion
 export default {
@@ -81,6 +81,19 @@ export default {
     }
 
     if (url.pathname.startsWith("/api/")) {
+      // Every data route requires a valid server-issued JWT in the
+      // Authorization header. /api/config and /api/auth/* are intentionally
+      // reachable without one (they bootstrap the login + token exchange), and
+      // google site verification is handled earlier, before any gating.
+      const authHeader = headers.get("Authorization") || "";
+      const bearer = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+      const session = await verifySessionToken(env, bearer);
+      if (!session.valid) {
+        return new Response(JSON.stringify({ error: "unauthorized", reason: session.reason }), {
+          status: 401,
+          headers: corsHeaders,
+        });
+      }
       try {
         // Ecole directe paths
         let resp;
@@ -109,7 +122,15 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
-    if (url.pathname === "/" || url.pathname === "") {
+    // "/", "/pages" and "/pages/" all land on home. Supabase sends users to
+    // "/pages/" after login; serving home there lets the client guard run and
+    // bounce to the originally-requested page (post-auth redirect cookie).
+    if (
+      url.pathname === "/" ||
+      url.pathname === "" ||
+      url.pathname === "/pages" ||
+      url.pathname === "/pages/"
+    ) {
       const assetUrl = new URL(request.url);
       assetUrl.pathname = "/pages/home/index.html";
       return env.ASSETS.fetch(new Request(assetUrl, request));
