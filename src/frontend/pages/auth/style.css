@@ -275,12 +275,6 @@ body {
   transform: translateY(-1px);
 }
 
-.auth-submit-ghost {
-  background: transparent;
-  border-color: var(--line);
-  color: var(--text);
-}
-
 .auth-submit:disabled,
 .auth-submit.is-loading {
   opacity: 0.6;
