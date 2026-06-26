@@ -1,3 +1,5 @@
+import { authedFetch } from "/lib/auth.js";
+
 const ED_BASE = "/api/ed";
 
 // Day keys match the EcoleDirecte timetable response (semaine[jour]); names are for display.
@@ -19,7 +21,7 @@ const state = {
 
 /* ===================== API ===================== */
 async function edGet(sub) {
-  const res = await fetch(`${ED_BASE}/${sub}`, {
+  const res = await authedFetch(`${ED_BASE}/${sub}`, {
     method: "GET",
     headers: {
       filter: "true",
@@ -46,7 +48,7 @@ async function edGet(sub) {
 }
 
 async function edPost(sub, body) {
-  const res = await fetch(`${ED_BASE}/${sub}`, {
+  const res = await authedFetch(`${ED_BASE}/${sub}`, {
     method: "POST",
     headers: {
       filter: "true",
