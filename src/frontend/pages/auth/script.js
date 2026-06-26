@@ -64,6 +64,23 @@ function rememberChecked() {
   return document.getElementById("rememberDevice")?.checked === true;
 }
 
+// Show/hide the password like classic login forms.
+function setupPasswordToggle() {
+  const toggle = document.querySelector("[data-password-toggle]");
+  const input = emailForm.querySelector('input[name="password"]');
+  if (!toggle || !input) return;
+  toggle.addEventListener("click", () => {
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    toggle.setAttribute("aria-pressed", show ? "true" : "false");
+    toggle.setAttribute(
+      "aria-label",
+      show ? "Masquer le mot de passe" : "Afficher le mot de passe",
+    );
+    input.focus();
+  });
+}
+
 async function startOAuth(provider, button) {
   clearMessage();
   setBusy(button, true);
@@ -168,6 +185,7 @@ async function init() {
   document.documentElement.removeAttribute("data-auth-pending");
 
   renderProviders();
+  setupPasswordToggle();
   const { ok, missing } = await checkConfig();
   if (!ok) {
     setFormDisabled(true);
