@@ -2,7 +2,6 @@ import {
   checkConfig,
   signInWithProvider,
   signInWithEmail,
-  signUpWithEmail,
 } from "/lib/supabase.js";
 import { redirectIfAuthenticated } from "/lib/auth.js";
 
@@ -91,20 +90,11 @@ function renderProviders() {
   }
 }
 
-let submitter = null;
-emailForm.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-action]");
-  if (button) {
-    submitter = button;
-  }
-});
-
 emailForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearMessage();
 
-  const action = submitter?.dataset.action || "signin";
-  const button = submitter || emailForm.querySelector('[data-action="signin"]');
+  const button = emailForm.querySelector('[data-action="signin"]');
   const data = new FormData(emailForm);
   const email = sanitizeEmail(String(data.get("email") || ""));
   const password = String(data.get("password") || "");
@@ -125,29 +115,16 @@ emailForm.addEventListener("submit", async (event) => {
 
   setBusy(button, true);
   try {
-    if (action === "signup") {
-      const { data: result, error } = await signUpWithEmail(email, password, remember);
-      if (error) {
-        throw error;
-      }
-      if (result?.session) {
-        window.location.href = "/pages/";
-        return;
-      }
-      showMessage("Account created, check your mails.", "success");
-    } else {
-      const { error } = await signInWithEmail(email, password, remember);
-      if (error) {
-        throw error;
-      }
-      window.location.href = "/pages/";
-      return;
+    const { error } = await signInWithEmail(email, password, remember);
+    if (error) {
+      throw error;
     }
+    window.location.href = "/pages/";
+    return;
   } catch (err) {
     showMessage(err?.message || "La connexion a échoué. Réessayez.");
   } finally {
     setBusy(button, false);
-    submitter = null;
   }
 });
 

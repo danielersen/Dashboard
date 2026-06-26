@@ -147,12 +147,6 @@ export async function signInWithEmail(email, password, remember = false) {
   return supabase.auth.signInWithPassword({ email, password });
 }
 
-export async function signUpWithEmail(email, password, remember = false) {
-  setRememberPref(remember);
-  const supabase = await getAuthClient();
-  return supabase.auth.signUp({ email, password });
-}
-
 // Sign out everywhere: clears the Supabase session and forgets this device
 // (drops the remember preference and any persisted session in both storages).
 export async function signOut() {
