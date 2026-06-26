@@ -8,6 +8,17 @@
 // that page and clear the cookie. The server token is then used for every API
 // call, and re-requested automatically when it expires. Navigation re-appends
 // the params to the URL so the next page is accepted too.
+//
+// A remembered device ("se souvenir de moi") has its Supabase session persisted
+// in localStorage; on a later visit we restore it automatically so the user is
+// recognised without retyping anything, like a normal website.
+
+import {
+  getRememberPref,
+  getRestoredSession,
+  persistSession,
+  signOut as supabaseSignOut,
+} from "/lib/supabase.js";
 
 const AUTH_PAGE = "/pages/auth";
 const HOME_PAGE = "/pages/home";
@@ -27,8 +38,20 @@ const STORAGE_KEYS = {
 
 const HASH_KEYS = ["access_token", "refresh_token", "expires_at", "expires_in", "token_type"];
 
+// Writes go to the storage matching the remember preference (localStorage when
+// remembered so they survive a browser restart, sessionStorage otherwise).
 function store() {
-  return window.sessionStorage;
+  return getRememberPref() ? window.localStorage : window.sessionStorage;
+}
+
+// Reads look in both storages so a token is found whatever the mode was.
+function readItem(key) {
+  return window.sessionStorage.getItem(key) ?? window.localStorage.getItem(key);
+}
+
+function removeItemEverywhere(key) {
+  window.sessionStorage.removeItem(key);
+  window.localStorage.removeItem(key);
 }
 
 // --- token transport (URL hash) ---------------------------------------------
@@ -59,7 +82,27 @@ function captureHashTokens() {
 }
 
 function getAccessToken() {
-  return store().getItem(STORAGE_KEYS.access);
+  return readItem(STORAGE_KEYS.access);
+}
+
+function storeSession(session) {
+  if (!session?.access_token) return false;
+  store().setItem(STORAGE_KEYS.access, session.access_token);
+  if (session.refresh_token) store().setItem(STORAGE_KEYS.refresh, session.refresh_token);
+  if (session.expires_at) store().setItem(STORAGE_KEYS.expiresAt, String(session.expires_at));
+  return true;
+}
+
+// Make sure a Supabase access token is available locally. Order: tokens in the
+// URL hash (fresh login) -> already in storage -> a remembered Supabase session
+// restored automatically. Returns true if a token is now available.
+async function ensureLocalSession() {
+  if (captureHashTokens()) {
+    await persistSession(readItem(STORAGE_KEYS.access), readItem(STORAGE_KEYS.refresh));
+    return true;
+  }
+  if (getAccessToken()) return true;
+  return storeSession(await getRestoredSession());
 }
 
 // Re-append the auth params to a same-origin URL so the next page re-runs the
@@ -76,8 +119,8 @@ export function appendAuthParams(href) {
   if (target.origin !== window.location.origin) return href;
   const params = new URLSearchParams();
   params.set("access_token", accessToken);
-  const refresh = store().getItem(STORAGE_KEYS.refresh);
-  const expiresAt = store().getItem(STORAGE_KEYS.expiresAt);
+  const refresh = readItem(STORAGE_KEYS.refresh);
+  const expiresAt = readItem(STORAGE_KEYS.expiresAt);
   if (refresh) params.set("refresh_token", refresh);
   if (expiresAt) params.set("expires_at", expiresAt);
   target.hash = params.toString();
@@ -91,8 +134,8 @@ export function navigateWithAuth(href) {
 // --- server session token ----------------------------------------------------
 
 function getValidSessionToken() {
-  const token = store().getItem(STORAGE_KEYS.session);
-  const exp = Number(store().getItem(STORAGE_KEYS.sessionExp) || 0);
+  const token = readItem(STORAGE_KEYS.session);
+  const exp = Number(readItem(STORAGE_KEYS.sessionExp) || 0);
   if (!token) return null;
   const now = Math.floor(Date.now() / 1000);
   if (exp && exp <= now + 5) return null; // expired (with small skew)
@@ -179,13 +222,36 @@ function consumePostAuthRedirect() {
   return true;
 }
 
+// On the login page: if this device is already recognised (remembered session),
+// skip the form and go straight in. Returns true if it triggered a navigation.
+export async function redirectIfAuthenticated() {
+  const session = await getRestoredSession();
+  if (!storeSession(session)) return false;
+  // Go through the landing path so any saved post-auth redirect is honoured.
+  navigateWithAuth("/pages/");
+  return true;
+}
+
+// Sign out: clear the Supabase session (forgetting this device if it was
+// remembered), drop every local token and the redirect cookie, then return to
+// the login page.
+export async function logout() {
+  try {
+    await supabaseSignOut();
+  } catch (e) {
+    /* ignore, still clear locally */
+  }
+  for (const key of Object.values(STORAGE_KEYS)) removeItemEverywhere(key);
+  deleteCookie(REDIRECT_COOKIE);
+  window.location.replace(AUTH_PAGE);
+}
+
 // --- page guard --------------------------------------------------------------
 
 // Run before showing protected content. Resolves to true if authenticated;
 // otherwise redirects to the login page and resolves to false.
 export async function guardPage() {
-  captureHashTokens();
-  if (!getAccessToken()) {
+  if (!(await ensureLocalSession())) {
     redirectToAuth();
     return false;
   }
@@ -223,8 +289,8 @@ export async function authedFetch(input, init = {}) {
 
   let res = await fetch(input, withAuth(token));
   if (res.status === 401) {
-    store().removeItem(STORAGE_KEYS.session);
-    store().removeItem(STORAGE_KEYS.sessionExp);
+    removeItemEverywhere(STORAGE_KEYS.session);
+    removeItemEverywhere(STORAGE_KEYS.sessionExp);
     token = await requestSessionToken();
     if (!token) {
       redirectToAuth();
