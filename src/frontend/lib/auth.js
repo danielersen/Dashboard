@@ -10,6 +10,10 @@
 // the params to the URL so the next page is accepted too.
 
 const AUTH_PAGE = "/pages/auth";
+const HOME_PAGE = "/pages/home";
+// Supabase drops the user on "/pages/" after login; those are not real pages,
+// just landing spots from which we send the user to their destination.
+const LANDING_PATHS = ["/pages", "/pages/"];
 const REDIRECT_COOKIE = "post_auth_redirect";
 const REDIRECT_COOKIE_TTL = 600; // seconds
 
@@ -145,6 +149,10 @@ function isAuthPage() {
   return normalizePath(window.location.pathname) === normalizePath(AUTH_PAGE);
 }
 
+function isLandingPath() {
+  return LANDING_PATHS.includes(window.location.pathname);
+}
+
 // Remember the page the user was trying to reach, then send them to login.
 function redirectToAuth() {
   if (isAuthPage()) return;
@@ -189,6 +197,12 @@ export async function guardPage() {
   // Authenticated: if the user was sent here from login, bounce them back to the
   // page they originally wanted. Keep the page hidden while navigating.
   if (consumePostAuthRedirect()) {
+    return false;
+  }
+  // No saved destination but we landed on "/pages/" (or came straight to the
+  // login page): send the user to home.
+  if (isLandingPath()) {
+    navigateWithAuth(HOME_PAGE);
     return false;
   }
   return true;
