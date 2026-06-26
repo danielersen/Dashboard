@@ -4,6 +4,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
 } from "/lib/supabase.js";
+import { redirectIfAuthenticated } from "/lib/auth.js";
 
 // OAuth providers enabled in Supabase (Authentication -> Providers).
 const OAUTH_PROVIDERS = ["github", "google"];
@@ -59,11 +60,15 @@ function setBusy(button, busy) {
   button.classList.toggle("is-loading", busy);
 }
 
+function rememberChecked() {
+  return document.getElementById("rememberDevice")?.checked === true;
+}
+
 async function startOAuth(provider, button) {
   clearMessage();
   setBusy(button, true);
   try {
-    const { error } = await signInWithProvider(provider);
+    const { error } = await signInWithProvider(provider, rememberChecked());
     if (error) {
       throw error;
     }
@@ -158,6 +163,10 @@ function setFormDisabled(disabled) {
 // Verify the required env variables exist before allowing any login attempt.
 // If they are missing, disable the form and tell the user exactly what's wrong.
 async function init() {
+  // Already recognised on this device? Skip the form and go straight in.
+  if (await redirectIfAuthenticated()) return;
+  document.documentElement.removeAttribute("data-auth-pending");
+
   renderProviders();
   const { ok, missing } = await checkConfig();
   if (!ok) {
