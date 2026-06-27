@@ -25,7 +25,7 @@ const state = {
   pomoSubjects: [],
   pomoSubjectsOriginal: null,
   pomoDirty: false,
-  pomoChecked: [],
+  pomoChecked: {},
   pomoTimerCount: 0,
   pomoTimerRunning: false,
   pomoTimerInterval: null,
@@ -752,47 +752,40 @@ async function pomoLoadSubjects() {
   pomoRenderSubjects();
 }
 
+function pomoFlattenSubjects() {
+  const flat = [];
+  state.pomoSubjects.forEach((s) => {
+    const name = s.matière || s.matiere || "";
+    const count = Number(s.nb_fois) || 1;
+    for (let j = 0; j < count; j++) {
+      flat.push({ name, instance: j });
+    }
+  });
+  return flat;
+}
+
 function pomoRenderSubjects() {
   pomoUpdateDayLabel();
   const listEl = document.querySelector("[data-pomo-subjects]");
   if (!listEl) return;
   const isToday = pomoIsToday();
-  if (state.pomoSubjects.length === 0) {
+  const flat = pomoFlattenSubjects();
+  if (flat.length === 0) {
     listEl.innerHTML = `<p class="state-msg">No subjects for this day.</p>`;
     return;
   }
-  listEl.innerHTML = state.pomoSubjects
-    .map((s, i) => {
-      const name = escapeHtml(s.matière || s.matiere || "");
-      const count = Number(s.nb_fois) || 1;
-      const checked = isToday && state.pomoChecked.includes(name) ? "checked" : "";
-      const disabled = isToday ? "" : "disabled";
+  listEl.innerHTML = flat
+    .map((item, i) => {
+      const checkedCount = Number(state.pomoChecked[item.name]) || 0;
+      const isChecked = isToday && item.instance < checkedCount;
       return `
-        <label class="pomo-subject" data-pomo-subject-index="${i}">
-          <input type="checkbox" ${checked} ${disabled} data-pomo-check="${i}" />
-          <span class="pomo-subject-name">${name}</span>
-          ${count > 1 ? `<span class="pomo-subject-count">&times;${count}</span>` : ""}
+        <label class="pomo-subject">
+          <input type="checkbox" ${isChecked ? "checked" : ""} ${isToday ? "" : "disabled"}
+            data-pomo-check="${i}" data-pomo-subj-name="${escapeHtml(item.name)}" />
+          <span class="pomo-subject-name">${escapeHtml(item.name)}</span>
         </label>`;
     })
     .join("");
-  pomoAttachCheckboxHandlers();
-}
-
-function pomoAttachCheckboxHandlers() {
-  document.querySelectorAll("[data-pomo-check]").forEach((cb) => {
-    cb.addEventListener("change", async () => {
-      const idx = parseInt(cb.dataset.pomoCheck, 10);
-      const subject = state.pomoSubjects[idx];
-      if (!subject) return;
-      const name = subject.matière || subject.matiere || "";
-      if (cb.checked) {
-        if (!state.pomoChecked.includes(name)) state.pomoChecked.push(name);
-      } else {
-        state.pomoChecked = state.pomoChecked.filter((s) => s !== name);
-      }
-      await pomoPost("set-checked", { subjects: state.pomoChecked });
-    });
-  });
 }
 
 /* --- Three-dots menu --- */
@@ -865,19 +858,23 @@ async function pomoSave() {
     saveBtn.disabled = true;
   }
   try {
-    await pomoPost("save-subjects", {
+    const result = await pomoPost("save-subjects", {
       day: POMO_DAYS[state.pomoDayIndex],
       subjects: state.pomoSubjects,
     });
+    if (result && result.error) {
+      throw new Error(result.error);
+    }
     state.pomoSubjectsOriginal = JSON.stringify(state.pomoSubjects);
     state.pomoDirty = false;
-  } catch {
-    /* will keep dirty state */
+    if (saveBtn) saveBtn.textContent = "Saved!";
+    setTimeout(() => { if (saveBtn) saveBtn.textContent = "Save"; }, 1500);
+  } catch (err) {
+    if (saveBtn) saveBtn.textContent = "Error!";
+    setTimeout(() => { if (saveBtn) saveBtn.textContent = "Save"; }, 2000);
+    console.error("Pomodoro save failed:", err);
   }
-  if (saveBtn) {
-    saveBtn.textContent = "Save";
-    saveBtn.disabled = false;
-  }
+  if (saveBtn) saveBtn.disabled = false;
 }
 
 function pomoCloseMenuOnOutsideClick(e) {
@@ -900,6 +897,7 @@ function initPomodoro() {
   const addInput = document.querySelector("[data-pomo-add-input]");
   const saveBtn = document.querySelector("[data-pomo-save]");
   const ring = document.querySelector("[data-pomo-ring]");
+  const subjectsList = document.querySelector("[data-pomo-subjects]");
 
   if (ring) {
     ring.style.strokeDasharray = String(POMO_CIRCUMFERENCE);
@@ -916,6 +914,23 @@ function initPomodoro() {
   if (addInput) addInput.addEventListener("keydown", (e) => { if (e.key === "Enter") pomoAddSubject(); });
   if (saveBtn) saveBtn.addEventListener("click", pomoSave);
 
+  if (subjectsList) {
+    subjectsList.addEventListener("change", async (e) => {
+      const cb = e.target;
+      if (!cb.matches("[data-pomo-check]")) return;
+      if (!pomoIsToday()) { cb.checked = false; return; }
+      const name = cb.dataset.pomoSubjName;
+      if (!name) return;
+      if (cb.checked) {
+        state.pomoChecked[name] = (Number(state.pomoChecked[name]) || 0) + 1;
+      } else {
+        const cur = (Number(state.pomoChecked[name]) || 0) - 1;
+        if (cur <= 0) { delete state.pomoChecked[name]; } else { state.pomoChecked[name] = cur; }
+      }
+      await pomoPost("set-checked", { checked: state.pomoChecked });
+    });
+  }
+
   document.addEventListener("click", pomoCloseMenuOnOutsideClick);
   pomoUpdateTimerDisplay();
   pomoUpdateCounterDisplay();
@@ -928,7 +943,12 @@ async function loadPomodoro() {
   ]);
   if (stateResult) {
     state.pomoTimerCount = stateResult.timerCount || 0;
-    state.pomoChecked = Array.isArray(stateResult.checked) ? stateResult.checked : [];
+    const raw = stateResult.checked;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      state.pomoChecked = raw;
+    } else {
+      state.pomoChecked = {};
+    }
     pomoUpdateCounterDisplay();
     pomoRenderSubjects();
   }
