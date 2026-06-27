@@ -1,8 +1,10 @@
 import {
+  checkConfig,
   signInWithProvider,
   signInWithEmail,
-  signUpWithEmail,
 } from "/lib/supabase.js";
+import { redirectIfAuthenticated } from "/lib/auth.js";
+import { getTurnstileToken, preloadTurnstile } from "/lib/turnstile.js";
 
 // OAuth providers enabled in Supabase (Authentication -> Providers).
 const OAUTH_PROVIDERS = ["github", "google"];
@@ -31,6 +33,18 @@ const providersEl = document.getElementById("providers");
 const messageEl = document.getElementById("authMessage");
 const emailForm = document.getElementById("emailForm");
 
+// Remove every whitespace character (including non-breaking and zero-width ones
+// often added by autofill / mobile keyboards) before validating. Supabase
+// rejects any email containing whitespace with "Unable to validate email
+// address: invalid format", and a plain .trim() does not strip these.
+function sanitizeEmail(value) {
+  return value.replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, "");
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
 function showMessage(text, kind = "error") {
   messageEl.textContent = text;
   messageEl.dataset.kind = kind;
@@ -46,16 +60,59 @@ function setBusy(button, busy) {
   button.classList.toggle("is-loading", busy);
 }
 
+function rememberChecked() {
+  return document.getElementById("rememberDevice")?.checked === true;
+}
+
+// Run the invisible Turnstile challenge and have the Worker verify the token.
+// Returns true when human-verification passes (or Turnstile is disabled), false
+// when the challenge is required but fails.
+async function passTurnstile() {
+  const token = await getTurnstileToken();
+  if (!token) return true; // Turnstile not configured / unavailable: don't block.
+  try {
+    const res = await fetch("/api/auth/turnstile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const data = await res.json();
+    return data?.success === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Show/hide the password like classic login forms.
+function setupPasswordToggle() {
+  const toggle = document.querySelector("[data-password-toggle]");
+  const input = emailForm.querySelector('input[name="password"]');
+  if (!toggle || !input) return;
+  toggle.addEventListener("click", () => {
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    toggle.setAttribute("aria-pressed", show ? "true" : "false");
+    toggle.setAttribute(
+      "aria-label",
+      show ? "Masquer le mot de passe" : "Afficher le mot de passe",
+    );
+    input.focus();
+  });
+}
+
 async function startOAuth(provider, button) {
   clearMessage();
   setBusy(button, true);
   try {
-    const { error } = await signInWithProvider(provider);
+    if (!(await passTurnstile())) {
+      throw new Error("Human verification failed, please try again.");
+    }
+    const { error } = await signInWithProvider(provider, rememberChecked());
     if (error) {
       throw error;
     }
   } catch (err) {
-    showMessage(err?.message || "La connexion a échoué. Réessayez.");
+    showMessage(err?.message || "Login failed, try again.");
     setBusy(button, false);
   }
 }
@@ -73,55 +130,74 @@ function renderProviders() {
   }
 }
 
-let submitter = null;
-emailForm.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-action]");
-  if (button) {
-    submitter = button;
-  }
-});
-
 emailForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearMessage();
 
-  const action = submitter?.dataset.action || "signin";
-  const button = submitter || emailForm.querySelector('[data-action="signin"]');
+  const button = emailForm.querySelector('[data-action="signin"]');
   const data = new FormData(emailForm);
-  const email = String(data.get("email") || "").trim();
+  const email = sanitizeEmail(String(data.get("email") || ""));
   const password = String(data.get("password") || "");
+  const remember = data.get("remember") != null;
 
   if (!email || !password) {
-    showMessage("Renseignez votre email et votre mot de passe.");
+    showMessage("Put your email and password");
     return;
   }
 
+  if (!isValidEmail(email)) {
+    showMessage("Enter a valid email address (e.g. name@example.com).");
+    return;
+  }
+
+  const emailInput = emailForm.querySelector('input[name="email"]');
+  if (emailInput) emailInput.value = email;
+
   setBusy(button, true);
   try {
-    if (action === "signup") {
-      const { data: result, error } = await signUpWithEmail(email, password);
-      if (error) {
-        throw error;
-      }
-      if (result?.session) {
-        window.location.href = "/pages/";
-        return;
-      }
-      showMessage("Compte créé. Vérifiez votre email pour confirmer l'inscription.", "success");
-    } else {
-      const { error } = await signInWithEmail(email, password);
-      if (error) {
-        throw error;
-      }
-      window.location.href = "/pages/";
-      return;
+    if (!(await passTurnstile())) {
+      throw new Error("Human verification failed, please try again.");
     }
+    const { error } = await signInWithEmail(email, password, remember);
+    if (error) {
+      throw error;
+    }
+    window.location.href = "/pages/";
+    return;
   } catch (err) {
     showMessage(err?.message || "La connexion a échoué. Réessayez.");
   } finally {
     setBusy(button, false);
-    submitter = null;
   }
 });
 
-renderProviders();
+function setFormDisabled(disabled) {
+  for (const el of emailForm.querySelectorAll("input, button")) {
+    el.disabled = disabled;
+  }
+  for (const el of providersEl.querySelectorAll("button")) {
+    el.disabled = disabled;
+  }
+}
+
+// Verify the required env variables exist before allowing any login attempt.
+// If they are missing, disable the form and tell the user exactly what's wrong.
+async function init() {
+  // Already recognised on this device? Skip the form and go straight in.
+  if (await redirectIfAuthenticated()) return;
+  document.documentElement.removeAttribute("data-auth-pending");
+
+  renderProviders();
+  setupPasswordToggle();
+  preloadTurnstile();
+  const { ok, missing } = await checkConfig();
+  if (!ok) {
+    setFormDisabled(true);
+    const list = missing.length ? ` : ${missing.join(", ")}` : "";
+    showMessage(
+      `Configuration Supabase manquante${list}. Définissez ces variables d'environnement sur le Worker avant de vous connecter.`,
+    );
+  }
+}
+
+init();

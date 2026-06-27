@@ -1,13 +1,23 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-auth-pending>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#08100f">
-    <title>Dashboard - Private workspace</title>
-    <meta name="description" content="Workspace with notes, and students informations from ED, Artificial Intelligence, usefools tools, personnalisation...">
+    <meta property="og:site_name" content="Daniel Ersen Dashboard">
+    <title>Home</title>
+    <meta property="og:title" content="Dashboard | Private workspace">
+    <meta name="description" content="This website is a dashboard by Daniel Ersen. If you want one, go on the repository Dashboard, in the Daniel Ersen github account. Workspace with notes, and students informations from ED, Artificial Intelligence, usefools tools, personnalisation...">
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/logo/websitelogo.png">
+    <link rel="apple-touch-icon" href="/assets/logo/websitelogo.png">
+    <style>html[data-auth-pending] body { visibility: hidden; }</style>
+    <script type="module">
+      import { guardPage } from "/lib/auth.js";
+      guardPage().then((ok) => {
+        if (ok) document.documentElement.removeAttribute("data-auth-pending");
+      });
+    </script>
     <link rel="stylesheet" href="/pages/home/style.css">
-    <link rel="icon" href="/assets/logo/websitelogo.png">
     <script type="module" src="/components/navbar/navbar.js"></script>
   </head>
   <body>

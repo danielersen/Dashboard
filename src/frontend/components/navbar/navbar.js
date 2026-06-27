@@ -1,3 +1,5 @@
+import { appendAuthParams, logout } from "/lib/auth.js";
+
 const NAV_ITEMS = [
   { slug: "home", label: "Home", href: "/pages/home", icon: "home" },
   { slug: "workspace", label: "Workspace", href: "/pages/workspace", icon: "grid" },
@@ -40,6 +42,18 @@ const ICONS = {
   refresh: `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.99 5.99 0 0 1-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path>
+    </svg>
+  `,
+  logout: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4v-2H6V5h4zm5.5 3.5-1.4 1.42L16.17 10H9v2h7.17l-2.07 2.08 1.4 1.42L20 11z"></path>
+    </svg>
+  `,
+  more: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="5" cy="12" r="2"></circle>
+      <circle cx="12" cy="12" r="2"></circle>
+      <circle cx="19" cy="12" r="2"></circle>
     </svg>
   `,
 };
@@ -339,9 +353,103 @@ const NAVBAR_STYLE = `
     display: none;
   }
 
+  /* Kebab (three dots) is only used on small screens. */
+  .more-toggle {
+    display: none;
+  }
+
+  .more-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 184px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 16, 17, 0.55);
+    backdrop-filter: blur(22px) saturate(1.15);
+    -webkit-backdrop-filter: blur(22px) saturate(1.15);
+    box-shadow:
+      0 18px 50px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    visibility: hidden;
+    transition:
+      opacity 200ms ease,
+      transform 200ms ease,
+      visibility 200ms ease;
+    z-index: 2;
+  }
+
+  .more-menu[data-open="true"] {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    visibility: visible;
+  }
+
+  .more-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(237, 245, 242, 0.9);
+    cursor: pointer;
+    text-decoration: none;
+    text-align: left;
+    font: inherit;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .more-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  .more-item:active {
+    transform: translateY(1px);
+  }
+
+  .more-item .action-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .more-item .action-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  .more-item-label {
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
   @media (max-width: 640px) {
     :host {
       inset: 8px 10px auto 10px;
+    }
+
+    .right .quick:not(.more-toggle) {
+      display: none;
+    }
+
+    .more-toggle {
+      display: inline-flex;
+    }
+
+    .more-menu {
+      display: flex;
     }
 
     .bar {
@@ -403,8 +511,29 @@ const NAVBAR_TEMPLATE = `
         <a class="quick" data-kind="settings" href="/pages/settings" aria-label="Ouvrir les paramètres">
           <span class="action-icon">${ICONS.settings}</span>
         </a>
+        <button class="quick" data-kind="logout" type="button" aria-label="Se déconnecter">
+          <span class="action-icon">${ICONS.logout}</span>
+        </button>
+        <button class="quick more-toggle" data-kind="more" type="button" aria-label="Plus d'options" aria-expanded="false">
+          <span class="action-icon">${ICONS.more}</span>
+        </button>
       </div>
     </div>
+  </div>
+
+  <div class="more-menu" data-more-menu data-open="false" aria-hidden="true">
+    <button class="more-item" data-kind="refresh" type="button">
+      <span class="action-icon">${ICONS.refresh}</span>
+      <span class="more-item-label">Refresh</span>
+    </button>
+    <a class="more-item" data-kind="settings" href="/pages/settings">
+      <span class="action-icon">${ICONS.settings}</span>
+      <span class="more-item-label">Settings</span>
+    </a>
+    <button class="more-item" data-kind="logout" type="button">
+      <span class="action-icon">${ICONS.logout}</span>
+      <span class="more-item-label">Log out</span>
+    </button>
   </div>
 `;
 
@@ -420,8 +549,9 @@ class SiteNavbar extends HTMLElement {
     this._resizeObserver = null;
     this._centerScrollObserver = null;
     this._centerScrollCleanup = null;
-    this._boundRefresh = this._handleRefresh.bind(this);
     this._boundUpdateHeight = this._updateHeight.bind(this);
+    this._boundAction = this._handleAction.bind(this);
+    this._boundDocClick = this._handleDocumentClick.bind(this);
     this._refreshCooldownTimer = null;
   }
 
@@ -431,17 +561,22 @@ class SiteNavbar extends HTMLElement {
     if (!this.shadowRoot) {
       this.attachShadow({ mode: "open" });
       this.shadowRoot.innerHTML = `<style>${NAVBAR_STYLE}</style>${NAVBAR_TEMPLATE}`;
-      this.shadowRoot.querySelector("[data-kind='refresh']").addEventListener("click", this._boundRefresh);
       this.shadowRoot.querySelector("[data-home-link]").addEventListener("click", (event) => {
         event.preventDefault();
-        window.location.href = "/pages/home";
+        window.location.href = appendAuthParams("/pages/home");
       });
       this.shadowRoot.querySelectorAll("[data-route]").forEach((item) => {
         item.addEventListener("click", (event) => {
           event.preventDefault();
-          window.location.href = item.getAttribute("href");
+          window.location.href = appendAuthParams(item.getAttribute("href"));
         });
       });
+      // One delegated handler for refresh / settings / logout / more, shared by
+      // the inline buttons and the kebab menu (matched by data-kind).
+      this.shadowRoot.querySelectorAll("[data-kind]").forEach((item) => {
+        item.addEventListener("click", this._boundAction);
+      });
+      document.addEventListener("click", this._boundDocClick);
     }
 
     this._syncActiveState();
@@ -450,7 +585,57 @@ class SiteNavbar extends HTMLElement {
     this._updateHeight();
   }
 
+  _handleAction(event) {
+    const kind = event.currentTarget?.dataset?.kind;
+    if (!kind) return;
+    event.preventDefault();
+    switch (kind) {
+      case "more":
+        this._toggleMoreMenu();
+        return;
+      case "refresh":
+        this._closeMoreMenu();
+        this._handleRefresh();
+        return;
+      case "settings":
+        this._closeMoreMenu();
+        window.location.href = appendAuthParams("/pages/settings");
+        return;
+      case "logout":
+        this._closeMoreMenu();
+        logout();
+        return;
+      default:
+    }
+  }
+
+  _toggleMoreMenu() {
+    const menu = this.shadowRoot?.querySelector("[data-more-menu]");
+    const toggle = this.shadowRoot?.querySelector(".more-toggle");
+    if (!menu) return;
+    const open = menu.dataset.open !== "true";
+    menu.dataset.open = open ? "true" : "false";
+    menu.setAttribute("aria-hidden", open ? "false" : "true");
+    toggle?.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  _closeMoreMenu() {
+    const menu = this.shadowRoot?.querySelector("[data-more-menu]");
+    const toggle = this.shadowRoot?.querySelector(".more-toggle");
+    if (!menu || menu.dataset.open !== "true") return;
+    menu.dataset.open = "false";
+    menu.setAttribute("aria-hidden", "true");
+    toggle?.setAttribute("aria-expanded", "false");
+  }
+
+  // Close the kebab menu when clicking anywhere outside the navbar.
+  _handleDocumentClick(event) {
+    if (event.composedPath().includes(this)) return;
+    this._closeMoreMenu();
+  }
+
   disconnectedCallback() {
+    document.removeEventListener("click", this._boundDocClick);
     if (this._refreshCooldownTimer) {
       clearTimeout(this._refreshCooldownTimer);
       this._refreshCooldownTimer = null;
@@ -600,18 +785,24 @@ class SiteNavbar extends HTMLElement {
   }
 
   _handleRefresh() {
-    const button = this.shadowRoot?.querySelector("[data-kind='refresh']");
-    if (button) {
-      if (button.dataset.cooldown === "true") return;
-      button.dataset.cooldown = "true";
-      button.dataset.refreshing = "true";
-      button.disabled = true;
-      button.setAttribute("aria-disabled", "true");
+    // There can be two refresh controls (inline button + kebab menu item).
+    const buttons = Array.from(this.shadowRoot?.querySelectorAll("[data-kind='refresh']") || []);
+    const inline = buttons.find((b) => !b.classList.contains("more-item")) || buttons[0];
+    if (inline) {
+      if (inline.dataset.cooldown === "true") return;
+      for (const b of buttons) {
+        b.dataset.cooldown = "true";
+        b.dataset.refreshing = "true";
+        b.disabled = true;
+        b.setAttribute("aria-disabled", "true");
+      }
       if (this._refreshCooldownTimer) clearTimeout(this._refreshCooldownTimer);
       this._refreshCooldownTimer = setTimeout(() => {
-        button.dataset.cooldown = "false";
-        button.disabled = false;
-        button.removeAttribute("aria-disabled");
+        for (const b of buttons) {
+          b.dataset.cooldown = "false";
+          b.disabled = false;
+          b.removeAttribute("aria-disabled");
+        }
         this._refreshCooldownTimer = null;
       }, SiteNavbar.REFRESH_COOLDOWN_MS);
     }
@@ -628,7 +819,7 @@ class SiteNavbar extends HTMLElement {
     document.dispatchEvent(new CustomEvent("site-navbar:refresh", { detail }));
 
     Promise.allSettled(pending).then(() => {
-      if (button) button.dataset.refreshing = "false";
+      for (const b of buttons) b.dataset.refreshing = "false";
     });
   }
 }
