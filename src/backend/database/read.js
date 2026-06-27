@@ -75,9 +75,29 @@ export async function driveRead(env, path) {
     );
   }
 
-  try {
-    return await contentResponse.json();
-  } catch {
-    throw new Error(`File "${segments.at(-1)}" is not valid JSON`);
+  const raw = await contentResponse.text();
+  return deepParse(raw);
+}
+
+function deepParse(value) {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (
+    (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+    (trimmed.startsWith("[") && trimmed.endsWith("]"))
+  ) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed.map(deepParse);
+      if (typeof parsed === "object" && parsed !== null) {
+        for (const key of Object.keys(parsed)) {
+          parsed[key] = deepParse(parsed[key]);
+        }
+      }
+      return parsed;
+    } catch {
+      return value;
+    }
   }
+  return value;
 }
