@@ -5,6 +5,7 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 import { EDfunction } from "./backend/ecole_directe/index.js";
 import { Cache } from "./backend/cache/index.js";
 import { Auth, verifySessionToken } from "./backend/auth/index.js";
+import { Pomodoro } from "./backend/pomodoro_api.js";
  
 // API funtion
 export default {
@@ -100,6 +101,8 @@ export default {
         let resp;
         if (url.pathname.startsWith("/api/ed/")) {
           resp = await EDfunction(env, url.pathname.slice("/api/ed/".length), method, headers, body);
+        } else if (url.pathname.startsWith("/api/pomodoro/")) {
+          resp = await Pomodoro(env, url.pathname.slice("/api/pomodoro/".length), method, body);
         } else if (url.pathname.startsWith("/api/cache/")) {
           resp = await Cache(url.pathname.slice("/api/cache/".length), method, body)
         };
