@@ -1,21 +1,25 @@
+import { getAccessToken } from "./drive_auth.js";
+
+const escapeQuery = str =>
+  str.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
 export async function driveRead(env, path) {
-  const accessToken = env.DRIVE_TOKEN;
-  if (!accessToken) {
-    throw new Error("Missing Google Drive access token");
-  }
+  const accessToken = await getAccessToken(env);
+
   if (!path || typeof path !== "string") {
     throw new Error("Invalid path");
   }
+
   const headers = {
     Authorization: `Bearer ${accessToken}`
   };
-  const escapeQuery = str =>
-    str.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+
   let parentId = "root";
   const segments = path.split("/").filter(Boolean);
   if (segments.length === 0) {
     throw new Error("Invalid path");
   }
+
   for (let i = 0; i < segments.length - 1; i++) {
     const folderName = escapeQuery(segments[i]);
     const query =
@@ -38,6 +42,7 @@ export async function driveRead(env, path) {
     }
     parentId = data.files[0].id;
   }
+
   const fileName = escapeQuery(segments.at(-1));
   const fileQuery =
     `'${parentId}' in parents and ` +
@@ -56,6 +61,7 @@ export async function driveRead(env, path) {
   if (!fileData.files?.length) {
     throw new Error(`File not found: ${segments.at(-1)}`);
   }
+
   const fileId = fileData.files[0].id;
   const contentResponse = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
@@ -66,6 +72,7 @@ export async function driveRead(env, path) {
       `Unable to read file (${contentResponse.status})`
     );
   }
+
   try {
     return await contentResponse.json();
   } catch {
