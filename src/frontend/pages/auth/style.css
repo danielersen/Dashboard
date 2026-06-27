@@ -68,7 +68,6 @@ body {
 .auth-logo {
   width: 64px;
   height: auto;
-  border-radius: 18px;
   filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.32));
 }
 
@@ -118,6 +117,137 @@ body {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+}
+
+/* Leave room for the eye button so long passwords don't slide under it. */
+.auth-input-wrap input {
+  padding-right: 46px;
+}
+
+.auth-eye {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease;
+}
+
+.auth-eye:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.auth-eye:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.auth-eye svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* Show one icon at a time depending on the toggle state. */
+.auth-eye .auth-eye-closed {
+  display: none;
+}
+
+.auth-eye[aria-pressed="true"] .auth-eye-open {
+  display: none;
+}
+
+.auth-eye[aria-pressed="true"] .auth-eye-closed {
+  display: block;
+}
+
+.auth-remember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.auth-remember input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.auth-remember-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.auth-remember-box svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: #062019;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.auth-remember:hover .auth-remember-box {
+  border-color: rgba(82, 214, 168, 0.45);
+}
+
+.auth-remember input:checked + .auth-remember-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.auth-remember input:checked + .auth-remember-box svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.auth-remember input:focus-visible + .auth-remember-box {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.auth-remember-label {
+  line-height: 1.2;
+}
+
 .auth-form-actions {
   display: flex;
   gap: 10px;
@@ -143,12 +273,6 @@ body {
 
 .auth-submit:hover {
   transform: translateY(-1px);
-}
-
-.auth-submit-ghost {
-  background: transparent;
-  border-color: var(--line);
-  color: var(--text);
 }
 
 .auth-submit:disabled,

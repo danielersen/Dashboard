@@ -1,11 +1,12 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-auth-pending>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#08100f">
-    <title>Dashboard - Connexion</title>
-    <meta name="description" content="Connexion au Dashboard via vos providers Supabase.">
+    <title>Dashboard - Login</title>
+    <meta name="description" content="Login to dashboard.">
+    <style>html[data-auth-pending] body { visibility: hidden; }</style>
     <link rel="stylesheet" href="/pages/auth/style.css">
     <link rel="icon" href="/assets/icons/websitelogo.png">
   </head>
@@ -14,20 +15,36 @@
       <section class="auth-card" aria-label="Connexion">
         <img src="/assets/icons/logo.png" alt="Logo Dashboard" class="auth-logo">
         <h1 class="auth-title">Dashboard</h1>
-        <p class="auth-subtitle">Connectez-vous pour accéder à votre espace.</p>
+        <p class="auth-subtitle">Login to access at your space</p>
 
         <form id="emailForm" class="auth-form" novalidate>
           <label class="auth-field">
             <span>Email</span>
-            <input type="email" name="email" autocomplete="email" required placeholder="vous@exemple.com">
+            <input type="email" name="email" autocomplete="username" required placeholder="vous@exemple.com">
           </label>
           <label class="auth-field">
-            <span>Mot de passe</span>
-            <input type="password" name="password" autocomplete="current-password" required placeholder="••••••••">
+            <span>Password</span>
+            <div class="auth-input-wrap">
+              <input type="password" name="password" autocomplete="current-password" required placeholder="••••••••">
+              <button type="button" class="auth-eye" data-password-toggle aria-label="Afficher le mot de passe" aria-pressed="false">
+                <svg class="auth-eye-open" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 5c-5 0-9.27 3.11-11 7.5C2.73 16.89 7 20 12 20s9.27-3.11 11-7.5C21.27 8.11 17 5 12 5zm0 12.5A5 5 0 1 1 12 7.5a5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"></path>
+                </svg>
+                <svg class="auth-eye-closed" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 7.5a5 5 0 0 1 5 5c0 .57-.1 1.11-.28 1.62l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.54C21.27 8.11 17 5 12 5c-1.27 0-2.49.2-3.64.57l2.16 2.16c.47-.15.97-.23 1.48-.23zM3.71 4.56 2.29 5.97l2.06 2.06C2.94 9.13 1.83 10.69 1 12.5 2.73 16.89 7 20 12 20c1.52 0 2.98-.29 4.32-.82l2.79 2.79 1.41-1.41L3.71 4.56zM9.51 10.36l1.58 1.58c-.05.18-.09.37-.09.56a2 2 0 0 0 2 2c.19 0 .38-.04.56-.09l1.58 1.58c-.63.31-1.34.51-2.14.51a4 4 0 0 1-4-4c0-.8.2-1.51.51-2.14z"></path>
+                </svg>
+              </button>
+            </div>
+          </label>
+          <label class="auth-remember">
+            <input type="checkbox" name="remember" id="rememberDevice">
+            <span class="auth-remember-box" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+            </span>
+            <span class="auth-remember-label">Se souvenir de cet appareil</span>
           </label>
           <div class="auth-form-actions">
-            <button type="submit" class="auth-submit" data-action="signin">Se connecter</button>
-            <button type="submit" class="auth-submit auth-submit-ghost" data-action="signup">Créer un compte</button>
+            <button type="submit" class="auth-submit" data-action="signin">Login</button>
           </div>
         </form>
 
