@@ -42,6 +42,11 @@
             <path d="M5 3h11l3 3v15a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm2 6v2h10V9zm0 4v2h10v-2zm0 4v2h7v-2z"></path>
           </svg>
         </button>
+        <button class="ws-nav" type="button" data-target="pomodoro" aria-label="Pomodoro">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 1h4v2h3l-1.4 1.4A8.96 8.96 0 0 1 21 12a9 9 0 1 1-15.6-6.6L4 4h3V1h3zm2 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14zm1 2v5.4l3.2 1.9-.8 1.4L11 13V8h2z"></path>
+          </svg>
+        </button>
       </aside>
 
       <main class="ws-main">
@@ -117,6 +122,66 @@
           </header>
           <div class="homeworks-body" data-homeworks-body>
             <p class="state-msg">Loading homework… Slowing to not be blocked.</p>
+          </div>
+        </section>
+
+        <!-- ===================== POMODORO ===================== -->
+        <section id="pomodoro" class="ws-section" aria-label="Pomodoro" hidden>
+          <header class="section-head">
+            <h1>Pomodoro</h1>
+          </header>
+          <div class="pomo-grid">
+            <article class="pomo-card pomo-timer-card">
+              <div class="pomo-timer-display">
+                <svg class="pomo-ring" viewBox="0 0 200 200">
+                  <circle class="pomo-ring-bg" cx="100" cy="100" r="90" />
+                  <circle class="pomo-ring-fg" cx="100" cy="100" r="90" data-pomo-ring />
+                </svg>
+                <span class="pomo-time" data-pomo-time>25:00</span>
+              </div>
+              <div class="pomo-controls">
+                <button class="pomo-btn pomo-btn-main" type="button" data-pomo-start>Start</button>
+                <button class="pomo-btn" type="button" data-pomo-reset>Reset</button>
+              </div>
+              <div class="pomo-duration">
+                <label>
+                  Duration
+                  <input type="number" min="1" max="120" value="25" data-pomo-duration />
+                  <span>min</span>
+                </label>
+              </div>
+              <div class="pomo-counter">
+                <span data-pomo-count>0</span> timers completed today
+              </div>
+            </article>
+
+            <article class="pomo-card pomo-subjects-card">
+              <div class="pomo-subjects-header">
+                <button class="pomo-arrow" type="button" data-pomo-prev aria-label="Previous day">
+                  <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <span class="pomo-day-label" data-pomo-day-label>Lundi</span>
+                <button class="pomo-arrow" type="button" data-pomo-next aria-label="Next day">
+                  <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="pomo-subjects-actions">
+                  <button class="pomo-btn pomo-btn-save" type="button" data-pomo-save>Save</button>
+                  <button class="pomo-dots" type="button" data-pomo-menu-toggle aria-label="Options">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="pomo-subjects-list" data-pomo-subjects>
+                <p class="state-msg">Loading subjects…</p>
+              </div>
+              <div class="pomo-menu" data-pomo-menu hidden>
+                <div class="pomo-menu-add">
+                  <input type="text" placeholder="Subject name…" data-pomo-add-input />
+                  <button class="pomo-btn" type="button" data-pomo-add-btn>Add</button>
+                </div>
+                <div class="pomo-menu-list" data-pomo-menu-list></div>
+              </div>
+            </article>
           </div>
         </section>
       </main>
