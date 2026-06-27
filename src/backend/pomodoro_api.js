@@ -33,7 +33,7 @@ export async function Pomodoro(env, path, method, body) {
     const timerData = await getCacheValue("pomodoro_timer");
     const checkedData = await getCacheValue("pomodoro_checked");
     const timerCount = (timerData?.date === today) ? (timerData.count || 0) : 0;
-    const checked = (checkedData?.date === today) ? (checkedData.subjects || []) : [];
+    const checked = (checkedData?.date === today) ? (checkedData.checked || {}) : {};
     return { timerCount, checked };
   }
 
@@ -48,9 +48,9 @@ export async function Pomodoro(env, path, method, body) {
 
   if (path === "set-checked" && method === "POST") {
     const today = todayStr();
-    const subjects = body?.subjects;
-    if (!Array.isArray(subjects)) return { error: "Invalid subjects" };
-    await setCacheValue("pomodoro_checked", { subjects, date: today });
+    const checked = body?.checked;
+    if (!checked || typeof checked !== "object") return { error: "Invalid checked data" };
+    await setCacheValue("pomodoro_checked", { checked, date: today });
     return { ok: true };
   }
 
