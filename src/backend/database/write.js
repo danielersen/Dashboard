@@ -1,5 +1,7 @@
 import { getAccessToken } from "./drive_auth.js";
 
+const ROOT_FOLDER = "Dashboard";
+
 const escapeQuery = str =>
   str.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
@@ -13,7 +15,7 @@ export async function driveWrite(env, path, body) {
   };
 
   let parentId = "root";
-  const segments = path.split("/").filter(Boolean);
+  const segments = [ROOT_FOLDER, ...path.split("/").filter(Boolean)];
   if (segments.length === 0) throw new Error("Invalid path");
 
   for (let i = 0; i < segments.length - 1; i++) {
