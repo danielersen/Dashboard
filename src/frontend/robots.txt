@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://tonsite.fr/sitemap.xml
+Sitemap: https://dashboard.danielersen.workers.dev/sitemap.xml
