@@ -10,6 +10,10 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
+const POMO_DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
+const POMO_DAY_LABELS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+const POMO_CIRCUMFERENCE = 2 * Math.PI * 90;
+
 const state = {
   grades: null,
   timetable: null,
@@ -17,6 +21,16 @@ const state = {
   newGrades: null,
   trimester: "trimestre1",
   semaine: "semaineA",
+  pomoDayIndex: ((new Date().getDay() + 6) % 7),
+  pomoSubjects: [],
+  pomoSubjectsOriginal: null,
+  pomoDirty: false,
+  pomoChecked: [],
+  pomoTimerCount: 0,
+  pomoTimerRunning: false,
+  pomoTimerInterval: null,
+  pomoTimerTotal: 25 * 60,
+  pomoTimerRemaining: 25 * 60,
 };
 
 /* ===================== API ===================== */
@@ -594,6 +608,332 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+/* ===================== POMODORO ===================== */
+const POMO_BASE = "/api/pomodoro";
+
+async function pomoPost(sub, body) {
+  const res = await authedFetch(`${POMO_BASE}/${sub}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  try {
+    const json = JSON.parse(text);
+    return Object.prototype.hasOwnProperty.call(json, "resp") ? json.resp : json;
+  } catch {
+    return null;
+  }
+}
+
+function pomoTodayIndex() {
+  return (new Date().getDay() + 6) % 7;
+}
+
+function pomoIsToday() {
+  return state.pomoDayIndex === pomoTodayIndex();
+}
+
+/* --- Timer --- */
+function pomoUpdateTimerDisplay() {
+  const timeEl = document.querySelector("[data-pomo-time]");
+  const ring = document.querySelector("[data-pomo-ring]");
+  const startBtn = document.querySelector("[data-pomo-start]");
+  if (timeEl) {
+    const m = Math.floor(state.pomoTimerRemaining / 60);
+    const s = state.pomoTimerRemaining % 60;
+    timeEl.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  if (ring) {
+    const progress = state.pomoTimerTotal > 0 ? state.pomoTimerRemaining / state.pomoTimerTotal : 1;
+    ring.style.strokeDashoffset = String(POMO_CIRCUMFERENCE * (1 - progress));
+  }
+  if (startBtn) {
+    startBtn.textContent = state.pomoTimerRunning ? "Pause" : "Start";
+  }
+}
+
+function pomoStartTimer() {
+  if (state.pomoTimerRunning) {
+    clearInterval(state.pomoTimerInterval);
+    state.pomoTimerRunning = false;
+    pomoUpdateTimerDisplay();
+    return;
+  }
+  if (state.pomoTimerRemaining <= 0) return;
+  state.pomoTimerRunning = true;
+  pomoUpdateTimerDisplay();
+  state.pomoTimerInterval = setInterval(async () => {
+    state.pomoTimerRemaining--;
+    pomoUpdateTimerDisplay();
+    if (state.pomoTimerRemaining <= 0) {
+      clearInterval(state.pomoTimerInterval);
+      state.pomoTimerRunning = false;
+      pomoUpdateTimerDisplay();
+      pomoPlaySound();
+      const result = await pomoPost("increment-timer", {});
+      if (result && result.timerCount != null) {
+        state.pomoTimerCount = result.timerCount;
+      }
+      pomoUpdateCounterDisplay();
+    }
+  }, 1000);
+}
+
+function pomoResetTimer() {
+  clearInterval(state.pomoTimerInterval);
+  state.pomoTimerRunning = false;
+  const input = document.querySelector("[data-pomo-duration]");
+  const minutes = input ? Math.max(1, Math.min(120, parseInt(input.value, 10) || 25)) : 25;
+  state.pomoTimerTotal = minutes * 60;
+  state.pomoTimerRemaining = minutes * 60;
+  pomoUpdateTimerDisplay();
+}
+
+function pomoOnDurationChange() {
+  if (!state.pomoTimerRunning) {
+    pomoResetTimer();
+  }
+}
+
+function pomoPlaySound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.value = 0.3;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+    osc.stop(ctx.currentTime + 1.5);
+  } catch {
+    /* audio not available */
+  }
+}
+
+function pomoUpdateCounterDisplay() {
+  const el = document.querySelector("[data-pomo-count]");
+  if (el) el.textContent = String(state.pomoTimerCount);
+}
+
+/* --- Day navigation --- */
+function pomoChangeDay(offset) {
+  state.pomoDayIndex = ((state.pomoDayIndex + offset) % 7 + 7) % 7;
+  state.pomoDirty = false;
+  pomoLoadSubjects();
+}
+
+function pomoUpdateDayLabel() {
+  const label = document.querySelector("[data-pomo-day-label]");
+  if (label) {
+    const dayLabel = POMO_DAY_LABELS[state.pomoDayIndex];
+    label.textContent = pomoIsToday() ? `${dayLabel} (today)` : dayLabel;
+  }
+}
+
+/* --- Subjects --- */
+async function pomoLoadSubjects() {
+  pomoUpdateDayLabel();
+  const listEl = document.querySelector("[data-pomo-subjects]");
+  if (listEl) listEl.innerHTML = `<p class="state-msg">Loading subjects\u2026</p>`;
+  try {
+    const result = await pomoPost("read-subjects", { day: POMO_DAYS[state.pomoDayIndex] });
+    const subjects = Array.isArray(result?.subjects) ? result.subjects : [];
+    state.pomoSubjects = subjects.map(s => ({ ...s }));
+    state.pomoSubjectsOriginal = JSON.stringify(subjects);
+    state.pomoDirty = false;
+  } catch {
+    state.pomoSubjects = [];
+    state.pomoSubjectsOriginal = "[]";
+  }
+  pomoRenderSubjects();
+}
+
+function pomoRenderSubjects() {
+  pomoUpdateDayLabel();
+  const listEl = document.querySelector("[data-pomo-subjects]");
+  if (!listEl) return;
+  const isToday = pomoIsToday();
+  if (state.pomoSubjects.length === 0) {
+    listEl.innerHTML = `<p class="state-msg">No subjects for this day.</p>`;
+    return;
+  }
+  listEl.innerHTML = state.pomoSubjects
+    .map((s, i) => {
+      const name = escapeHtml(s.matière || s.matiere || "");
+      const count = Number(s.nb_fois) || 1;
+      const checked = isToday && state.pomoChecked.includes(name) ? "checked" : "";
+      const disabled = isToday ? "" : "disabled";
+      return `
+        <label class="pomo-subject" data-pomo-subject-index="${i}">
+          <input type="checkbox" ${checked} ${disabled} data-pomo-check="${i}" />
+          <span class="pomo-subject-name">${name}</span>
+          ${count > 1 ? `<span class="pomo-subject-count">&times;${count}</span>` : ""}
+        </label>`;
+    })
+    .join("");
+  pomoAttachCheckboxHandlers();
+}
+
+function pomoAttachCheckboxHandlers() {
+  document.querySelectorAll("[data-pomo-check]").forEach((cb) => {
+    cb.addEventListener("change", async () => {
+      const idx = parseInt(cb.dataset.pomoCheck, 10);
+      const subject = state.pomoSubjects[idx];
+      if (!subject) return;
+      const name = subject.matière || subject.matiere || "";
+      if (cb.checked) {
+        if (!state.pomoChecked.includes(name)) state.pomoChecked.push(name);
+      } else {
+        state.pomoChecked = state.pomoChecked.filter((s) => s !== name);
+      }
+      await pomoPost("set-checked", { subjects: state.pomoChecked });
+    });
+  });
+}
+
+/* --- Three-dots menu --- */
+function pomoToggleMenu() {
+  const menu = document.querySelector("[data-pomo-menu]");
+  if (!menu) return;
+  menu.hidden = !menu.hidden;
+  if (!menu.hidden) pomoRenderMenu();
+}
+
+function pomoRenderMenu() {
+  const listEl = document.querySelector("[data-pomo-menu-list]");
+  if (!listEl) return;
+  if (state.pomoSubjects.length === 0) {
+    listEl.innerHTML = `<p class="pomo-menu-empty">No subjects yet.</p>`;
+  } else {
+    listEl.innerHTML = state.pomoSubjects
+      .map((s, i) => {
+        const name = escapeHtml(s.matière || s.matiere || "");
+        const count = Number(s.nb_fois) || 1;
+        return `
+          <div class="pomo-menu-item">
+            <span>${name}${count > 1 ? ` (&times;${count})` : ""}</span>
+            <button class="pomo-menu-remove" type="button" data-pomo-remove="${i}" aria-label="Remove ${name}">&times;</button>
+          </div>`;
+      })
+      .join("");
+  }
+  listEl.querySelectorAll("[data-pomo-remove]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = parseInt(btn.dataset.pomoRemove, 10);
+      const entry = state.pomoSubjects[idx];
+      if (!entry) return;
+      const count = Number(entry.nb_fois) || 1;
+      if (count <= 1) {
+        state.pomoSubjects.splice(idx, 1);
+      } else {
+        entry.nb_fois = count - 1;
+      }
+      state.pomoDirty = true;
+      pomoRenderSubjects();
+      pomoRenderMenu();
+    });
+  });
+}
+
+function pomoAddSubject() {
+  const input = document.querySelector("[data-pomo-add-input]");
+  if (!input) return;
+  const name = input.value.trim();
+  if (!name) return;
+  const existing = state.pomoSubjects.find(
+    (s) => (s.matière || s.matiere || "").toLowerCase() === name.toLowerCase()
+  );
+  if (existing) {
+    existing.nb_fois = (Number(existing.nb_fois) || 1) + 1;
+  } else {
+    state.pomoSubjects.push({ "matière": name, nb_fois: 1 });
+  }
+  input.value = "";
+  state.pomoDirty = true;
+  pomoRenderSubjects();
+  pomoRenderMenu();
+}
+
+async function pomoSave() {
+  const saveBtn = document.querySelector("[data-pomo-save]");
+  if (saveBtn) {
+    saveBtn.textContent = "Saving\u2026";
+    saveBtn.disabled = true;
+  }
+  try {
+    await pomoPost("save-subjects", {
+      day: POMO_DAYS[state.pomoDayIndex],
+      subjects: state.pomoSubjects,
+    });
+    state.pomoSubjectsOriginal = JSON.stringify(state.pomoSubjects);
+    state.pomoDirty = false;
+  } catch {
+    /* will keep dirty state */
+  }
+  if (saveBtn) {
+    saveBtn.textContent = "Save";
+    saveBtn.disabled = false;
+  }
+}
+
+function pomoCloseMenuOnOutsideClick(e) {
+  const menu = document.querySelector("[data-pomo-menu]");
+  const toggle = document.querySelector("[data-pomo-menu-toggle]");
+  if (!menu || menu.hidden) return;
+  if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+    menu.hidden = true;
+  }
+}
+
+function initPomodoro() {
+  const startBtn = document.querySelector("[data-pomo-start]");
+  const resetBtn = document.querySelector("[data-pomo-reset]");
+  const durationInput = document.querySelector("[data-pomo-duration]");
+  const prevBtn = document.querySelector("[data-pomo-prev]");
+  const nextBtn = document.querySelector("[data-pomo-next]");
+  const menuToggle = document.querySelector("[data-pomo-menu-toggle]");
+  const addBtn = document.querySelector("[data-pomo-add-btn]");
+  const addInput = document.querySelector("[data-pomo-add-input]");
+  const saveBtn = document.querySelector("[data-pomo-save]");
+  const ring = document.querySelector("[data-pomo-ring]");
+
+  if (ring) {
+    ring.style.strokeDasharray = String(POMO_CIRCUMFERENCE);
+    ring.style.strokeDashoffset = "0";
+  }
+
+  if (startBtn) startBtn.addEventListener("click", pomoStartTimer);
+  if (resetBtn) resetBtn.addEventListener("click", pomoResetTimer);
+  if (durationInput) durationInput.addEventListener("change", pomoOnDurationChange);
+  if (prevBtn) prevBtn.addEventListener("click", () => pomoChangeDay(-1));
+  if (nextBtn) nextBtn.addEventListener("click", () => pomoChangeDay(1));
+  if (menuToggle) menuToggle.addEventListener("click", pomoToggleMenu);
+  if (addBtn) addBtn.addEventListener("click", pomoAddSubject);
+  if (addInput) addInput.addEventListener("keydown", (e) => { if (e.key === "Enter") pomoAddSubject(); });
+  if (saveBtn) saveBtn.addEventListener("click", pomoSave);
+
+  document.addEventListener("click", pomoCloseMenuOnOutsideClick);
+  pomoUpdateTimerDisplay();
+  pomoUpdateCounterDisplay();
+}
+
+async function loadPomodoro() {
+  const [stateResult] = await Promise.all([
+    pomoPost("get-state", {}).catch(() => null),
+    pomoLoadSubjects(),
+  ]);
+  if (stateResult) {
+    state.pomoTimerCount = stateResult.timerCount || 0;
+    state.pomoChecked = Array.isArray(stateResult.checked) ? stateResult.checked : [];
+    pomoUpdateCounterDisplay();
+    pomoRenderSubjects();
+  }
+}
+
 /* ===================== BOOT ===================== */
 async function loadAll() {
   updateSyncTime();
@@ -601,6 +941,7 @@ async function loadAll() {
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+  const pomoPromise = loadPomodoro();
   const tasks = [
     ["grades", () => edGet("grades")],
     ["timetable", () => edGet("timetable")],
@@ -622,6 +963,7 @@ async function loadAll() {
   renderNotes();
   renderTimetable();
   renderHomeworks();
+  await pomoPromise;
 }
 
 function boot() {
@@ -634,6 +976,7 @@ function boot() {
     state.semaine = btn.dataset.semaine;
     renderTimetable();
   });
+  initPomodoro();
   loadAll();
 }
 
