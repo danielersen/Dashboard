@@ -35,7 +35,7 @@ export async function driveWrite(env, path, body) {
     const data = await response.json();
     if (!data.files?.length) {
       const createFolder = await fetch(
-        "https://www.googleapis.com/drive/v3/files",
+        "https://www.googleapis.com/drive/v3/files?supportsAllDrives=true",
         {
           method: "POST",
           headers: {
@@ -50,7 +50,8 @@ export async function driveWrite(env, path, body) {
         }
       );
       if (!createFolder.ok) {
-        throw new Error(`Unable to create folder ${segments[i]}`);
+        const errorText = await createFolder.text();
+        throw new Error(`Unable to create folder ${segments[i]} (${createFolder.status}): ${errorText}`);
       }
       parentId = (await createFolder.json()).id;
     } else {
@@ -64,11 +65,12 @@ export async function driveWrite(env, path, body) {
     `name='${fileName}' and ` +
     `trashed=false`;
   const fileResponse = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(fileQuery)}&fields=files(id)`,
+    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(fileQuery)}&fields=files(id)&supportsAllDrives=true`,
     { headers }
   );
   if (!fileResponse.ok) {
-    throw new Error(`Google Drive error (${fileResponse.status})`);
+    const errorText = await fileResponse.text();
+    throw new Error(`Google Drive error (${fileResponse.status}) while searching file: ${errorText}`);
   }
   const fileData = await fileResponse.json();
   const content = JSON.stringify(body);
@@ -98,7 +100,7 @@ export async function driveWrite(env, path, body) {
   };
   const boundary = "drive-upload-boundary";
   const createResponse = await fetch(
-    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true",
     {
       method: "POST",
       headers: {
@@ -116,7 +118,8 @@ export async function driveWrite(env, path, body) {
     }
   );
   if (!createResponse.ok) {
-    throw new Error(`Unable to create file (${createResponse.status})`);
+    const errorText = await createResponse.text();
+    throw new Error(`Unable to create file (${createResponse.status}): ${errorText}`);
   }
   return await createResponse.json();
 }
