@@ -881,10 +881,9 @@ function pomoCloseMenuOnOutsideClick(e) {
   const menu = document.querySelector("[data-pomo-menu]");
   const toggle = document.querySelector("[data-pomo-menu-toggle]");
   if (!menu || menu.hidden) return;
-  if (toggle.contains(e.target)) return;
-  if (!menu.contains(e.target)) {
-    menu.hidden = true;
-  }
+  if (toggle && toggle.contains(e.target)) return;
+  if (menu.contains(e.target)) return;
+  menu.hidden = true;
 }
 
 function initPomodoro() {
@@ -894,12 +893,14 @@ function initPomodoro() {
   const prevBtn = document.querySelector("[data-pomo-prev]");
   const nextBtn = document.querySelector("[data-pomo-next]");
   const menuToggle = document.querySelector("[data-pomo-menu-toggle]");
+  const menu = document.querySelector("[data-pomo-menu]");
   const addBtn = document.querySelector("[data-pomo-add-btn]");
   const addInput = document.querySelector("[data-pomo-add-input]");
   const saveBtn = document.querySelector("[data-pomo-save]");
   const ring = document.querySelector("[data-pomo-ring]");
   const subjectsList = document.querySelector("[data-pomo-subjects]");
 
+  if (menu) menu.hidden = true;
   if (ring) {
     ring.style.strokeDasharray = String(POMO_CIRCUMFERENCE);
     ring.style.strokeDashoffset = "0";
@@ -910,7 +911,12 @@ function initPomodoro() {
   if (durationInput) durationInput.addEventListener("change", pomoOnDurationChange);
   if (prevBtn) prevBtn.addEventListener("click", () => pomoChangeDay(-1));
   if (nextBtn) nextBtn.addEventListener("click", () => pomoChangeDay(1));
-  if (menuToggle) menuToggle.addEventListener("click", pomoToggleMenu);
+  if (menuToggle) {
+    menuToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      pomoToggleMenu();
+    });
+  }
   if (addBtn) addBtn.addEventListener("click", pomoAddSubject);
   if (addInput) addInput.addEventListener("keydown", (e) => { if (e.key === "Enter") pomoAddSubject(); });
   if (saveBtn) saveBtn.addEventListener("click", pomoSave);
