@@ -1,6 +1,18 @@
 const SCOPES = "https://www.googleapis.com/auth/drive";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 
+function normalizePrivateKey(raw) {
+  if (typeof raw !== "string" || !raw.trim()) {
+    throw new Error("Invalid GOOGLE_PRIVATE_KEY");
+  }
+  let pem = raw.replace(/\\n/g, "\n").trim();
+  pem = pem.replace(/\r/g, "");
+  if (!pem.includes("-----BEGIN PRIVATE KEY-----")) {
+    pem = `-----BEGIN PRIVATE KEY-----\n${pem}\n-----END PRIVATE KEY-----`;
+  }
+  return pem;
+}
+
 function base64url(buffer) {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)))
     .replace(/\+/g, "-")
@@ -32,7 +44,7 @@ async function importPrivateKey(pem) {
 
 export async function getAccessToken(env) {
   const clientEmail = env.GOOGLE_CLIENT_EMAIL;
-  const privateKey = env.GOOGLE_PRIVATE_KEY;
+  const privateKey = normalizePrivateKey(env.GOOGLE_PRIVATE_KEY);
 
   if (!clientEmail || !privateKey) {
     throw new Error("Missing GOOGLE_CLIENT_EMAIL or GOOGLE_PRIVATE_KEY");
