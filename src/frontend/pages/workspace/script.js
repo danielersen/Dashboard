@@ -881,7 +881,8 @@ function pomoCloseMenuOnOutsideClick(e) {
   const menu = document.querySelector("[data-pomo-menu]");
   const toggle = document.querySelector("[data-pomo-menu-toggle]");
   if (!menu || menu.hidden) return;
-  if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+  if (toggle.contains(e.target)) return;
+  if (!menu.contains(e.target)) {
     menu.hidden = true;
   }
 }
