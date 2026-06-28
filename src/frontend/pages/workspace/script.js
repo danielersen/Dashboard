@@ -792,8 +792,12 @@ function pomoRenderSubjects() {
 function pomoToggleMenu() {
   const menu = document.querySelector("[data-pomo-menu]");
   if (!menu) return;
-  menu.hidden = !menu.hidden;
-  if (!menu.hidden) pomoRenderMenu();
+  if (menu.hasAttribute("hidden")) {
+    menu.removeAttribute("hidden");
+    pomoRenderMenu();
+  } else {
+    menu.setAttribute("hidden", "");
+  }
 }
 
 function pomoRenderMenu() {
@@ -880,10 +884,10 @@ async function pomoSave() {
 function pomoCloseMenuOnOutsideClick(e) {
   const menu = document.querySelector("[data-pomo-menu]");
   const toggle = document.querySelector("[data-pomo-menu-toggle]");
-  if (!menu || menu.hidden) return;
+  if (!menu || menu.hasAttribute("hidden")) return;
   if (toggle && toggle.contains(e.target)) return;
   if (menu.contains(e.target)) return;
-  menu.hidden = true;
+  menu.setAttribute("hidden", "");
 }
 
 function initPomodoro() {
@@ -900,7 +904,7 @@ function initPomodoro() {
   const ring = document.querySelector("[data-pomo-ring]");
   const subjectsList = document.querySelector("[data-pomo-subjects]");
 
-  if (menu) menu.hidden = true;
+  if (menu) menu.setAttribute("hidden", "");
   if (ring) {
     ring.style.strokeDasharray = String(POMO_CIRCUMFERENCE);
     ring.style.strokeDashoffset = "0";
@@ -913,6 +917,7 @@ function initPomodoro() {
   if (nextBtn) nextBtn.addEventListener("click", () => pomoChangeDay(1));
   if (menuToggle) {
     menuToggle.addEventListener("click", (event) => {
+      event.preventDefault();
       event.stopPropagation();
       pomoToggleMenu();
     });
@@ -939,6 +944,7 @@ function initPomodoro() {
   }
 
   document.addEventListener("click", pomoCloseMenuOnOutsideClick);
+  document.addEventListener("pointerdown", pomoCloseMenuOnOutsideClick);
   pomoUpdateTimerDisplay();
   pomoUpdateCounterDisplay();
 }
