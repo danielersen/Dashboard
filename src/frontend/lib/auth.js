@@ -142,19 +142,48 @@ function getValidSessionToken() {
   return token;
 }
 
+async function refreshSupabaseSessionIfPossible() {
+  const session = await getRestoredSession();
+  if (!session) return null;
+  if (session.access_token) store().setItem(STORAGE_KEYS.access, session.access_token);
+  if (session.refresh_token) store().setItem(STORAGE_KEYS.refresh, session.refresh_token);
+  if (session.expires_at) store().setItem(STORAGE_KEYS.expiresAt, String(session.expires_at));
+  return session.access_token ?? null;
+}
+
 async function requestSessionToken() {
-  const accessToken = getAccessToken();
+  let accessToken = getAccessToken();
+  if (!accessToken) {
+    accessToken = await refreshSupabaseSessionIfPossible();
+  }
   if (!accessToken) return null;
+
+  const payload = { access_token: accessToken };
   let res;
   try {
     res = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_token: accessToken }),
+      body: JSON.stringify(payload),
     });
   } catch (e) {
     return null;
   }
+
+  if (!res.ok) {
+    const refreshed = await refreshSupabaseSessionIfPossible();
+    if (!refreshed) return null;
+    try {
+      res = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: refreshed }),
+      });
+    } catch (e) {
+      return null;
+    }
+  }
+
   if (!res.ok) return null;
   const data = await res.json().catch(() => ({}));
   if (!data || !data.valid || !data.token) return null;
