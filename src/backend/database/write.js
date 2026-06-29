@@ -13,8 +13,9 @@ export async function driveWrite(env, path, body) {
   const headers = {
     Authorization: `Bearer ${accessToken}`
   };
+  const sharedDriveId = env.GOOGLE_SHARED_DRIVE_ID || env.GOOGLE_DRIVE_ID || null;
 
-  let parentId = "root";
+  let parentId = sharedDriveId || "root";
   const segments = [ROOT_FOLDER, ...path.split("/").filter(Boolean)];
   if (segments.length === 0) throw new Error("Invalid path");
 
@@ -26,7 +27,7 @@ export async function driveWrite(env, path, body) {
       `mimeType='application/vnd.google-apps.folder' and ` +
       `trashed=false`;
     const response = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)`,
+      `https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&includeItemsFromAllDrives=true&q=${encodeURIComponent(query)}&fields=files(id)`,
       { headers }
     );
     if (!response.ok) {
@@ -45,7 +46,8 @@ export async function driveWrite(env, path, body) {
           body: JSON.stringify({
             name: segments[i],
             mimeType: "application/vnd.google-apps.folder",
-            parents: [parentId]
+            parents: [parentId],
+            ...(sharedDriveId ? { driveId: sharedDriveId } : {})
           })
         }
       );
@@ -65,7 +67,7 @@ export async function driveWrite(env, path, body) {
     `name='${fileName}' and ` +
     `trashed=false`;
   const fileResponse = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(fileQuery)}&fields=files(id)&supportsAllDrives=true`,
+    `https://www.googleapis.com/drive/v3/files?supportsAllDrives=true&includeItemsFromAllDrives=true&q=${encodeURIComponent(fileQuery)}&fields=files(id)`,
     { headers }
   );
   if (!fileResponse.ok) {
@@ -96,7 +98,8 @@ export async function driveWrite(env, path, body) {
 
   const metadata = {
     name: segments.at(-1),
-    parents: [parentId]
+    parents: [parentId],
+    ...(sharedDriveId ? { driveId: sharedDriveId } : {})
   };
   const boundary = "drive-upload-boundary";
   const createResponse = await fetch(

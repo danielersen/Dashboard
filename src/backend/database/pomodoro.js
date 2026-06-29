@@ -1,5 +1,4 @@
-import { driveRead } from "./read.js";
-import { driveWrite } from "./write.js";
+import { megaRead, megaWrite } from "./mega.js";
 
 const VALID_DAYS = [
   "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
@@ -21,7 +20,16 @@ export async function readDay(env, day) {
   const normalized = validateDay(day);
 
   try {
-    return await driveRead(env, filePath(normalized));
+    const result = await megaRead(env, filePath(normalized));
+    if (Array.isArray(result)) return result;
+    if (typeof result === "string" && result.trim()) {
+      try {
+        return JSON.parse(result);
+      } catch {
+        return [];
+      }
+    }
+    return [];
   } catch (e) {
     if (e.message.includes("File not found") || e.message.includes("Folder not found")) {
       return [];
@@ -36,7 +44,7 @@ export async function saveDay(env, day, subjects) {
     throw new Error("Invalid subjects");
   }
 
-  return await driveWrite(env, filePath(normalized), subjects);
+  return await megaWrite(env, filePath(normalized), subjects);
 }
 
 export async function addSubject(env, day, subject) {
