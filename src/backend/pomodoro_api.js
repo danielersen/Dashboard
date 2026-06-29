@@ -1,5 +1,4 @@
-import { readDay } from "./database/pomodoro.js";
-import { driveWrite } from "./database/write.js";
+import { readDay, saveDay } from "./database/pomodoro.js";
 import { getCacheValue } from "./cache/get.js";
 import { setCacheValue } from "./cache/set.js";
 
@@ -24,7 +23,7 @@ export async function Pomodoro(env, path, method, body) {
     const subjects = body?.subjects;
     if (!day) return { error: "Missing day" };
     if (!Array.isArray(subjects)) return { error: "Invalid subjects" };
-    await driveWrite(env, `Pomodoro/${day.toLowerCase().trim()}.txt`, subjects);
+    await saveDay(env, day, subjects);
     return { ok: true };
   }
 
