@@ -3,9 +3,10 @@ import { megaRead, megaWrite } from "./mega.js";
 const VALID_DAYS = [
   "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
 ];
+const STATE_FILE = "Pomodoro/state.json";
 
 function validateDay(day) {
-  const normalized = day.toLowerCase().trim();
+  const normalized = String(day || "").toLowerCase().trim();
   if (!VALID_DAYS.includes(normalized)) {
     throw new Error(`Invalid day: "${day}". Must be one of: ${VALID_DAYS.join(", ")}`);
   }
@@ -14,6 +15,36 @@ function validateDay(day) {
 
 function filePath(day) {
   return `Pomodoro/${day}.txt`;
+}
+
+async function readState(env) {
+  try {
+    const state = await megaRead(env, STATE_FILE);
+    if (state && typeof state === "object" && !Array.isArray(state)) {
+      return {
+        timerCount: Number(state.timerCount) || 0,
+        checked: state.checked && typeof state.checked === "object" && !Array.isArray(state.checked)
+          ? state.checked
+          : {},
+      };
+    }
+    return { timerCount: 0, checked: {} };
+  } catch (e) {
+    if (e.message.includes("File not found") || e.message.includes("Folder not found")) {
+      return { timerCount: 0, checked: {} };
+    }
+    throw e;
+  }
+}
+
+async function saveState(env, state) {
+  const safeState = {
+    timerCount: Number(state.timerCount) || 0,
+    checked: state.checked && typeof state.checked === "object" && !Array.isArray(state.checked)
+      ? state.checked
+      : {},
+  };
+  return await megaWrite(env, STATE_FILE, safeState);
 }
 
 export async function readDay(env, day) {
@@ -92,4 +123,42 @@ export async function removeSubject(env, day, subject) {
   }
 
   return await saveDay(env, normalized, list);
+}
+
+export async function Pomodoro(env, subpath, method, body) {
+  if (method !== "POST") {
+    throw new Error("Unsupported method for Pomodoro API");
+  }
+
+  if (subpath === "read-subjects") {
+    return { subjects: await readDay(env, body?.day) };
+  }
+
+  if (subpath === "save-subjects") {
+    return await saveDay(env, body?.day, body?.subjects);
+  }
+
+  if (subpath === "get-state") {
+    return await readState(env);
+  }
+
+  if (subpath === "increment-timer") {
+    const state = await readState(env);
+    state.timerCount = Number(state.timerCount || 0) + 1;
+    await saveState(env, state);
+    return { timerCount: state.timerCount };
+  }
+
+  if (subpath === "set-checked") {
+    const checked = body?.checked;
+    if (!checked || typeof checked !== "object" || Array.isArray(checked)) {
+      throw new Error("Invalid checked payload");
+    }
+    const state = await readState(env);
+    state.checked = checked;
+    await saveState(env, state);
+    return { checked: state.checked };
+  }
+
+  throw new Error(`Unknown Pomodoro action: ${subpath}`);
 }
