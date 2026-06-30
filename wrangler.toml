@@ -16,12 +16,6 @@ TURNSTILE_SITE_KEY = "0x4AAAAAADrlHr788EQ3YFx3" # -> Turnstile site key
 directory = "./src/frontend"
 binding = "ASSETS"
 
-# Secret store
-[[secrets_store_secrets]]
-binding = "MY_SECRET"
-store_id = "66ec2510845d44729eeef43b8f0a7f65"
-secret_name = "SECRET_KEY"
-
 # Worker AI
 [ai]
 binding = "AI"
