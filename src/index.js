@@ -5,7 +5,7 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 import { EDfunction } from "./backend/ecole_directe/index.js";
 import { Cache } from "./backend/cache/index.js";
 import { Auth, verifySessionToken } from "./backend/auth/index.js";
-import { Pomodoro } from "./backend/pomodoro_api.js";
+import { Pomodoro } from "./backend/database/pomodoro.js";
  
 // API funtion
 export default {
