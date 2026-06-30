@@ -252,10 +252,14 @@ function consumePostAuthRedirect() {
 }
 
 // On the login page: if this device is already recognised (remembered session),
-// skip the form and go straight in. Returns true if it triggered a navigation.
+// skip the form and go straight in only when the server-side session exchange
+// can be completed. Returns true if it triggered a navigation.
 export async function redirectIfAuthenticated() {
   const session = await getRestoredSession();
+  if (!session?.access_token) return false;
   if (!storeSession(session)) return false;
+  const token = await ensureSessionToken();
+  if (!token) return false;
   // Go through the landing path so any saved post-auth redirect is honoured.
   navigateWithAuth("/pages/");
   return true;
