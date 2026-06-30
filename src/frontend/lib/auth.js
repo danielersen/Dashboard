@@ -54,6 +54,12 @@ function removeItemEverywhere(key) {
   window.localStorage.removeItem(key);
 }
 
+function clearLocalAuthState() {
+  for (const key of Object.values(STORAGE_KEYS)) {
+    removeItemEverywhere(key);
+  }
+}
+
 // --- token transport (URL hash) ---------------------------------------------
 
 function parseHashTokens() {
@@ -259,7 +265,10 @@ export async function redirectIfAuthenticated() {
   if (!session?.access_token) return false;
   if (!storeSession(session)) return false;
   const token = await ensureSessionToken();
-  if (!token) return false;
+  if (!token) {
+    clearLocalAuthState();
+    return false;
+  }
   // Go through the landing path so any saved post-auth redirect is honoured.
   navigateWithAuth("/pages/");
   return true;
