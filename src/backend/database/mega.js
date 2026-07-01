@@ -1,4 +1,4 @@
-import Storage from "megajs";
+import { Storage } from "megajs";
 
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
@@ -17,7 +17,8 @@ async function getClient(env) {
     throw new Error("Missing MEGA_EMAIL or MEGA_PASSWORD");
   }
 
-  const storage = await Storage.login(email, password);
+  const storage = new Storage({ email, password });
+  await storage.login();
   return storage;
 }
 
