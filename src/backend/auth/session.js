@@ -14,7 +14,7 @@ export const SESSION_TTL_SECONDS = 10 * 60; // 10 minutes
 
 async function getSecret(env) {
 
-  const secret = env?.PROJECT_TOKEN ? await env.PROJECT_TOKEN.get() : null;
+  const secret = env.PROJECT_TOKEN;
   if (!secret) {
     throw new Error("Missing signing secret (MY_SECRET).");
   }
