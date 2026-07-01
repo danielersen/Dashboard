@@ -106,6 +106,13 @@ export async function megaWrite(env, path, body) {
     await existing.delete();
   }
 
-  const file = await folder.upload({ name: fileName, size: content.length }, content);
-  return file;
+  const uploadStream = folder.upload({ name: fileName, size: content.length }, content);
+  const file = await uploadStream.complete;
+  
+  return {
+    name: file.name,
+    size: file.size,
+    nodeId: file.nodeId,
+    downloadId: file.downloadId
+  };
 }
