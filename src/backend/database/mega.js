@@ -33,7 +33,7 @@ async function getOrCreateFolder(storage, folderPath) {
     const children = current ? await current.children : await storage.root.children;
     let folder = children.find(child => child.name === segment && child.directory);
     if (!folder) {
-      folder = await storage.createFolder(segment, current || undefined);
+      folder = await current ? current.mkdir(segment) : storage.mkdir(segment);
     }
     current = folder;
   }
