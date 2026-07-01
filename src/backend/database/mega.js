@@ -1,4 +1,4 @@
-import { Storage } from "megajs";
+import Storage from "megajs";
 
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
