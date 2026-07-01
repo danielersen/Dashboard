@@ -24,16 +24,16 @@ async function getClient(env) {
 
 async function getOrCreateFolder(storage, folderPath) {
   const normalized = normalizePath(folderPath);
-  if (!normalized) return null;
+  if (!normalized) return storage.root;
 
   const segments = normalized.split("/").filter(Boolean);
-  let current = null;
+  let current = storage.root;
 
   for (const segment of segments) {
-    const children = current ? await current.children : await storage.root.children;
+    const children = await current.children;
     let folder = children.find(child => child.name === segment && child.directory);
     if (!folder) {
-      folder = await current ? current.mkdir(segment) : storage.mkdir(segment);
+      folder = await current.mkdir(segment);
     }
     current = folder;
   }
@@ -52,12 +52,29 @@ async function ensureParentFolder(storage, path) {
 export async function megaRead(env, path) {
   const storage = await getClient(env);
   const normalizedPath = normalizePath(path);
+  
+  try {
+    // Essayer de naviguer directement jusqu'au fichier
+    const file = storage.root.navigate(normalizedPath);
+    if (file) {
+      const buffer = await file.download();
+      const text = Buffer.from(buffer).toString("utf8");
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    }
+  } catch (e) {
+    // Fallback à la méthode manuelle
+  }
+
   const segments = normalizedPath.split("/").filter(Boolean);
   const fileName = segments.at(-1);
   const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
   const folder = folderPath ? await getOrCreateFolder(storage, folderPath) : storage.root;
-  const children = folder ? await folder.children : await storage.root.children;
+  const children = await folder.children;
   const fileNode = children.find(child => child.name === fileName && !child.directory);
   if (!fileNode) {
     throw new Error(`File not found: ${path}`);
@@ -75,18 +92,20 @@ export async function megaRead(env, path) {
 export async function megaWrite(env, path, body) {
   const storage = await getClient(env);
   const normalizedPath = normalizePath(path);
+  const content = Buffer.from(toText(body), "utf8");
+
   const segments = normalizedPath.split("/").filter(Boolean);
   const fileName = segments.at(-1);
   const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
+
   const folder = folderPath ? await getOrCreateFolder(storage, folderPath) : storage.root;
-  const children = folder ? await folder.children : await storage.root.children;
+  const children = await folder.children;
   const existing = children.find(child => child.name === fileName && !child.directory);
 
-  const content = Buffer.from(toText(body), "utf8");
   if (existing) {
     await existing.delete();
   }
 
-  const file = await (folder || storage.root).upload({ name: fileName, size: content.length }, content);
+  const file = await folder.upload({ name: fileName, size: content.length }, content);
   return file;
 }
