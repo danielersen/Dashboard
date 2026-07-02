@@ -10,6 +10,14 @@ function toText(value) {
   return JSON.stringify(value);
 }
 
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise.finally(() => clearTimeout(timer)), timeout]);
+}
+
 async function getClient(env) {
   const email = env.MEGA_EMAIL;
   const password = env.MEGA_PASSWORD;
@@ -41,6 +49,23 @@ async function getOrCreateFolder(storage, folderPath) {
   return current;
 }
 
+async function getFolderIfExists(storage, folderPath) {
+  const normalized = normalizePath(folderPath);
+  if (!normalized) return storage.root;
+
+  const segments = normalized.split("/").filter(Boolean);
+  let current = storage.root;
+
+  for (const segment of segments) {
+    const children = await current.children;
+    const folder = children.find(child => child.name === segment && child.directory);
+    if (!folder) return null;
+    current = folder;
+  }
+
+  return current;
+}
+
 async function ensureParentFolder(storage, path) {
   const normalized = normalizePath(path);
   const segments = normalized.split("/").filter(Boolean);
@@ -51,14 +76,12 @@ async function ensureParentFolder(storage, path) {
 
 export async function megaRead(env, path) {
   const storage = await getClient(env);
-  // Ajouter le préfixe dashboard/ automatiquement
   const fullPath = `dashboard/${normalizePath(path)}`;
-  
+
   try {
-    // Essayer de naviguer directement jusqu'au fichier
     const file = storage.root.navigate(fullPath);
     if (file && !file.directory) {
-      const buffer = await file.downloadBuffer();
+      const buffer = await withTimeout(file.downloadBuffer(), 20000, `Mega download timed out for ${fullPath}`);
       const text = Buffer.from(buffer).toString("utf8");
       try {
         return JSON.parse(text);
@@ -74,14 +97,18 @@ export async function megaRead(env, path) {
   const fileName = segments.at(-1);
   const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
-  const folder = folderPath ? await getOrCreateFolder(storage, folderPath) : storage.root;
+  const folder = folderPath ? await getFolderIfExists(storage, folderPath) : storage.root;
+  if (!folder) {
+    throw new Error(`File not found: ${path}`);
+  }
+
   const children = await folder.children;
   const fileNode = children.find(child => child.name === fileName && !child.directory);
   if (!fileNode) {
     throw new Error(`File not found: ${path}`);
   }
 
-  const buffer = await fileNode.downloadBuffer();
+  const buffer = await withTimeout(fileNode.downloadBuffer(), 20000, `Mega download timed out for ${fullPath}`);
   const text = Buffer.from(buffer).toString("utf8");
   try {
     return JSON.parse(text);
@@ -92,7 +119,6 @@ export async function megaRead(env, path) {
 
 export async function megaWrite(env, path, body) {
   const storage = await getClient(env);
-  // Ajouter le préfixe dashboard/ automatiquement
   const fullPath = `dashboard/${normalizePath(path)}`;
   const content = Buffer.from(toText(body), "utf8");
 
@@ -108,14 +134,14 @@ export async function megaWrite(env, path, body) {
     await existing.delete();
   }
 
-  // Utiliser un callback pour éviter le problème du Pumpify
-  const file = await new Promise((resolve, reject) => {
+  const uploadPromise = new Promise((resolve, reject) => {
     folder.upload({ name: fileName, size: content.length }, content, (err, file) => {
       if (err) reject(err);
       else resolve(file);
     });
   });
-  
+
+  const file = await withTimeout(uploadPromise, 20000, `Mega upload timed out for ${fullPath}`);
   return {
     name: file.name,
     size: file.size,
