@@ -26,7 +26,7 @@ async function getClient(env) {
   }
 
   const storage = new Storage({ email, password });
-  await storage.login();
+  await withTimeout(storage.login(), 20000, "Mega login timed out");
   return storage;
 }
 
