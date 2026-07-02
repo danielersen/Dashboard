@@ -51,13 +51,14 @@ async function ensureParentFolder(storage, path) {
 
 export async function megaRead(env, path) {
   const storage = await getClient(env);
-  const normalizedPath = normalizePath(path);
+  // Ajouter le préfixe dashboard/ automatiquement
+  const fullPath = `dashboard/${normalizePath(path)}`;
   
   try {
     // Essayer de naviguer directement jusqu'au fichier
-    const file = storage.root.navigate(normalizedPath);
-    if (file) {
-      const buffer = await file.download();
+    const file = storage.root.navigate(fullPath);
+    if (file && !file.directory) {
+      const buffer = await file.downloadBuffer();
       const text = Buffer.from(buffer).toString("utf8");
       try {
         return JSON.parse(text);
@@ -69,7 +70,7 @@ export async function megaRead(env, path) {
     // Fallback à la méthode manuelle
   }
 
-  const segments = normalizedPath.split("/").filter(Boolean);
+  const segments = fullPath.split("/").filter(Boolean);
   const fileName = segments.at(-1);
   const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
@@ -80,7 +81,7 @@ export async function megaRead(env, path) {
     throw new Error(`File not found: ${path}`);
   }
 
-  const buffer = await fileNode.download();
+  const buffer = await fileNode.downloadBuffer();
   const text = Buffer.from(buffer).toString("utf8");
   try {
     return JSON.parse(text);
@@ -91,10 +92,11 @@ export async function megaRead(env, path) {
 
 export async function megaWrite(env, path, body) {
   const storage = await getClient(env);
-  const normalizedPath = normalizePath(path);
+  // Ajouter le préfixe dashboard/ automatiquement
+  const fullPath = `dashboard/${normalizePath(path)}`;
   const content = Buffer.from(toText(body), "utf8");
 
-  const segments = normalizedPath.split("/").filter(Boolean);
+  const segments = fullPath.split("/").filter(Boolean);
   const fileName = segments.at(-1);
   const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
@@ -106,8 +108,13 @@ export async function megaWrite(env, path, body) {
     await existing.delete();
   }
 
-  const uploadStream = folder.upload({ name: fileName, size: content.length }, content);
-  const file = await uploadStream.complete;
+  // Utiliser un callback pour éviter le problème du Pumpify
+  const file = await new Promise((resolve, reject) => {
+    folder.upload({ name: fileName, size: content.length }, content, (err, file) => {
+      if (err) reject(err);
+      else resolve(file);
+    });
+  });
   
   return {
     name: file.name,
