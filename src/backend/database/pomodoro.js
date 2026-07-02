@@ -3,7 +3,7 @@ import { megaRead, megaWrite } from "./mega.js";
 const VALID_DAYS = [
   "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
 ];
-const STATE_FILE = "Pomodoro/state.json";
+const STATE_FILE = "pomodoro/state.json";
 
 function validateDay(day) {
   const normalized = String(day || "").toLowerCase().trim();
@@ -14,7 +14,7 @@ function validateDay(day) {
 }
 
 function filePath(day) {
-  return `Pomodoro/${day}.txt`;
+  return `pomodoro/${day}.txt`;
 }
 
 async function readState(env) {
