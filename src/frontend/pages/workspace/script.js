@@ -611,12 +611,26 @@ function escapeHtml(value) {
 /* ===================== POMODORO ===================== */
 const POMO_BASE = "/api/pomodoro";
 
+function withTimeout(promise, ms, message) {
+  let timer;
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]);
+}
+
 async function pomoPost(sub, body) {
-  const res = await authedFetch(`${POMO_BASE}/${sub}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(body),
-  });
+  const res = await withTimeout(
+    authedFetch(`${POMO_BASE}/${sub}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    }),
+    25000,
+    `Pomodoro request timed out for ${sub}`
+  );
   const text = await res.text();
   try {
     const json = JSON.parse(text);
