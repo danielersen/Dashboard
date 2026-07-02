@@ -777,12 +777,16 @@ function pomoRenderSubjects() {
   listEl.innerHTML = flat
     .map((item, i) => {
       const checkedCount = Number(state.pomoChecked[item.name]) || 0;
+      const subject = state.pomoSubjects.find(
+        (s) => (s.matière || s.matiere || "") === item.name
+      );
+      const quantity = subject ? Number(subject.nb_fois) || 1 : 1;
       const isChecked = isToday && item.instance < checkedCount;
       return `
         <label class="pomo-subject">
           <input type="checkbox" ${isChecked ? "checked" : ""} ${isToday ? "" : "disabled"}
             data-pomo-check="${i}" data-pomo-subj-name="${escapeHtml(item.name)}" />
-          <span class="pomo-subject-name">${escapeHtml(item.name)}</span>
+          <span class="pomo-subject-name">${escapeHtml(item.name)}${quantity > 1 ? ` <span class="pomo-subject-count">×${quantity}</span>` : ""}</span>
         </label>`;
     })
     .join("");
@@ -812,12 +816,33 @@ function pomoRenderMenu() {
         const count = Number(s.nb_fois) || 1;
         return `
           <div class="pomo-menu-item">
-            <span>${name}${count > 1 ? ` (&times;${count})` : ""}</span>
+            <div class="pomo-menu-item-main">
+              <span class="pomo-menu-item-name">${name}</span>
+              <label class="pomo-menu-item-count">
+                <span>Times</span>
+                <input type="number" min="1" max="99" value="${count}" data-pomo-count-input="${i}" />
+              </label>
+            </div>
             <button class="pomo-menu-remove" type="button" data-pomo-remove="${i}" aria-label="Remove ${name}">&times;</button>
           </div>`;
       })
       .join("");
   }
+  listEl.querySelectorAll("[data-pomo-count-input]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const idx = parseInt(input.dataset.pomoCountInput, 10);
+      const entry = state.pomoSubjects[idx];
+      if (!entry) return;
+      let value = parseInt(input.value, 10);
+      if (!Number.isFinite(value) || value < 1) value = 1;
+      value = Math.min(99, value);
+      entry.nb_fois = value;
+      input.value = String(value);
+      state.pomoDirty = true;
+      pomoRenderSubjects();
+      pomoRenderMenu();
+    });
+  });
   listEl.querySelectorAll("[data-pomo-remove]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.pomoRemove, 10);
