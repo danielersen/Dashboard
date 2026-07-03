@@ -7,6 +7,20 @@ import { Cache } from "./backend/cache/index.js";
 import { Auth, verifySessionToken } from "./backend/auth/index.js";
 import { Pomodoro } from "./backend/database/pomodoro.js";
  
+import { sendMail } from "./backend/notifications/mail.js";
+
+async function sendErrorEmail(env, error, context) {
+  try {
+    const rawError = error instanceof Error ? error.stack || error.message : String(error);
+    await sendMail(env, {
+      subject: `Dashboard error: ${context}`,
+      text: `A runtime error occurred while processing the request in the Dashboard application.\n\nContext: ${context}\n\nRaw error:\n${rawError}`,
+    });
+  } catch (mailError) {
+    console.error("Failed to send error email:", mailError);
+  }
+}
+
 // API funtion
 export default {
   async fetch(request, env, ctx) {
@@ -75,6 +89,7 @@ export default {
         return new Response(JSON.stringify(resp), { headers: corsHeaders });
       } catch (e) {
         console.error("AUTH ERROR:", e?.stack || e);
+        await sendErrorEmail(env, e, "AUTH");
         return new Response(JSON.stringify({ valid: false, error: e?.message }), {
           status: 500,
           headers: corsHeaders,
@@ -114,6 +129,7 @@ export default {
         })
       } catch (e) {
         console.error("API ERROR:", e?.stack || e);
+        await sendErrorEmail(env, e, "API");
         return new Response(JSON.stringify({
           error: e?.message,
         }), {
