@@ -18,6 +18,24 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise.finally(() => clearTimeout(timer)), timeout]);
 }
 
+async function retryOperation(operation, attempts = 4) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      const isTimeout = String(error?.message || "").toLowerCase().includes("timed out");
+      if (!isTimeout || attempt === attempts) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 async function getClient(env) {
   const email = env.MEGA_EMAIL;
   const password = env.MEGA_PASSWORD;
@@ -78,43 +96,45 @@ export async function megaRead(env, path) {
   const storage = await getClient(env);
   const fullPath = `dashboard/${normalizePath(path)}`;
 
-  try {
-    const file = storage.root.navigate(fullPath);
-    if (file && !file.directory) {
-      const buffer = await withTimeout(file.downloadBuffer(), 20000, `Mega download timed out for ${fullPath}`);
-      const text = Buffer.from(buffer).toString("utf8");
-      try {
-        return JSON.parse(text);
-      } catch {
-        return text;
+  return await retryOperation(async () => {
+    try {
+      const file = storage.root.navigate(fullPath);
+      if (file && !file.directory) {
+        const buffer = await withTimeout(file.downloadBuffer(), 3000, `Mega download timed out for ${fullPath}`);
+        const text = Buffer.from(buffer).toString("utf8");
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
       }
+    } catch (e) {
+      // Fallback à la méthode manuelle
     }
-  } catch (e) {
-    // Fallback à la méthode manuelle
-  }
 
-  const segments = fullPath.split("/").filter(Boolean);
-  const fileName = segments.at(-1);
-  const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
+    const segments = fullPath.split("/").filter(Boolean);
+    const fileName = segments.at(-1);
+    const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
-  const folder = folderPath ? await getFolderIfExists(storage, folderPath) : storage.root;
-  if (!folder) {
-    throw new Error(`File not found: ${path}`);
-  }
+    const folder = folderPath ? await getFolderIfExists(storage, folderPath) : storage.root;
+    if (!folder) {
+      throw new Error(`File not found: ${path}`);
+    }
 
-  const children = await folder.children;
-  const fileNode = children.find(child => child.name === fileName && !child.directory);
-  if (!fileNode) {
-    throw new Error(`File not found: ${path}`);
-  }
+    const children = await folder.children;
+    const fileNode = children.find(child => child.name === fileName && !child.directory);
+    if (!fileNode) {
+      throw new Error(`File not found: ${path}`);
+    }
 
-  const buffer = await withTimeout(fileNode.downloadBuffer(), 20000, `Mega download timed out for ${fullPath}`);
-  const text = Buffer.from(buffer).toString("utf8");
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
+    const buffer = await withTimeout(fileNode.downloadBuffer(), 3000, `Mega download timed out for ${fullPath}`);
+    const text = Buffer.from(buffer).toString("utf8");
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
+  });
 }
 
 export async function megaWrite(env, path, body) {
@@ -122,30 +142,32 @@ export async function megaWrite(env, path, body) {
   const fullPath = `dashboard/${normalizePath(path)}`;
   const content = Buffer.from(toText(body), "utf8");
 
-  const segments = fullPath.split("/").filter(Boolean);
-  const fileName = segments.at(-1);
-  const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
+  return await retryOperation(async () => {
+    const segments = fullPath.split("/").filter(Boolean);
+    const fileName = segments.at(-1);
+    const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
-  const folder = folderPath ? await getOrCreateFolder(storage, folderPath) : storage.root;
-  const children = await folder.children;
-  const existing = children.find(child => child.name === fileName && !child.directory);
+    const folder = folderPath ? await getOrCreateFolder(storage, folderPath) : storage.root;
+    const children = await folder.children;
+    const existing = children.find(child => child.name === fileName && !child.directory);
 
-  if (existing) {
-    await existing.delete();
-  }
+    if (existing) {
+      await existing.delete();
+    }
 
-  const uploadPromise = new Promise((resolve, reject) => {
-    folder.upload({ name: fileName, size: content.length }, content, (err, file) => {
-      if (err) reject(err);
-      else resolve(file);
+    const uploadPromise = new Promise((resolve, reject) => {
+      folder.upload({ name: fileName, size: content.length }, content, (err, file) => {
+        if (err) reject(err);
+        else resolve(file);
+      });
     });
-  });
 
-  const file = await withTimeout(uploadPromise, 20000, `Mega upload timed out for ${fullPath}`);
-  return {
-    name: file.name,
-    size: file.size,
-    nodeId: file.nodeId,
-    downloadId: file.downloadId
-  };
+    const file = await withTimeout(uploadPromise, 3000, `Mega upload timed out for ${fullPath}`);
+    return {
+      name: file.name,
+      size: file.size,
+      nodeId: file.nodeId,
+      downloadId: file.downloadId
+    };
+  });
 }
