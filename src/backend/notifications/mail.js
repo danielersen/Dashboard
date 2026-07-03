@@ -26,5 +26,4 @@ export async function sendMail(env, body = {}) {
   return transporter.sendMail(mailOptions);
 }
 
-export default sendMail;
 
