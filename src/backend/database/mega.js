@@ -18,12 +18,12 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise.finally(() => clearTimeout(timer)), timeout]);
 }
 
-async function retryOperation(operation, attempts = 4) {
+async function retryOperation(operation, attempts = 4, timeoutMs = 3000, delayMs = 200) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      return await operation();
+      return await withTimeout(operation(), timeoutMs, `Mega operation timed out after ${timeoutMs}ms`);
     } catch (error) {
       lastError = error;
       const message = String(error?.message || "").toLowerCase();
@@ -31,6 +31,7 @@ async function retryOperation(operation, attempts = 4) {
       if (isNotFound || attempt === attempts) {
         throw error;
       }
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
@@ -165,12 +166,12 @@ export async function megaWrite(env, path, body) {
       });
     });
 
-    const file = await withTimeout(uploadPromise, 3000, `Mega upload timed out for ${fullPath}`);
+    const file = await uploadPromise;
     return {
       name: file.name,
       size: file.size,
       nodeId: file.nodeId,
       downloadId: file.downloadId
     };
-  });
+  }, 4, 3000, 200);
 }
