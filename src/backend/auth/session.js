@@ -10,13 +10,13 @@ import { getCacheValue, setCacheValue } from "../cache/index.js";
 import { stringToBase64Url, bytesToBase64Url, decodeJwtPart } from "./encoding.js";
 
 const REGISTRY_KEY = "session_tokens";
-export const SESSION_TTL_SECONDS = 10 * 60; // 10 minutes
+export const SESSION_TTL_SECONDS = 5 * 60; // 5 minutes
 
 async function getSecret(env) {
 
-  const secret = env.PROJECT_TOKEN;
+  const secret = env.JWT_SECRET;
   if (!secret) {
-    throw new Error("Missing signing secret (MY_SECRET).");
+    throw new Error("Missing signing secret (JWT_SECRET).");
   }
   return secret;
 }
