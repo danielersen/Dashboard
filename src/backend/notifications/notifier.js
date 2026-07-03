@@ -84,23 +84,24 @@ function buildNotifierHeaders(body = {}) {
   return headers;
 }
 
-export async function sendNotifierMessage(env, body = {}) {
+export async function sendNotifierMessage(env, topicOrBody = {}, body = {}) {
   if (!env?.NOTIFER_TOKEN) {
     throw new Error("Missing NOTIFER_TOKEN");
   }
 
-  const topic = body.topic || env.NOTIFER_TOPIC || "";
+  const resolvedBody = typeof topicOrBody === "string" ? (body || {}) : (topicOrBody || {});
+  const topic = typeof topicOrBody === "string" ? topicOrBody : (resolvedBody.topic || env.NOTIFER_TOPIC || "");
   const url = buildNotifierUrl(env, topic);
   const headers = {
     Authorization: `Bearer ${env.NOTIFER_TOKEN}`,
     "Content-Type": "text/plain; charset=utf-8",
-    ...buildNotifierHeaders(body),
+    ...buildNotifierHeaders(resolvedBody),
   };
 
   const response = await fetch(url, {
     method: "POST",
     headers,
-    body: buildNotifierText(body),
+    body: buildNotifierText(resolvedBody),
   });
 
   if (!response.ok) {
