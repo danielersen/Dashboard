@@ -5,7 +5,7 @@ compatibility_date = "2026-05-22"
 workers_dev = true
 compatibility_flags = ["nodejs_compat"]
 
-# Environnement variables
+# Environement variables
 [vars]
 MODE = "production" # -> "production" if enabled, or any other name if disabled
 SITE = "enabled" # -> "enabled" if enabled, or any other name if disabled
