@@ -896,10 +896,12 @@ function pomoAddSubject() {
 
 async function pomoSave() {
   const saveBtn = document.querySelector("[data-pomo-save]");
-  if (saveBtn) {
-    saveBtn.textContent = "Saving\u2026";
-    saveBtn.disabled = true;
-  }
+  if (!saveBtn || saveBtn.disabled) return;
+
+  saveBtn.textContent = "Saving…";
+  saveBtn.disabled = true;
+  state.pomoSaveCooldown = Date.now() + 5000;
+
   try {
     const result = await pomoPost("save-subjects", {
       day: POMO_DAYS[state.pomoDayIndex],
@@ -917,7 +919,14 @@ async function pomoSave() {
     setTimeout(() => { if (saveBtn) saveBtn.textContent = "Save"; }, 2000);
     console.error("Pomodoro save failed:", err);
   }
-  if (saveBtn) saveBtn.disabled = false;
+
+  setTimeout(() => {
+    if (!saveBtn) return;
+    if (Date.now() >= state.pomoSaveCooldown) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save";
+    }
+  }, 5000);
 }
 
 function pomoCloseMenuOnOutsideClick(e) {
