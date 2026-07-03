@@ -26,8 +26,9 @@ async function retryOperation(operation, attempts = 4) {
       return await operation();
     } catch (error) {
       lastError = error;
-      const isTimeout = String(error?.message || "").toLowerCase().includes("timed out");
-      if (!isTimeout || attempt === attempts) {
+      const message = String(error?.message || "").toLowerCase();
+      const isNotFound = message.includes("file not found") || message.includes("folder not found");
+      if (isNotFound || attempt === attempts) {
         throw error;
       }
     }
@@ -93,10 +94,11 @@ async function ensureParentFolder(storage, path) {
 }
 
 export async function megaRead(env, path) {
-  const storage = await getClient(env);
   const fullPath = `dashboard/${normalizePath(path)}`;
 
   return await retryOperation(async () => {
+    const storage = await getClient(env);
+
     try {
       const file = storage.root.navigate(fullPath);
       if (file && !file.directory) {
@@ -138,11 +140,12 @@ export async function megaRead(env, path) {
 }
 
 export async function megaWrite(env, path, body) {
-  const storage = await getClient(env);
   const fullPath = `dashboard/${normalizePath(path)}`;
   const content = Buffer.from(toText(body), "utf8");
 
   return await retryOperation(async () => {
+    const storage = await getClient(env);
+
     const segments = fullPath.split("/").filter(Boolean);
     const fileName = segments.at(-1);
     const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
