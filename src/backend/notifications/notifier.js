@@ -18,7 +18,7 @@ function buildNotifierUrl(env, topic) {
   return baseUrl.endsWith(`/${normalizedTopic}`) ? baseUrl : `${baseUrl}/${encodeURIComponent(normalizedTopic)}`;
 }
 
-function buildNotifierText(body = {}) {
+function buildNotifierText(body) {
   const parts = [];
 
   if (body.title) parts.push(`Title: ${body.title}`);
@@ -49,7 +49,7 @@ function buildNotifierText(body = {}) {
   return parts.join("\n");
 }
 
-function buildNotifierHeaders(body = {}) {
+function buildNotifierHeaders(body) {
   const headers = {};
   const headerMap = {
     title: "Title",
@@ -84,7 +84,7 @@ function buildNotifierHeaders(body = {}) {
   return headers;
 }
 
-export async function sendNotifierMessage(env, body = "No body send", topic = "Dashboard") {
+export async function sendNotifierMessage(env, body = "No body send", topic = env.NOTIFER_TOPIC) {
   if (!env?.NOTIFER_TOKEN) {
     throw new Error("Missing NOTIFER_TOKEN");
   }
@@ -115,7 +115,7 @@ export async function sendNotifierMessage(env, body = "No body send", topic = "D
   };
 }
 
-export async function readNotifierMessages(env, topic="Dashboard") {
+export async function readNotifierMessages(env, topic = env.NOTIFER_TOPIC) {
   if (!env?.NOTIFER_TOKEN) {
     throw new Error("Missing NOTIFER_TOKEN");
   }
