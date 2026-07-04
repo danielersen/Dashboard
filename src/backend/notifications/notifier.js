@@ -84,24 +84,22 @@ function buildNotifierHeaders(body = {}) {
   return headers;
 }
 
-export async function sendNotifierMessage(env, topicOrBody = {}, body = {}) {
+export async function sendNotifierMessage(env, body = "No body send", topic = "Dashboard") {
   if (!env?.NOTIFER_TOKEN) {
     throw new Error("Missing NOTIFER_TOKEN");
   }
 
-  const resolvedBody = typeof topicOrBody === "string" ? (body || {}) : (topicOrBody || {});
-  const topic = typeof topicOrBody === "string" ? topicOrBody : (resolvedBody.topic || env.NOTIFER_TOPIC || "");
   const url = buildNotifierUrl(env, topic);
   const headers = {
     Authorization: `Bearer ${env.NOTIFER_TOKEN}`,
     "Content-Type": "text/plain; charset=utf-8",
-    ...buildNotifierHeaders(resolvedBody),
+    ...buildNotifierHeaders(body),
   };
 
   const response = await fetch(url, {
     method: "POST",
     headers,
-    body: buildNotifierText(resolvedBody),
+    body: buildNotifierText(body),
   });
 
   if (!response.ok) {
@@ -117,7 +115,7 @@ export async function sendNotifierMessage(env, topicOrBody = {}, body = {}) {
   };
 }
 
-export async function readNotifierMessages(env, topic) {
+export async function readNotifierMessages(env, topic="Dashboard") {
   if (!env?.NOTIFER_TOKEN) {
     throw new Error("Missing NOTIFER_TOKEN");
   }
