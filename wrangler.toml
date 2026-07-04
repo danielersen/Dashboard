@@ -54,9 +54,8 @@ name = "check_grades"
 binding = "CHECK_GRADES"
 class_name = "CheckGradesWorkflow"
 
-# Run workflow every 3 hours
-[[triggers.crons]]
-crons = ["0 */3 * * *"]
+[[workflows.crons]]
+cron = "0 */3 * * *"  # Vérifier les notes toutes les 3 heures
 
 # Observability
 [observability]
