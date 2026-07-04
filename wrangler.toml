@@ -54,6 +54,10 @@ name = "check_grades"
 binding = "CHECK_GRADES"
 class_name = "CheckGradesWorkflow"
 
+# Cron trigger - Vérifier les notes toutes les 3 heures (~2h30-4h)
+[[triggers.crons]]
+crons = ["0 */3 * * *"]
+
 # Observability
 [observability]
 enabled = true
