@@ -187,6 +187,10 @@ const NAVBAR_STYLE = `
     outline: none;
   }
 
+  .center[data-labels="hidden"] .center-scroll {
+    overflow-x: hidden;
+  }
+
   .center-scroll::-webkit-scrollbar {
     display: none;
   }
@@ -219,6 +223,12 @@ const NAVBAR_STYLE = `
     height: 12px;
     opacity: 1;
     pointer-events: auto;
+  }
+
+  .center[data-labels="hidden"] .center-scrollbar {
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .center-scrollbar-track {
@@ -682,21 +692,18 @@ class SiteNavbar extends HTMLElement {
     if (!center || !scroller || !scrollbar || !track || !thumb || !featureList) return;
 
     let dragState = null;
-    const HIDE_LABELS_WIDTH = 300;
-    const SHOW_LABELS_WIDTH = 420;
+    const HIDE_LABELS_WIDTH = 360;
 
     const updateOverflow = () => {
       const overflow = scroller.scrollWidth - scroller.clientWidth > 1;
-      const currentlyHidden = center.dataset.labels === "hidden";
-      const nextLabelsState = currentlyHidden
-        ? (scroller.clientWidth > SHOW_LABELS_WIDTH ? "visible" : "hidden")
-        : (scroller.clientWidth < HIDE_LABELS_WIDTH ? "hidden" : "visible");
+      const shouldHideLabels = scroller.clientWidth < HIDE_LABELS_WIDTH;
+      const shouldShowScrollbar = !shouldHideLabels && overflow;
 
-      center.dataset.overflow = overflow ? "true" : "false";
-      center.dataset.labels = nextLabelsState;
-      scrollbar.setAttribute("aria-hidden", overflow ? "false" : "true");
+      center.dataset.overflow = shouldShowScrollbar ? "true" : "false";
+      center.dataset.labels = shouldHideLabels ? "hidden" : "visible";
+      scrollbar.setAttribute("aria-hidden", shouldShowScrollbar ? "false" : "true");
 
-      if (!overflow) {
+      if (!shouldShowScrollbar) {
         scroller.scrollLeft = 0;
       }
 
