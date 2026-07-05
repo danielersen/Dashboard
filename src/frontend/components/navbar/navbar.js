@@ -629,16 +629,14 @@ class SiteNavbar extends HTMLElement {
     if (!root || this._centerScrollCleanup) return;
 
     const center = root.querySelector(".center");
-    const scroller = root.querySelector("[data-center-scroll]");
-    const featureList = scroller?.querySelector(".feature-list");
 
-    if (!center || !scroller || !featureList) return;
+    if (!center) return;
 
-    const LABELS_HIDE_WIDTH = 360;
-    const LABELS_SHOW_WIDTH = 420;
+    const LABELS_HIDE_WIDTH = 700;
+    const LABELS_SHOW_WIDTH = 780;
 
-    const updateOverflow = () => {
-      const availableWidth = scroller.clientWidth;
+    const updateLabelsState = () => {
+      const availableWidth = this.getBoundingClientRect().width;
       const currentlyHidden = center.dataset.labels === "hidden";
       const nextLabelsState = currentlyHidden
         ? (availableWidth >= LABELS_SHOW_WIDTH ? "visible" : "hidden")
@@ -648,15 +646,16 @@ class SiteNavbar extends HTMLElement {
       this._updateHeight();
     };
 
-    this._centerScrollObserver = new ResizeObserver(updateOverflow);
-    this._centerScrollObserver.observe(scroller);
-    this._centerScrollObserver.observe(featureList);
+    this._centerScrollObserver = new ResizeObserver(updateLabelsState);
+    this._centerScrollObserver.observe(this);
 
-    updateOverflow();
+    window.addEventListener("resize", updateLabelsState);
+    updateLabelsState();
 
     this._centerScrollCleanup = () => {
       this._centerScrollObserver?.disconnect();
       this._centerScrollObserver = null;
+      window.removeEventListener("resize", updateLabelsState);
     };
   }
 
