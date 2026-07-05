@@ -227,8 +227,8 @@ const NAVBAR_STYLE = `
   .feature-icon,
   .action-icon,
   .brand-icon-wrap {
-    width: 32px;
-    height: 32px;
+    width: 58px;
+    height: 50px;
     display: inline-grid;
     place-items: center;
     flex: 0 0 auto;
