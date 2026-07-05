@@ -236,8 +236,8 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon-wrap {
-    width: 58px;
-    height: 50px;
+    width: 62px;
+    height: 54px;
     display: inline-grid;
     place-items: center;
     overflow: hidden;
@@ -246,8 +246,8 @@ const NAVBAR_STYLE = `
 
   .feature-icon svg,
   .action-icon svg {
-    width: 58px;
-    height: 50px;
+    width: 20px;
+    height: 20px;
     fill: currentColor;
   }
 
