@@ -1,4 +1,4 @@
-Correctionimport { callModel, addMessagePair } from "./core.js";
+import { callModel, addMessagePair } from "./core.js";
 
 export async function basic(env, model, body = {}) {
 	const category = "basic";
