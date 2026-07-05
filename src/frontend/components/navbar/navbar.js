@@ -174,10 +174,6 @@ const NAVBAR_STYLE = `
     justify-self: stretch;
   }
 
-  .center[data-overflow="true"] {
-    gap: 5px;
-  }
-
   .center-scroll {
     min-width: 0;
     overflow-x: auto;
@@ -197,13 +193,10 @@ const NAVBAR_STYLE = `
     justify-content: flex-start;
     gap: 8px;
     width: max-content;
-    margin: 0 auto;
-  }
-
-  .center[data-overflow="true"] .feature-list {
     margin: 0;
   }
 
+<<<<<<< HEAD
   .center-scrollbar {
     height: 0;
     opacity: 0;
@@ -252,6 +245,8 @@ const NAVBAR_STYLE = `
     background: rgba(237, 245, 242, 0.78);
   }
 
+=======
+>>>>>>> 9490edc (Navbar...)
   .feature {
     display: inline-flex;
     align-items: center;
@@ -497,11 +492,6 @@ const NAVBAR_TEMPLATE = `
             `).join("")}
           </div>
         </div>
-        <div class="center-scrollbar" data-center-scrollbar aria-hidden="true">
-          <div class="center-scrollbar-track" data-scrollbar-track>
-            <div class="center-scrollbar-thumb" data-scrollbar-thumb></div>
-          </div>
-        </div>
       </div>
 
       <div class="right">
@@ -684,7 +674,12 @@ class SiteNavbar extends HTMLElement {
 
     if (!center || !scroller || !scrollbar || !track || !thumb || !featureList) return;
 
+<<<<<<< HEAD
     let dragState = null;
+=======
+    const LABELS_HIDE_WIDTH = 620;
+    const LABELS_SHOW_WIDTH = 760;
+>>>>>>> 9490edc (Navbar...)
 
     const updateOverflow = () => {
       const overflow = scroller.scrollWidth - scroller.clientWidth > 1;
