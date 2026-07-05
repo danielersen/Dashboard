@@ -180,7 +180,7 @@ const NAVBAR_STYLE = `
 
   .center-scroll {
     min-width: 0;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -205,7 +205,51 @@ const NAVBAR_STYLE = `
   }
 
   .center-scrollbar {
-    display: none;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    padding: 0 6px;
+    transition:
+      height 160ms ease,
+      opacity 160ms ease;
+  }
+
+  .center[data-overflow="true"] .center-scrollbar {
+    height: 12px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .center-scrollbar-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+    cursor: pointer;
+  }
+
+  .center-scrollbar-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    min-width: 28px;
+    border-radius: inherit;
+    background: rgba(237, 245, 242, 0.42);
+    cursor: grab;
+    touch-action: none;
+    transition: background 160ms ease;
+  }
+
+  .center-scrollbar-thumb:hover,
+  .center-scrollbar-track:hover .center-scrollbar-thumb {
+    background: rgba(237, 245, 242, 0.62);
+  }
+
+  .center-scrollbar-thumb:active {
+    cursor: grabbing;
+    background: rgba(237, 245, 242, 0.78);
   }
 
   .feature {
@@ -251,11 +295,6 @@ const NAVBAR_STYLE = `
   .quick span {
     font-size: 0.85rem;
     white-space: nowrap;
-  }
-
-  .center[data-labels="hidden"] .feature-label,
-  .center[data-labels="hidden"] .feature em {
-    display: none;
   }
 
   .feature em {
@@ -417,6 +456,14 @@ const NAVBAR_STYLE = `
       min-height: 48px;
       padding: 10px 10px;
       border-radius: 16px;
+    }
+
+    .feature-label {
+      display: none;
+    }
+
+    .feature em {
+      display: none;
     }
 
     .feature {
@@ -629,33 +676,105 @@ class SiteNavbar extends HTMLElement {
     if (!root || this._centerScrollCleanup) return;
 
     const center = root.querySelector(".center");
+    const scroller = root.querySelector("[data-center-scroll]");
+    const scrollbar = root.querySelector("[data-center-scrollbar]");
+    const track = root.querySelector("[data-scrollbar-track]");
+    const thumb = root.querySelector("[data-scrollbar-thumb]");
+    const featureList = scroller?.querySelector(".feature-list");
 
-    if (!center) return;
+    if (!center || !scroller || !scrollbar || !track || !thumb || !featureList) return;
 
-    const LABELS_HIDE_WIDTH = 700;
-    const LABELS_SHOW_WIDTH = 780;
+    let dragState = null;
 
-    const updateLabelsState = () => {
-      const availableWidth = this.getBoundingClientRect().width;
-      const currentlyHidden = center.dataset.labels === "hidden";
-      const nextLabelsState = currentlyHidden
-        ? (availableWidth >= LABELS_SHOW_WIDTH ? "visible" : "hidden")
-        : (availableWidth <= LABELS_HIDE_WIDTH ? "hidden" : "visible");
+    const updateOverflow = () => {
+      const overflow = scroller.scrollWidth - scroller.clientWidth > 1;
+      center.dataset.overflow = overflow ? "true" : "false";
+      scrollbar.setAttribute("aria-hidden", overflow ? "false" : "true");
 
-      center.dataset.labels = nextLabelsState;
+      if (!overflow) {
+        scroller.scrollLeft = 0;
+      }
+
+      updateThumb();
       this._updateHeight();
     };
 
-    this._centerScrollObserver = new ResizeObserver(updateLabelsState);
-    this._centerScrollObserver.observe(this);
+    const updateThumb = () => {
+      if (center.dataset.overflow !== "true") {
+        thumb.style.width = "0px";
+        thumb.style.transform = "translateX(0px)";
+        return;
+      }
 
-    window.addEventListener("resize", updateLabelsState);
-    updateLabelsState();
+      const { scrollWidth, clientWidth, scrollLeft } = scroller;
+      const trackWidth = track.clientWidth;
+      const ratio = clientWidth / scrollWidth;
+      const thumbWidth = Math.max(ratio * trackWidth, 28);
+      const maxScroll = scrollWidth - clientWidth;
+      const maxThumbOffset = Math.max(trackWidth - thumbWidth, 0);
+      const thumbOffset = maxScroll > 0 ? (scrollLeft / maxScroll) * maxThumbOffset : 0;
+
+      thumb.style.width = `${thumbWidth}px`;
+      thumb.style.transform = `translateX(${thumbOffset}px)`;
+    };
+
+    const scrollFromThumbOffset = (thumbOffset) => {
+      const trackWidth = track.clientWidth;
+      const thumbWidth = thumb.offsetWidth;
+      const maxScroll = scroller.scrollWidth - scroller.clientWidth;
+      const maxThumbOffset = Math.max(trackWidth - thumbWidth, 0);
+      const ratio = maxThumbOffset > 0 ? thumbOffset / maxThumbOffset : 0;
+      scroller.scrollLeft = ratio * maxScroll;
+    };
+
+    const onScrollerScroll = () => updateThumb();
+    const onTrackPointerDown = (event) => {
+      if (event.target === thumb) return;
+      const rect = track.getBoundingClientRect();
+      const clickOffset = event.clientX - rect.left - thumb.offsetWidth / 2;
+      scrollFromThumbOffset(Math.max(0, Math.min(clickOffset, rect.width - thumb.offsetWidth)));
+    };
+    const onThumbPointerDown = (event) => {
+      dragState = {
+        startX: event.clientX,
+        startOffset: thumb.getBoundingClientRect().left - track.getBoundingClientRect().left,
+      };
+      thumb.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    };
+    const onThumbPointerMove = (event) => {
+      if (!dragState) return;
+      const delta = event.clientX - dragState.startX;
+      const nextOffset = dragState.startOffset + delta;
+      const maxOffset = Math.max(track.clientWidth - thumb.offsetWidth, 0);
+      scrollFromThumbOffset(Math.max(0, Math.min(nextOffset, maxOffset)));
+    };
+    const onThumbPointerUp = (event) => {
+      if (!dragState) return;
+      dragState = null;
+      thumb.releasePointerCapture(event.pointerId);
+    };
+
+    scroller.addEventListener("scroll", onScrollerScroll, { passive: true });
+    track.addEventListener("pointerdown", onTrackPointerDown);
+    thumb.addEventListener("pointerdown", onThumbPointerDown);
+    thumb.addEventListener("pointermove", onThumbPointerMove);
+    thumb.addEventListener("pointerup", onThumbPointerUp);
+    thumb.addEventListener("pointercancel", onThumbPointerUp);
+
+    this._centerScrollObserver = new ResizeObserver(updateOverflow);
+    this._centerScrollObserver.observe(scroller);
+    this._centerScrollObserver.observe(featureList);
+
+    updateOverflow();
 
     this._centerScrollCleanup = () => {
-      this._centerScrollObserver?.disconnect();
-      this._centerScrollObserver = null;
-      window.removeEventListener("resize", updateLabelsState);
+      scroller.removeEventListener("scroll", onScrollerScroll);
+      track.removeEventListener("pointerdown", onTrackPointerDown);
+      thumb.removeEventListener("pointerdown", onThumbPointerDown);
+      thumb.removeEventListener("pointermove", onThumbPointerMove);
+      thumb.removeEventListener("pointerup", onThumbPointerUp);
+      thumb.removeEventListener("pointercancel", onThumbPointerUp);
     };
   }
 
