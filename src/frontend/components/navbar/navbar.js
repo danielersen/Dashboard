@@ -159,8 +159,8 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon {
-    width: 20px;
-    height: 20px;
+    width: 58px;
+    height: 50px;
     border-radius: 0;
     object-fit: contain;
     object-position: center;
@@ -236,8 +236,8 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon-wrap {
-    width: 20px;
-    height: 20px;
+    width: 58px;
+    height: 50px;
     display: inline-grid;
     place-items: center;
     overflow: hidden;
@@ -246,8 +246,8 @@ const NAVBAR_STYLE = `
 
   .feature-icon svg,
   .action-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 58px;
+    height: 50px;
     fill: currentColor;
   }
 
