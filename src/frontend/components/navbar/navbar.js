@@ -159,8 +159,8 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon {
-    width: 20px;
-    height: 20px;
+    width: 58px;
+    height: 50px;
     border-radius: 4px;
     object-fit: cover;
     object-position: center;
