@@ -682,11 +682,18 @@ class SiteNavbar extends HTMLElement {
     if (!center || !scroller || !scrollbar || !track || !thumb || !featureList) return;
 
     let dragState = null;
+    const HIDE_LABELS_WIDTH = 300;
+    const SHOW_LABELS_WIDTH = 420;
 
     const updateOverflow = () => {
       const overflow = scroller.scrollWidth - scroller.clientWidth > 1;
+      const currentlyHidden = center.dataset.labels === "hidden";
+      const nextLabelsState = currentlyHidden
+        ? (scroller.clientWidth > SHOW_LABELS_WIDTH ? "visible" : "hidden")
+        : (scroller.clientWidth < HIDE_LABELS_WIDTH ? "hidden" : "visible");
+
       center.dataset.overflow = overflow ? "true" : "false";
-      center.dataset.labels = overflow ? "hidden" : "visible";
+      center.dataset.labels = nextLabelsState;
       scrollbar.setAttribute("aria-hidden", overflow ? "false" : "true");
 
       if (!overflow) {
