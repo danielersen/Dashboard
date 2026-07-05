@@ -161,8 +161,8 @@ const NAVBAR_STYLE = `
   .brand-icon {
     width: 20px;
     height: 20px;
-    border-radius: 4px;
-    object-fit: cover;
+    border-radius: 0;
+    object-fit: contain;
     object-position: center;
     display: block;
     transform: scale(1);
@@ -236,7 +236,12 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon-wrap {
+    width: 20px;
+    height: 20px;
+    display: inline-grid;
+    place-items: center;
     overflow: hidden;
+    flex: 0 0 auto;
   }
 
   .feature-icon svg,
