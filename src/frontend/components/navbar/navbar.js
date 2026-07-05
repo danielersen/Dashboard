@@ -159,13 +159,13 @@ const NAVBAR_STYLE = `
   }
 
   .brand-icon {
-    width: 32px;
-    height: 32px;
+    width: 20px;
+    height: 20px;
     border-radius: 4px;
     object-fit: cover;
     object-position: center;
     display: block;
-    transform: scale(1.2);
+    transform: scale(1);
     transform-origin: center;
   }
 
