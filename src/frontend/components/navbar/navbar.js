@@ -180,15 +180,11 @@ const NAVBAR_STYLE = `
 
   .center-scroll {
     min-width: 0;
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
     outline: none;
-  }
-
-  .center[data-labels="hidden"] .center-scroll {
-    overflow-x: hidden;
   }
 
   .center-scroll::-webkit-scrollbar {
@@ -209,57 +205,7 @@ const NAVBAR_STYLE = `
   }
 
   .center-scrollbar {
-    height: 0;
-    opacity: 0;
-    overflow: hidden;
-    pointer-events: none;
-    padding: 0 6px;
-    transition:
-      height 160ms ease,
-      opacity 160ms ease;
-  }
-
-  .center[data-overflow="true"] .center-scrollbar {
-    height: 12px;
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .center[data-labels="hidden"] .center-scrollbar {
-    height: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .center-scrollbar-track {
-    height: 4px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
-    position: relative;
-    cursor: pointer;
-  }
-
-  .center-scrollbar-thumb {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    min-width: 28px;
-    border-radius: inherit;
-    background: rgba(237, 245, 242, 0.42);
-    cursor: grab;
-    touch-action: none;
-    transition: background 160ms ease;
-  }
-
-  .center-scrollbar-thumb:hover,
-  .center-scrollbar-track:hover .center-scrollbar-thumb {
-    background: rgba(237, 245, 242, 0.62);
-  }
-
-  .center-scrollbar-thumb:active {
-    cursor: grabbing;
-    background: rgba(237, 245, 242, 0.78);
+    display: none;
   }
 
   .feature {
@@ -684,95 +630,17 @@ class SiteNavbar extends HTMLElement {
 
     const center = root.querySelector(".center");
     const scroller = root.querySelector("[data-center-scroll]");
-    const scrollbar = root.querySelector("[data-center-scrollbar]");
-    const track = root.querySelector("[data-scrollbar-track]");
-    const thumb = root.querySelector("[data-scrollbar-thumb]");
     const featureList = scroller?.querySelector(".feature-list");
 
-    if (!center || !scroller || !scrollbar || !track || !thumb || !featureList) return;
+    if (!center || !scroller || !featureList) return;
 
-    let dragState = null;
     const HIDE_LABELS_WIDTH = 360;
 
     const updateOverflow = () => {
-      const overflow = scroller.scrollWidth - scroller.clientWidth > 1;
       const shouldHideLabels = scroller.clientWidth < HIDE_LABELS_WIDTH;
-      const shouldShowScrollbar = !shouldHideLabels && overflow;
-
-      center.dataset.overflow = shouldShowScrollbar ? "true" : "false";
       center.dataset.labels = shouldHideLabels ? "hidden" : "visible";
-      scrollbar.setAttribute("aria-hidden", shouldShowScrollbar ? "false" : "true");
-
-      if (!shouldShowScrollbar) {
-        scroller.scrollLeft = 0;
-      }
-
-      updateThumb();
       this._updateHeight();
     };
-
-    const updateThumb = () => {
-      if (center.dataset.overflow !== "true") {
-        thumb.style.width = "0px";
-        thumb.style.transform = "translateX(0px)";
-        return;
-      }
-
-      const { scrollWidth, clientWidth, scrollLeft } = scroller;
-      const trackWidth = track.clientWidth;
-      const ratio = clientWidth / scrollWidth;
-      const thumbWidth = Math.max(ratio * trackWidth, 28);
-      const maxScroll = scrollWidth - clientWidth;
-      const maxThumbOffset = Math.max(trackWidth - thumbWidth, 0);
-      const thumbOffset = maxScroll > 0 ? (scrollLeft / maxScroll) * maxThumbOffset : 0;
-
-      thumb.style.width = `${thumbWidth}px`;
-      thumb.style.transform = `translateX(${thumbOffset}px)`;
-    };
-
-    const scrollFromThumbOffset = (thumbOffset) => {
-      const trackWidth = track.clientWidth;
-      const thumbWidth = thumb.offsetWidth;
-      const maxScroll = scroller.scrollWidth - scroller.clientWidth;
-      const maxThumbOffset = Math.max(trackWidth - thumbWidth, 0);
-      const ratio = maxThumbOffset > 0 ? thumbOffset / maxThumbOffset : 0;
-      scroller.scrollLeft = ratio * maxScroll;
-    };
-
-    const onScrollerScroll = () => updateThumb();
-    const onTrackPointerDown = (event) => {
-      if (event.target === thumb) return;
-      const rect = track.getBoundingClientRect();
-      const clickOffset = event.clientX - rect.left - thumb.offsetWidth / 2;
-      scrollFromThumbOffset(Math.max(0, Math.min(clickOffset, rect.width - thumb.offsetWidth)));
-    };
-    const onThumbPointerDown = (event) => {
-      dragState = {
-        startX: event.clientX,
-        startOffset: thumb.getBoundingClientRect().left - track.getBoundingClientRect().left,
-      };
-      thumb.setPointerCapture(event.pointerId);
-      event.preventDefault();
-    };
-    const onThumbPointerMove = (event) => {
-      if (!dragState) return;
-      const delta = event.clientX - dragState.startX;
-      const nextOffset = dragState.startOffset + delta;
-      const maxOffset = Math.max(track.clientWidth - thumb.offsetWidth, 0);
-      scrollFromThumbOffset(Math.max(0, Math.min(nextOffset, maxOffset)));
-    };
-    const onThumbPointerUp = (event) => {
-      if (!dragState) return;
-      dragState = null;
-      thumb.releasePointerCapture(event.pointerId);
-    };
-
-    scroller.addEventListener("scroll", onScrollerScroll, { passive: true });
-    track.addEventListener("pointerdown", onTrackPointerDown);
-    thumb.addEventListener("pointerdown", onThumbPointerDown);
-    thumb.addEventListener("pointermove", onThumbPointerMove);
-    thumb.addEventListener("pointerup", onThumbPointerUp);
-    thumb.addEventListener("pointercancel", onThumbPointerUp);
 
     this._centerScrollObserver = new ResizeObserver(updateOverflow);
     this._centerScrollObserver.observe(scroller);
@@ -781,12 +649,8 @@ class SiteNavbar extends HTMLElement {
     updateOverflow();
 
     this._centerScrollCleanup = () => {
-      scroller.removeEventListener("scroll", onScrollerScroll);
-      track.removeEventListener("pointerdown", onTrackPointerDown);
-      thumb.removeEventListener("pointerdown", onThumbPointerDown);
-      thumb.removeEventListener("pointermove", onThumbPointerMove);
-      thumb.removeEventListener("pointerup", onThumbPointerUp);
-      thumb.removeEventListener("pointercancel", onThumbPointerUp);
+      this._centerScrollObserver?.disconnect();
+      this._centerScrollObserver = null;
     };
   }
 
