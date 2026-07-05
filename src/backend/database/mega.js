@@ -175,3 +175,27 @@ export async function megaWrite(env, path, body) {
     };
   }, 4, 3000, 200);
 }
+
+export async function megaDelete(env, path) {
+  const fullPath = `dashboard/${normalizePath(path)}`;
+
+  return await retryOperation(async () => {
+    const storage = await getClient(env);
+
+    const segments = fullPath.split("/").filter(Boolean);
+    const fileName = segments.at(-1);
+    const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
+
+    const folder = folderPath ? await getFolderIfExists(storage, folderPath) : storage.root;
+    if (!folder) {
+      // nothing to delete
+      return { deleted: false };
+    }
+
+    const children = await folder.children;
+    const existing = children.find(child => child.name === fileName && !child.directory);
+    if (!existing) return { deleted: false };
+    await existing.delete();
+    return { deleted: true };
+  });
+}
