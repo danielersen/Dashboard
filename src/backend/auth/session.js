@@ -12,13 +12,16 @@ import { stringToBase64Url, bytesToBase64Url, decodeJwtPart } from "./encoding.j
 const REGISTRY_KEY = "session_tokens";
 export const SESSION_TTL_SECONDS = 5 * 60; // 5 minutes
 
-async function getSecret(env) {
-
-  const secret = env.JWT_SECRET;
+export function resolveSigningSecret(env) {
+  const secret = env?.JWT_SECRET || env?.JWT;
   if (!secret) {
-    throw new Error("Missing signing secret (JWT_SECRET).");
+    throw new Error("Missing signing secret (JWT_SECRET or JWT).");
   }
   return secret;
+}
+
+async function getSecret(env) {
+  return resolveSigningSecret(env);
 }
 
 async function hmacKey(secret) {
