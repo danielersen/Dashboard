@@ -106,6 +106,11 @@ const NAVBAR_STYLE = `
     z-index: 1;
   }
 
+  .center {
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .brand,
   .action,
   .feature,
@@ -172,6 +177,7 @@ const NAVBAR_STYLE = `
     align-items: stretch;
     gap: 0;
     justify-self: stretch;
+    overflow: hidden;
   }
 
   .center-scroll {
@@ -261,6 +267,7 @@ const NAVBAR_STYLE = `
     gap: 8px;
     flex-shrink: 0;
     padding-right: 2px;
+    min-width: 104px;
   }
 
   .action,
