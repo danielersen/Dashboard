@@ -634,11 +634,17 @@ class SiteNavbar extends HTMLElement {
 
     if (!center || !scroller || !featureList) return;
 
-    const HIDE_LABELS_WIDTH = 360;
-
     const updateOverflow = () => {
-      const shouldHideLabels = scroller.clientWidth < HIDE_LABELS_WIDTH;
-      center.dataset.labels = shouldHideLabels ? "hidden" : "visible";
+      const currentlyHidden = center.dataset.labels === "hidden";
+      const availableWidth = scroller.clientWidth;
+      const requiredWidth = featureList.scrollWidth;
+
+      if (!currentlyHidden && requiredWidth > availableWidth + 8) {
+        center.dataset.labels = "hidden";
+      } else if (currentlyHidden && requiredWidth < availableWidth - 24) {
+        center.dataset.labels = "visible";
+      }
+
       this._updateHeight();
     };
 
