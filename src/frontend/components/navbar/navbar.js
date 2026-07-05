@@ -297,6 +297,11 @@ const NAVBAR_STYLE = `
     white-space: nowrap;
   }
 
+  .center[data-labels="hidden"] .feature-label,
+  .center[data-labels="hidden"] .feature em {
+    display: none;
+  }
+
   .feature em {
     font-style: normal;
     color: rgba(237, 245, 242, 0.58);
@@ -456,14 +461,6 @@ const NAVBAR_STYLE = `
       min-height: 48px;
       padding: 10px 10px;
       border-radius: 16px;
-    }
-
-    .feature-label {
-      display: none;
-    }
-
-    .feature em {
-      display: none;
     }
 
     .feature {
@@ -689,6 +686,7 @@ class SiteNavbar extends HTMLElement {
     const updateOverflow = () => {
       const overflow = scroller.scrollWidth - scroller.clientWidth > 1;
       center.dataset.overflow = overflow ? "true" : "false";
+      center.dataset.labels = overflow ? "hidden" : "visible";
       scrollbar.setAttribute("aria-hidden", overflow ? "false" : "true");
 
       if (!overflow) {
