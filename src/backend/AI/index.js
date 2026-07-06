@@ -276,6 +276,22 @@ export async function AIfunction(env, subpath, method, headers, body) {
     };
   }
 
+  if (parts.length === 1 && parts[0] === "chat" && method === "POST") {
+    // Chat endpoint for unified AI interface
+    const category = body?.category || "basic";
+    const model = body?.model || env.DEFAULT_AI_MODEL || "openai/gpt-4o-mini";
+    const prompt = body?.prompt || "";
+    
+    // Map frontend category names to backend category names
+    const mappedCategory = CATEGORY_ALIASES[category] || category;
+    const fn = CATEGORIES[mappedCategory];
+    if (!fn) return { error: "unknown category" };
+    
+    // Call category function
+    const resp = await fn(env, model, { prompt });
+    return resp;
+  }
+
   const category = parts[0];
   const action = parts[1] || "ask";
   // Map frontend category names to backend category names

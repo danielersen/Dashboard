@@ -375,7 +375,14 @@ function displayUserMessage(message) {
     <div class="chat-bubble">${escapeHtml(message)}</div>
   `;
   chatContainer.appendChild(messageDiv);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  
+  // Smooth scroll to bottom
+  requestAnimationFrame(() => {
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
+      behavior: "smooth"
+    });
+  });
 }
 
 function displayAIMessage(message) {
@@ -388,7 +395,14 @@ function displayAIMessage(message) {
     <div class="chat-bubble">${escapeHtml(message)}</div>
   `;
   chatContainer.appendChild(messageDiv);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  
+  // Smooth scroll to bottom
+  requestAnimationFrame(() => {
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
+      behavior: "smooth"
+    });
+  });
 }
 
 function displayLoading() {
@@ -402,7 +416,14 @@ function displayLoading() {
     <div class="chat-bubble">Thinking...</div>
   `;
   chatContainer.appendChild(messageDiv);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+  
+  // Smooth scroll to bottom
+  requestAnimationFrame(() => {
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
+      behavior: "smooth"
+    });
+  });
 }
 
 function removeLoading() {
@@ -428,15 +449,20 @@ async function sendToAPI(prompt) {
       })
     });
     
+    console.log("API response status:", response.status);
     const data = await response.json();
+    console.log("API response data:", data);
     removeLoading();
     
     if (data.response) {
       displayAIMessage(data.response);
     } else if (data.error) {
       displayAIMessage(`Error: ${data.error}`);
+    } else if (data.result || data.output || data.text || data.message) {
+      // Try alternative response field names
+      displayAIMessage(data.result || data.output || data.text || data.message);
     } else {
-      displayAIMessage("No response received");
+      displayAIMessage("No response received. Data: " + JSON.stringify(data));
     }
   } catch (error) {
     removeLoading();
