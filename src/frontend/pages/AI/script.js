@@ -7,6 +7,9 @@ const state = {
   categorizedModels: {},
   currentSection: "ai",
   loading: false,
+  selectedCategory: "basic",
+  selectedCompany: null,
+  selectedModel: null,
 };
 
 // Mapping from frontend category names to backend category names
@@ -97,163 +100,211 @@ async function loadModels() {
 }
 
 function populateModelSelects() {
-  const categories = ["ai", "search-web", "reasoning", "pictures"];
+  const categorySelect = document.getElementById("category-select");
+  const companySelect = document.getElementById("company-select");
+  const modelSelect = document.getElementById("model-select");
   
-  categories.forEach(category => {
-    const companySelect = document.querySelector(`#${category}-company-select`);
-    const modelSelect = document.querySelector(`#${category}-model-select`);
-    
-    if (!companySelect || !modelSelect) return;
-    
-    const companyTrigger = companySelect.querySelector(".custom-select-trigger");
-    const companyOptionsContainer = companySelect.querySelector(".custom-options");
-    const modelTrigger = modelSelect.querySelector(".custom-select-trigger");
-    const modelOptionsContainer = modelSelect.querySelector(".custom-options");
-    
-    // Clear existing options
-    companyOptionsContainer.innerHTML = "";
-    modelOptionsContainer.innerHTML = "";
-    
-    // Map frontend category name to backend category name
-    const backendCategory = CATEGORY_ALIASES[category] || category;
-    
-    // Get models for this specific category
-    const categoryModels = state.categorizedModels[backendCategory] || [];
-    
-    if (categoryModels.length === 0) {
-      companyTrigger.textContent = "No models available";
-      return;
+  if (!categorySelect || !companySelect || !modelSelect) return;
+  
+  // Setup category dropdown
+  setupCategoryDropdown(categorySelect);
+  
+  // Setup company dropdown
+  setupCompanyDropdown(companySelect);
+  
+  // Setup model dropdown
+  setupModelDropdown(modelSelect);
+  
+  // Initial population
+  populateCompanies();
+}
+
+function setupCategoryDropdown(select) {
+  const trigger = select.querySelector(".custom-select-trigger");
+  const optionsContainer = select.querySelector(".custom-options");
+  
+  select.addEventListener("click", (e) => {
+    if (e.target.closest(".custom-option")) return;
+    select.classList.toggle("open");
+  });
+  
+  optionsContainer.querySelectorAll(".custom-option").forEach(option => {
+    option.addEventListener("click", () => {
+      optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+      option.classList.add("selected");
+      trigger.textContent = option.textContent;
+      state.selectedCategory = option.dataset.value;
+      select.classList.remove("open");
+      populateCompanies();
+    });
+  });
+  
+  // Set default
+  const defaultOption = optionsContainer.querySelector('[data-value="basic"]');
+  if (defaultOption) {
+    defaultOption.classList.add("selected");
+  }
+}
+
+function setupCompanyDropdown(select) {
+  const trigger = select.querySelector(".custom-select-trigger");
+  const optionsContainer = select.querySelector(".custom-options");
+  
+  select.addEventListener("click", (e) => {
+    if (e.target.closest(".custom-option")) return;
+    select.classList.toggle("open");
+  });
+  
+  document.addEventListener("click", (e) => {
+    if (!select.contains(e.target)) {
+      select.classList.remove("open");
     }
-    
-    // Extract unique companies and sort alphabetically
-    const companies = [...new Set(categoryModels.map(model => model.brand || "Unknown"))].sort();
-    
-    // Populate company dropdown
-    companies.forEach(company => {
-      const option = document.createElement("div");
-      option.className = "custom-option";
-      option.textContent = company;
-      option.dataset.company = company;
-      companyOptionsContainer.appendChild(option);
-      
-      // Click handler for company
-      option.addEventListener("click", () => {
-        // Remove selected class from all company options
-        companyOptionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
-        // Add selected class to clicked option
-        option.classList.add("selected");
-        // Update trigger text
-        companyTrigger.textContent = company;
-        // Store selected company
-        companySelect.dataset.selectedCompany = company;
-        // Close company dropdown
-        companySelect.classList.remove("open");
-        // Populate model dropdown with models from this company
-        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, company);
-      });
-    });
-    
-    // Set first company as default
-    if (companies.length > 0) {
-      const firstCompanyOption = companyOptionsContainer.querySelector(".custom-option");
-      if (firstCompanyOption) {
-        firstCompanyOption.classList.add("selected");
-        companyTrigger.textContent = companies[0];
-        companySelect.dataset.selectedCompany = companies[0];
-        // Populate models for first company
-        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, companies[0]);
-      }
-    }
-    
-    // Toggle company dropdown on click
-    companySelect.addEventListener("click", (e) => {
-      if (e.target.closest(".custom-option")) return;
-      companySelect.classList.toggle("open");
-    });
-    
-    // Toggle model dropdown on click
-    modelSelect.addEventListener("click", (e) => {
-      if (e.target.closest(".custom-option")) return;
-      modelSelect.classList.toggle("open");
-    });
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener("click", (e) => {
-      if (!companySelect.contains(e.target)) {
-        companySelect.classList.remove("open");
-      }
-      if (!modelSelect.contains(e.target)) {
-        modelSelect.classList.remove("open");
-      }
-    });
   });
 }
 
-function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, company) {
-  // Clear existing model options
-  modelOptionsContainer.innerHTML = "";
+function setupModelDropdown(select) {
+  const trigger = select.querySelector(".custom-select-trigger");
+  const optionsContainer = select.querySelector(".custom-options");
   
-  // Filter models by company
-  const companyModels = categoryModels.filter(model => (model.brand || "Unknown") === company);
+  select.addEventListener("click", (e) => {
+    if (e.target.closest(".custom-option")) return;
+    select.classList.toggle("open");
+  });
   
-  if (companyModels.length === 0) {
-    modelTrigger.textContent = "No models for this company";
+  document.addEventListener("click", (e) => {
+    if (!select.contains(e.target)) {
+      select.classList.remove("open");
+    }
+  });
+}
+
+function populateCompanies() {
+  const companySelect = document.getElementById("company-select");
+  if (!companySelect) return;
+  
+  const trigger = companySelect.querySelector(".custom-select-trigger");
+  const optionsContainer = companySelect.querySelector(".custom-options");
+  
+  optionsContainer.innerHTML = "";
+  
+  const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+  
+  if (categoryModels.length === 0) {
+    trigger.textContent = "No models available";
     return;
   }
   
-  // Sort models by consumption score (ascending), then alphabetically
+  const companies = [...new Set(categoryModels.map(model => model.brand || "Unknown"))].sort();
+  
+  companies.forEach(company => {
+    const option = document.createElement("div");
+    option.className = "custom-option";
+    option.textContent = company;
+    option.dataset.company = company;
+    optionsContainer.appendChild(option);
+    
+    option.addEventListener("click", () => {
+      optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+      option.classList.add("selected");
+      trigger.textContent = company;
+      state.selectedCompany = company;
+      companySelect.classList.remove("open");
+      populateModels();
+    });
+  });
+  
+  // Select first company by default
+  if (companies.length > 0) {
+    const firstOption = optionsContainer.querySelector(".custom-option");
+    if (firstOption) {
+      firstOption.classList.add("selected");
+      trigger.textContent = companies[0];
+      state.selectedCompany = companies[0];
+      populateModels();
+    }
+  }
+}
+
+function populateModels() {
+  const modelSelect = document.getElementById("model-select");
+  if (!modelSelect) return;
+  
+  const trigger = modelSelect.querySelector(".custom-select-trigger");
+  const optionsContainer = modelSelect.querySelector(".custom-options");
+  
+  optionsContainer.innerHTML = "";
+  
+  const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+  const companyModels = categoryModels.filter(model => (model.brand || "Unknown") === state.selectedCompany);
+  
+  if (companyModels.length === 0) {
+    trigger.textContent = "No models for this company";
+    return;
+  }
+  
   const sortedModels = [...companyModels].sort((a, b) => {
     const scoreA = parseInt(a.consumption) || 0;
     const scoreB = parseInt(b.consumption) || 0;
     if (scoreA !== scoreB) return scoreA - scoreB;
-    // If scores are equal, sort alphabetically
     const nameA = (a.name || "").toLowerCase();
     const nameB = (b.name || "").toLowerCase();
     return nameA.localeCompare(nameB);
   });
   
-  // Populate model dropdown
   sortedModels.forEach(model => {
     const option = document.createElement("div");
     option.className = "custom-option";
     const consumptionScore = model.consumption || 0;
+    const percentage = Math.round((consumptionScore / 20) * 100);
+    
     option.innerHTML = `
       <span class="custom-option-name">${model.name || model.model}</span>
+      <span class="custom-option-right">
+        <span class="custom-option-score">${percentage}%</span>
+        <svg class="custom-option-icon" width="8" height="8" viewBox="0 0 24 24" fill="white">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </span>
     `;
     option.dataset.value = model.id || model.model;
     option.dataset.consumption = consumptionScore;
     option.dataset.description = model.description || "";
-    option.dataset.rawName = model.name || model.model;
-    modelOptionsContainer.appendChild(option);
+    optionsContainer.appendChild(option);
     
-    // Click handler for model
     option.addEventListener("click", () => {
-      // Remove selected class from all model options
-      modelOptionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
-      // Add selected class to clicked option
+      optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
       option.classList.add("selected");
-      // Update trigger text
-      modelTrigger.textContent = model.name || model.model;
-      // Store selected value
-      modelSelect.dataset.selectedValue = model.id || model.model;
-      modelSelect.dataset.selectedConsumption = consumptionScore;
-      modelSelect.dataset.selectedDescription = model.description || "";
-      // Close model dropdown
+      trigger.textContent = model.name || model.model;
+      state.selectedModel = model.id || model.model;
       modelSelect.classList.remove("open");
+      updateConsumptionDisplay(consumptionScore);
     });
   });
   
-  // Set first model as default
+  // Select first model by default
   if (sortedModels.length > 0) {
-    const firstModelOption = modelOptionsContainer.querySelector(".custom-option");
-    if (firstModelOption) {
-      firstModelOption.classList.add("selected");
-      modelTrigger.textContent = sortedModels[0].name || sortedModels[0].model;
-      modelSelect.dataset.selectedValue = sortedModels[0].id || sortedModels[0].model;
-      modelSelect.dataset.selectedConsumption = sortedModels[0].consumption || 0;
-      modelSelect.dataset.selectedDescription = sortedModels[0].description || "";
+    const firstOption = optionsContainer.querySelector(".custom-option");
+    if (firstOption) {
+      firstOption.classList.add("selected");
+      trigger.textContent = sortedModels[0].name || sortedModels[0].model;
+      state.selectedModel = sortedModels[0].id || sortedModels[0].model;
+      updateConsumptionDisplay(sortedModels[0].consumption || 0);
     }
   }
+}
+
+function updateConsumptionDisplay(consumptionScore) {
+  const consumptionDisplay = document.getElementById("consumption-display");
+  if (!consumptionDisplay) return;
+  
+  const barWidth = Math.min(100, (consumptionScore / 20) * 100);
+  const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
+  
+  consumptionDisplay.innerHTML = `
+    <div class="consumption-bar-container">
+      <div class="consumption-bar-fill" style="width: ${barWidth}%; background: ${barColor};"></div>
+    </div>
+  `;
 }
 
 /* ===================== PROMPT HANDLING ===================== */

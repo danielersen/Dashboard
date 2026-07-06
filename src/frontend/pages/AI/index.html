@@ -50,157 +50,56 @@
       </aside>
 
       <main class="ai-main">
-        <!-- ===================== AI ===================== -->
-        <section id="ai" class="ai-section" aria-label="AI">
-          <header class="section-head">
-            <h1>AI Assistant</h1>
-          </header>
-          <div class="ai-container">
-            <div class="ai-model-selector">
-              <label for="ai-company-select">Company</label>
+        <div class="ai-selector-bar">
+          <!-- Labels Row -->
+          <div class="selector-labels">
+            <span class="selector-label">Feature</span>
+            <span class="selector-label">Company</span>
+            <span class="selector-label">Model</span>
+            <span class="selector-label">Consumption</span>
+          </div>
+          
+          <!-- Dropdowns Row -->
+          <div class="selector-dropdowns">
+            <div class="selector-item">
               <div class="custom-select-wrapper">
-                <div class="custom-select" id="ai-company-select" data-company-select>
-                  <span class="custom-select-trigger">Loading brands...</span>
+                <div class="custom-select" id="category-select" data-category-select>
+                  <span class="custom-select-trigger">Basic</span>
                   <div class="custom-options">
-                    <!-- Brands will be populated by JS -->
+                    <div class="custom-option" data-value="basic">Basic</div>
+                    <div class="custom-option" data-value="search_web">Search Web</div>
+                    <div class="custom-option" data-value="reasonning">Reasoning</div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="ai-model-selector">
-              <label for="ai-model-select">Model</label>
+            <div class="selector-item">
               <div class="custom-select-wrapper">
-                <div class="custom-select" id="ai-model-select" data-model-select>
-                  <span class="custom-select-trigger">Select a brand first</span>
+                <div class="custom-select" id="company-select" data-company-select>
+                  <span class="custom-select-trigger">Loading...</span>
+                  <div class="custom-options">
+                    <!-- Companies will be populated by JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="selector-item">
+              <div class="custom-select-wrapper">
+                <div class="custom-select" id="model-select" data-model-select>
+                  <span class="custom-select-trigger">Select company first</span>
                   <div class="custom-options">
                     <!-- Models will be populated by JS -->
                   </div>
                 </div>
               </div>
             </div>
-            <div class="ai-prompt-area">
-              <textarea id="ai-prompt" data-prompt placeholder="Enter your prompt..." rows="4"></textarea>
-              <button id="ai-submit" data-submit type="button">Send</button>
-            </div>
-            <div class="ai-response" data-response>
-              <p class="state-msg">Your response will appear here.</p>
+            <div class="selector-item">
+              <div class="consumption-display" id="consumption-display">
+                <!-- Consumption bar will be populated by JS -->
+              </div>
             </div>
           </div>
-        </section>
-
-        <!-- ===================== SEARCH WEB ===================== -->
-        <section id="search-web" class="ai-section" aria-label="Search Web" hidden>
-          <header class="section-head">
-            <h1>Search Web</h1>
-          </header>
-          <div class="ai-container">
-            <div class="ai-model-selector">
-              <label for="search-web-company-select">Company</label>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="search-web-company-select" data-company-select>
-                  <span class="custom-select-trigger">Loading brands...</span>
-                  <div class="custom-options">
-                    <!-- Brands will be populated by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="ai-model-selector">
-              <label for="search-web-model-select">Model</label>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="search-web-model-select" data-model-select>
-                  <span class="custom-select-trigger">Select a brand first</span>
-                  <div class="custom-options">
-                    <!-- Models will be populated by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="ai-prompt-area">
-              <textarea id="search-web-prompt" data-prompt placeholder="Enter your search query..." rows="4"></textarea>
-              <button id="search-web-submit" data-submit type="button">Search</button>
-            </div>
-            <div class="ai-response" data-response>
-              <p class="state-msg">Search results will appear here.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- ===================== REASONING ===================== -->
-        <section id="reasoning" class="ai-section" aria-label="Reasoning" hidden>
-          <header class="section-head">
-            <h1>Reasoning</h1>
-          </header>
-          <div class="ai-container">
-            <div class="ai-model-selector">
-              <label for="reasoning-company-select">Company</label>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="reasoning-company-select" data-company-select>
-                  <span class="custom-select-trigger">Loading brands...</span>
-                  <div class="custom-options">
-                    <!-- Brands will be populated by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="ai-model-selector">
-              <label for="reasoning-model-select">Model</label>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="reasoning-model-select" data-model-select>
-                  <span class="custom-select-trigger">Select a brand first</span>
-                  <div class="custom-options">
-                    <!-- Models will be populated by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="ai-prompt-area">
-              <textarea id="reasoning-prompt" data-prompt placeholder="Enter your reasoning task..." rows="4"></textarea>
-              <button id="reasoning-submit" data-submit type="button">Reason</button>
-            </div>
-            <div class="ai-response" data-response>
-              <p class="state-msg">Reasoning results will appear here.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- ===================== PICTURES ===================== -->
-        <section id="pictures" class="ai-section" aria-label="Pictures Generator" hidden>
-          <header class="section-head">
-            <h1>Picture Generator</h1>
-          </header>
-          <div class="ai-container">
-            <div class="ai-model-selector">
-              <label for="pictures-company-select">Company</label>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="pictures-company-select" data-company-select>
-                  <span class="custom-select-trigger">Loading brands...</span>
-                  <div class="custom-options">
-                    <!-- Brands will be populated by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="ai-model-selector">
-              <label for="pictures-model-select">Model</label>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="pictures-model-select" data-model-select>
-                  <span class="custom-select-trigger">Select a brand first</span>
-                  <div class="custom-options">
-                    <!-- Models will be populated by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="ai-prompt-area">
-              <textarea id="pictures-prompt" data-prompt placeholder="Describe the image you want to generate..." rows="4"></textarea>
-              <button id="pictures-submit" data-submit type="button">Generate</button>
-            </div>
-            <div class="ai-response" data-response>
-              <p class="state-msg">Generated image or description will appear here.</p>
-            </div>
-          </div>
-        </section>
+        </div>
       </main>
     </div>
   </body>
