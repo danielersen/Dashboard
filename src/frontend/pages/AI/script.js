@@ -174,13 +174,15 @@ function updateConsumptionDisplay(select) {
     const consumptionScore = parseInt(selectedOption.dataset.consumption) || 0;
     console.log("Consumption score:", consumptionScore);
     
-    // Create energy bar with icon
+    // Create energy bar with SVG icon
     const barWidth = Math.min(100, (consumptionScore / 20) * 100);
     const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
     
     consumptionDisplay.innerHTML = `
       <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 16px;">⚡</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
         <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
           <div style="width: ${barWidth}%; height: 100%; background: ${barColor}; border-radius: 3px; transition: width 300ms ease;"></div>
         </div>
