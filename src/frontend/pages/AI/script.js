@@ -9,6 +9,14 @@ const state = {
   loading: false,
 };
 
+// Mapping from frontend category names to backend category names
+const CATEGORY_ALIASES = {
+  "ai": "basic",
+  "search-web": "search_web",
+  "reasoning": "reasonning",
+  "pictures": "pictures",
+};
+
 /* ===================== API ===================== */
 async function aiGet(sub) {
   const res = await authedFetch(`${AI_BASE}/${sub}`, {
@@ -97,8 +105,11 @@ function populateModelSelects() {
     
     select.innerHTML = "";
     
+    // Map frontend category name to backend category name
+    const backendCategory = CATEGORY_ALIASES[category] || category;
+    
     // Get models for this specific category
-    const categoryModels = state.categorizedModels[category] || [];
+    const categoryModels = state.categorizedModels[backendCategory] || [];
     
     if (categoryModels.length === 0) {
       const option = document.createElement("option");

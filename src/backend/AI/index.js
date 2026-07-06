@@ -112,6 +112,8 @@ function categorizeModel(model) {
   const modelId = (model.id || model.name || "").toLowerCase();
   const modelType = (model.type || "text-generation").toLowerCase();
   
+  console.log("Categorizing model:", modelId, "type:", modelType);
+  
   const categories = [];
   
   // Text generation models
@@ -124,7 +126,8 @@ function categorizeModel(model) {
   // Reasoning models (larger models)
   if (modelId.includes("70b") || modelId.includes("405b") || 
       modelId.includes("large")) {
-    categories.push("reasoning");
+    categories.push("reasonning");
+    console.log("Added to reasonning category");
   }
   
   // Image generation models
@@ -144,6 +147,7 @@ function categorizeModel(model) {
     categories.push("basic");
   }
   
+  console.log("Final categories for", modelId, ":", categories);
   return categories;
 }
 
