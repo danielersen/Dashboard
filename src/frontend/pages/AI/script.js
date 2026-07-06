@@ -221,9 +221,6 @@ function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer,
     option.innerHTML = `
       <span class="custom-option-name">${model.name || model.model}</span>
       <span class="custom-option-score">${percentage}%</span>
-      <svg class="custom-option-icon" width="10" height="10" viewBox="0 0 24 24" fill="white">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-      </svg>
     `;
     option.dataset.value = model.id || model.model;
     option.dataset.consumption = consumptionScore;
