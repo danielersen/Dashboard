@@ -109,7 +109,8 @@ function populateModelSelects() {
     // Set first model as default
     if (state.models.length > 0) {
       select.value = state.models[0].model;
-      updateConsumptionDisplay(select);
+      // Force immediate update
+      setTimeout(() => updateConsumptionDisplay(select), 0);
     }
 
     // Add change listener
