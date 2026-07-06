@@ -217,10 +217,8 @@ function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer,
     const option = document.createElement("div");
     option.className = "custom-option";
     const consumptionScore = model.consumption || 0;
-    const percentage = Math.round((consumptionScore / 20) * 100);
     option.innerHTML = `
       <span class="custom-option-name">${model.name || model.model}</span>
-      <span class="custom-option-score">${percentage}%</span>
     `;
     option.dataset.value = model.id || model.model;
     option.dataset.consumption = consumptionScore;
@@ -268,7 +266,7 @@ function updateConsumptionDisplay(customSelect) {
   console.log("updateConsumptionDisplay - consumptionScore:", consumptionScore, "consumptionDisplay:", consumptionDisplay);
   
   if (consumptionDisplay) {
-    // Create consumption bar with centered "Consumption" text
+    // Create consumption bar with centered "Consumption" text and energy icon
     const barWidth = Math.min(100, (consumptionScore / 20) * 100);
     const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
     
@@ -277,6 +275,9 @@ function updateConsumptionDisplay(customSelect) {
         <div class="consumption-bar-fill" style="width: ${barWidth}%; background: ${barColor};"></div>
         <span class="consumption-bar-text">Consumption</span>
       </div>
+      <svg class="consumption-energy-icon" width="14" height="14" viewBox="0 0 24 24" fill="white">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
     `;
   } else {
     console.log("Missing consumptionDisplay");

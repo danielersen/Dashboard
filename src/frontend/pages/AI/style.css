@@ -279,7 +279,6 @@ a {
 }
 
 .model-select-with-consumption .model-consumption {
-  width: 120px;
   flex-shrink: 0;
 }
 
@@ -287,12 +286,14 @@ a {
 .consumption-bar-container {
   position: relative;
   height: 24px;
+  width: 100px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .consumption-bar-fill {
@@ -315,6 +316,10 @@ a {
   pointer-events: none;
 }
 
+.consumption-energy-icon {
+  flex-shrink: 0;
+}
+
 .ai-model-selector select:hover {
   border-color: rgba(82, 214, 168, 0.4);
 }
@@ -330,6 +335,9 @@ a {
   padding: 4px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ===================== PROMPT AREA ===================== */
