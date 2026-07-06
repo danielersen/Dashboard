@@ -178,6 +178,10 @@ a {
   transition: border-color 180ms ease;
 }
 
+.ai-model-selector select option {
+  padding-right: 8px;
+}
+
 .ai-model-selector select:hover {
   border-color: rgba(82, 214, 168, 0.4);
 }
