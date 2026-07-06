@@ -119,27 +119,50 @@ function populateModelSelects() {
       return;
     }
     
-    categoryModels.forEach(model => {
+    // Sort models by consumption score (lightest first)
+    const sortedModels = [...categoryModels].sort((a, b) => {
+      const scoreA = parseInt(a.consumption) || 0;
+      const scoreB = parseInt(b.consumption) || 0;
+      return scoreA - scoreB;
+    });
+    
+    sortedModels.forEach(model => {
       const option = document.createElement("option");
       option.value = model.id || model.model;
-      option.textContent = model.name || model.model;
-      option.dataset.consumption = model.consumption || "unknown";
+      const consumptionScore = model.consumption || 0;
+      // Use unicode spaces to push score to the right
+      const padding = "\u2003\u2003\u2003\u2003\u2003\u2003\u2003\u2003";
+      option.textContent = `${model.name || model.model}${padding}⚡${consumptionScore}/20`;
+      option.dataset.consumption = consumptionScore;
       option.dataset.description = model.description || "";
-      console.log("Setting option dataset for", model.name, "consumption:", model.consumption, "description:", model.description);
+      option.dataset.rawName = model.name || model.model;
+      console.log("Setting option dataset for", model.name, "consumption:", consumptionScore, "description:", model.description);
       select.appendChild(option);
     });
 
     // Set first model as default
     if (categoryModels.length > 0) {
-      select.value = categoryModels[0].id || categoryModels[0].model;
+      select.value = sortedModels[0].id || sortedModels[0].model;
       console.log("Set default value to:", select.value);
+      // Hide score from selected option
+      hideScoreFromSelectedOption(select);
       // Force immediate update
       setTimeout(() => updateConsumptionDisplay(select), 0);
     }
 
     // Add change listener
-    select.addEventListener("change", () => updateConsumptionDisplay(select));
+    select.addEventListener("change", () => {
+      hideScoreFromSelectedOption(select);
+      updateConsumptionDisplay(select);
+    });
   });
+}
+
+function hideScoreFromSelectedOption(select) {
+  const selectedOption = select.selectedOptions[0];
+  if (selectedOption && selectedOption.dataset.rawName) {
+    selectedOption.textContent = selectedOption.dataset.rawName;
+  }
 }
 
 function updateConsumptionDisplay(select) {
@@ -148,13 +171,21 @@ function updateConsumptionDisplay(select) {
   console.log("updateConsumptionDisplay - selectedOption:", selectedOption, "consumptionDisplay:", consumptionDisplay);
   
   if (selectedOption && consumptionDisplay) {
-    const consumption = selectedOption.dataset.consumption || "unknown";
-    const description = selectedOption.dataset.description || "";
-    console.log("Consumption data:", consumption, "Description:", description);
-    const displayText = description 
-      ? `Consumption: ${consumption} • ${description}`
-      : `Consumption: ${consumption}`;
-    consumptionDisplay.textContent = displayText;
+    const consumptionScore = parseInt(selectedOption.dataset.consumption) || 0;
+    console.log("Consumption score:", consumptionScore);
+    
+    // Create energy bar with icon
+    const barWidth = Math.min(100, (consumptionScore / 20) * 100);
+    const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
+    
+    consumptionDisplay.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">⚡</span>
+        <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+          <div style="width: ${barWidth}%; height: 100%; background: ${barColor}; border-radius: 3px; transition: width 300ms ease;"></div>
+        </div>
+      </div>
+    `;
   } else {
     console.log("Missing selectedOption or consumptionDisplay");
   }

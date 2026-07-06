@@ -160,7 +160,7 @@ function categorizeModel(model) {
   return categories;
 }
 
-// Function to estimate consumption based on model pricing
+// Function to estimate consumption based on model pricing (returns score 0-20, 20 = heaviest)
 function estimateConsumption(model) {
   const pricing = model.pricing || {};
   const modelId = (model.id || model.name || "").toLowerCase();
@@ -174,31 +174,36 @@ function estimateConsumption(model) {
     const outputCost = parseFloat(pricing.output) || 0;
     const totalCost = inputCost + outputCost;
     
-    if (totalCost < 0.0001) return "very low";
-    if (totalCost < 0.001) return "low";
-    if (totalCost < 0.01) return "medium";
-    return "high";
+    // Convert cost to score (0-20 scale)
+    // very low (<0.0001) -> 0-3
+    // low (<0.001) -> 4-7
+    // medium (<0.01) -> 8-14
+    // high (>=0.01) -> 15-20
+    if (totalCost < 0.0001) return Math.round(totalCost * 30000); // 0-3
+    if (totalCost < 0.001) return Math.round(3 + (totalCost - 0.0001) * 4000); // 4-7
+    if (totalCost < 0.01) return Math.round(7 + (totalCost - 0.001) * 700); // 8-14
+    return Math.min(20, Math.round(14 + (totalCost - 0.01) * 60)); // 15-20
   }
   
   // Fallback based on model name patterns
   if (modelType.includes("image") || modelType.includes("text-to-image")) {
-    return "high"; // Image generation is always expensive
+    return 18; // Image generation is always expensive
   }
   
   if (modelId.includes("8b") || modelId.includes("7b") || modelId.includes("small") || modelId.includes("mini")) {
-    return "very low";
+    return 3;
   }
   if (modelId.includes("70b") || modelId.includes("72b") || modelId.includes("large") || modelId.includes("opus")) {
-    return "high";
+    return 18;
   }
   if (modelId.includes("27b") || modelId.includes("34b") || modelId.includes("405b") || modelId.includes("sonnet")) {
-    return "medium";
+    return 12;
   }
   if (modelId.includes("9b") || modelId.includes("haiku")) {
-    return "low";
+    return 6;
   }
   
-  return "low"; // Default fallback
+  return 5; // Default fallback
 }
 
 export async function AIfunction(env, subpath, method, headers, body) {
