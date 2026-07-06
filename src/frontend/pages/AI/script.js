@@ -100,7 +100,7 @@ function populateModelSelects() {
   const categories = ["ai", "search-web", "reasoning", "pictures"];
   
   categories.forEach(category => {
-    const select = document.querySelector(`#${category} [data-model-select]`);
+    const select = document.querySelector(`#${category}-model-select`);
     if (!select) return;
     
     select.innerHTML = "";
@@ -230,7 +230,7 @@ function setupPromptHandlers() {
   categories.forEach(category => {
     const promptInput = document.querySelector(`#${category} [data-prompt]`);
     const submitButton = document.querySelector(`#${category} [data-submit]`);
-    const modelSelect = document.querySelector(`#${category} [data-model-select]`);
+    const modelSelect = document.querySelector(`#${category}-model-select`);
 
     if (promptInput && submitButton && modelSelect) {
       submitButton.addEventListener("click", () => {
