@@ -287,8 +287,8 @@ export async function AIfunction(env, subpath, method, headers, body) {
     const fn = CATEGORIES[mappedCategory];
     if (!fn) return { error: "unknown category" };
     
-    // Call category function
-    const resp = await fn(env, model, { prompt });
+    // Call category function with proper body structure
+    const resp = await fn(env, model, { prompt, text: prompt });
     return resp;
   }
 

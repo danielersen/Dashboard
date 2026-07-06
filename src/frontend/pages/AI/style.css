@@ -237,6 +237,7 @@ a {
   border-radius: 8px;
   z-index: 1000;
   display: none;
+  backdrop-filter: blur(10px);
 }
 
 .custom-select.open .custom-options {

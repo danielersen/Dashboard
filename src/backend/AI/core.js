@@ -79,17 +79,30 @@ export async function addMessagePair(env, category, { discussionId = null, userC
 // Simple model caller using Cloudflare Workers AI
 export async function callModel(env, model, prompt, options = {}) {
   const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
+  const modelId = model.toLowerCase();
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
     try {
-      const aiModel = env.AI.run(model, {
-        messages: [{ role: "user", content: message }],
-        max_tokens: options.maxTokens || 512,
-      });
+      let input;
       
+      // Check if this is a translation model (requires text and target_language)
+      if (modelId.includes("translation") || modelId.includes("translate")) {
+        input = {
+          text: message,
+          target_language: options.targetLanguage || "en"
+        };
+      } else {
+        // Standard text generation model
+        input = {
+          messages: [{ role: "user", content: message }],
+          max_tokens: options.maxTokens || 512,
+        };
+      }
+      
+      const aiModel = env.AI.run(model, input);
       const response = await aiModel;
-      const content = response?.response || response?.output || JSON.stringify(response);
+      const content = response?.response || response?.output || response?.result?.response || JSON.stringify(response);
       
       return { ok: true, model: model, response: content, raw: response };
     } catch (error) {
