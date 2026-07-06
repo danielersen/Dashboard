@@ -394,8 +394,15 @@ function displayAIMessage(message) {
   
   const messageDiv = document.createElement("div");
   messageDiv.className = "chat-message ai";
+  
+  // Parse markdown using marked.js
+  let parsedMessage = message;
+  if (typeof marked !== 'undefined') {
+    parsedMessage = marked.parse(message);
+  }
+  
   messageDiv.innerHTML = `
-    <div class="chat-bubble">${escapeHtml(message)}</div>
+    <div class="chat-bubble markdown-content">${parsedMessage}</div>
   `;
   chatContainer.appendChild(messageDiv);
   

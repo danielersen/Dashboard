@@ -135,8 +135,19 @@ function categorizeModel(model) {
   
   const categories = [];
   
+  // Image generation models - ONLY add to pictures category
+  if (modelTask.includes("image") || modelType.includes("image") || modelType.includes("text-to-image") ||
+      modelId.includes("stable") || modelId.includes("flux") || 
+      modelId.includes("sd") || modelId.includes("diffusion") ||
+      modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
+      modelId.includes("runwayml")) {
+    categories.push("pictures");
+    console.log("Added to pictures category:", modelId);
+    return categories; // Return early - image models only in pictures
+  }
+  
   // Text generation models (basic)
-  if (modelType.includes("text") || modelType.includes("generation") || 
+  if (modelTask.includes("text") || modelType.includes("text") || modelType.includes("generation") || 
       modelId.includes("llama") || modelId.includes("mistral") || 
       modelId.includes("gemma") || modelId.includes("phi") ||
       modelId.includes("qwen") || modelId.includes("yi") ||
@@ -153,17 +164,8 @@ function categorizeModel(model) {
     console.log("Added to reasonning category");
   }
   
-  // Image generation models
-  if (modelType.includes("image") || modelType.includes("text-to-image") ||
-      modelId.includes("stable") || modelId.includes("flux") || 
-      modelId.includes("sd") || modelId.includes("diffusion") ||
-      modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
-      modelId.includes("runwayml")) {
-    categories.push("pictures");
-  }
-  
-  // Search/summarization models - add all text generation models to search_web as well
-  if (modelType.includes("text") || modelType.includes("generation") || 
+  // Search/summarization models - add text generation models to search_web as well
+  if (modelTask.includes("text") || modelType.includes("text") || modelType.includes("generation") || 
       modelId.includes("llama") || modelId.includes("mistral") || 
       modelId.includes("gemma") || modelId.includes("phi") ||
       modelId.includes("qwen") || modelId.includes("yi")) {
