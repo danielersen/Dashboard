@@ -343,10 +343,106 @@ function submitPrompt() {
   
   if (!prompt) return;
   
-  console.log("Prompt submitted:", prompt);
-  // TODO: Send to AI backend later
+  if (!state.selectedModel) {
+    console.error("No model selected");
+    return;
+  }
+  
+  // Hide selector bar
+  const selectorBar = document.getElementById("selector-bar");
+  if (selectorBar) {
+    selectorBar.style.display = "none";
+  }
+  
+  // Display user message
+  displayUserMessage(prompt);
+  
+  // Clear input
   promptInput.value = "";
   promptInput.style.height = "auto";
+  
+  // Send to API
+  sendToAPI(prompt);
+}
+
+function displayUserMessage(message) {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "chat-message user";
+  messageDiv.innerHTML = `
+    <div class="chat-bubble">${escapeHtml(message)}</div>
+  `;
+  chatContainer.appendChild(messageDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function displayAIMessage(message) {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "chat-message ai";
+  messageDiv.innerHTML = `
+    <div class="chat-bubble">${escapeHtml(message)}</div>
+  `;
+  chatContainer.appendChild(messageDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function displayLoading() {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "chat-message ai loading";
+  messageDiv.id = "loading-message";
+  messageDiv.innerHTML = `
+    <div class="chat-bubble">Thinking...</div>
+  `;
+  chatContainer.appendChild(messageDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function removeLoading() {
+  const loadingMessage = document.getElementById("loading-message");
+  if (loadingMessage) {
+    loadingMessage.remove();
+  }
+}
+
+async function sendToAPI(prompt) {
+  displayLoading();
+  
+  try {
+    const response = await authedFetch(`${AI_BASE}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        model: state.selectedModel,
+        category: state.selectedCategory
+      })
+    });
+    
+    const data = await response.json();
+    removeLoading();
+    
+    if (data.response) {
+      displayAIMessage(data.response);
+    } else if (data.error) {
+      displayAIMessage(`Error: ${data.error}`);
+    } else {
+      displayAIMessage("No response received");
+    }
+  } catch (error) {
+    removeLoading();
+    console.error("API error:", error);
+    displayAIMessage(`Error: ${error.message}`);
+  }
 }
 
 /* ===================== PROMPT HANDLING ===================== */
