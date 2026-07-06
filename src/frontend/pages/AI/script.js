@@ -240,8 +240,6 @@ function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer,
       modelSelect.dataset.selectedDescription = model.description || "";
       // Close model dropdown
       modelSelect.classList.remove("open");
-      // Update consumption display
-      updateConsumptionDisplay(modelSelect);
     });
   });
   
@@ -254,33 +252,7 @@ function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer,
       modelSelect.dataset.selectedValue = sortedModels[0].id || sortedModels[0].model;
       modelSelect.dataset.selectedConsumption = sortedModels[0].consumption || 0;
       modelSelect.dataset.selectedDescription = sortedModels[0].description || "";
-      // Force immediate update
-      setTimeout(() => updateConsumptionDisplay(modelSelect), 0);
     }
-  }
-}
-
-function updateConsumptionDisplay(customSelect) {
-  const consumptionDisplay = customSelect.parentElement.querySelector("[data-consumption]");
-  const consumptionScore = parseInt(customSelect.dataset.selectedConsumption) || 0;
-  console.log("updateConsumptionDisplay - consumptionScore:", consumptionScore, "consumptionDisplay:", consumptionDisplay);
-  
-  if (consumptionDisplay) {
-    // Create consumption bar with centered "Consumption" text and energy icon
-    const barWidth = Math.min(100, (consumptionScore / 20) * 100);
-    const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
-    
-    consumptionDisplay.innerHTML = `
-      <div class="consumption-bar-container">
-        <div class="consumption-bar-fill" style="width: ${barWidth}%; background: ${barColor};"></div>
-        <span class="consumption-bar-text">Consumption</span>
-      </div>
-      <svg class="consumption-energy-icon" width="14" height="14" viewBox="0 0 24 24" fill="white">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-      </svg>
-    `;
-  } else {
-    console.log("Missing consumptionDisplay");
   }
 }
 

@@ -266,60 +266,6 @@ a {
   flex-shrink: 0;
 }
 
-/* Model select with consumption wrapper */
-.model-select-with-consumption {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.model-select-with-consumption .custom-select-wrapper {
-  flex: 1;
-  min-width: 200px;
-}
-
-.model-select-with-consumption .model-consumption {
-  flex-shrink: 0;
-}
-
-/* Consumption Bar Styles */
-.consumption-bar-container {
-  position: relative;
-  height: 24px;
-  width: 100px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.consumption-bar-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  transition: width 300ms ease;
-  opacity: 0.7;
-  border-radius: 12px;
-}
-
-.consumption-bar-text {
-  position: relative;
-  z-index: 1;
-  color: var(--text);
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  pointer-events: none;
-}
-
-.consumption-energy-icon {
-  flex-shrink: 0;
-}
-
 .ai-model-selector select:hover {
   border-color: rgba(82, 214, 168, 0.4);
 }
@@ -327,17 +273,6 @@ a {
 .ai-model-selector select:focus {
   outline: none;
   border-color: var(--accent);
-}
-
-.model-consumption {
-  font-size: 0.85rem;
-  color: var(--muted);
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 /* ===================== PROMPT AREA ===================== */
