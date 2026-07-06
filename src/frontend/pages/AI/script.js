@@ -307,6 +307,48 @@ function updateConsumptionDisplay(consumptionScore) {
   `;
 }
 
+function setupPromptBar() {
+  const promptInput = document.getElementById("prompt-input");
+  const submitButton = document.getElementById("prompt-submit");
+  
+  if (!promptInput || !submitButton) return;
+  
+  // Auto-resize textarea
+  promptInput.addEventListener("input", () => {
+    promptInput.style.height = "auto";
+    promptInput.style.height = Math.min(promptInput.scrollHeight, 200) + "px";
+  });
+  
+  // Handle keyboard shortcuts
+  promptInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl+Enter or Cmd+Enter to submit
+        e.preventDefault();
+        submitPrompt();
+      }
+      // Regular Enter just goes to new line (default behavior)
+    }
+  });
+  
+  // Submit on button click
+  submitButton.addEventListener("click", () => {
+    submitPrompt();
+  });
+}
+
+function submitPrompt() {
+  const promptInput = document.getElementById("prompt-input");
+  const prompt = promptInput.value.trim();
+  
+  if (!prompt) return;
+  
+  console.log("Prompt submitted:", prompt);
+  // TODO: Send to AI backend later
+  promptInput.value = "";
+  promptInput.style.height = "auto";
+}
+
 /* ===================== PROMPT HANDLING ===================== */
 async function handlePrompt(category, prompt, model) {
   if (!prompt.trim()) {
@@ -408,7 +450,7 @@ function setupPromptHandlers() {
 /* ===================== INITIALIZATION ===================== */
 async function init() {
   await loadModels();
-  setupPromptHandlers();
+  setupPromptBar();
 }
 
 // Start initialization when DOM is ready
