@@ -24,11 +24,19 @@ export async function AIfunction(env, subpath, method, headers, body) {
     // Build human-readable consumption info
     let models = [];
     try {
-      const raw = env.AI_AVAILABLE_MODELS ? JSON.parse(env.AI_AVAILABLE_MODELS) : [];
-      const consumption = env.AI_MODEL_CONSUMPTION ? JSON.parse(env.AI_MODEL_CONSUMPTION) : {};
+      const raw = env.AI_AVAILABLE_MODELS ? JSON.parse(env.AI_AVAILABLE_MODELS) : ["openai/gpt-4o-mini", "openai/gpt-4o", "openai/gpt-3.5-turbo"];
+      const consumption = env.AI_MODEL_CONSUMPTION ? JSON.parse(env.AI_MODEL_CONSUMPTION) : {
+        "openai/gpt-4o-mini": "low",
+        "openai/gpt-4o": "medium",
+        "openai/gpt-3.5-turbo": "low"
+      };
       models = raw.map(m => ({ model: m, consumption: (consumption[m] || "unknown") }));
     } catch (e) {
-      models = env.AI_AVAILABLE_MODELS ? JSON.parse(env.AI_AVAILABLE_MODELS) : [];
+      models = [
+        { model: "openai/gpt-4o-mini", consumption: "low" },
+        { model: "openai/gpt-4o", consumption: "medium" },
+        { model: "openai/gpt-3.5-turbo", consumption: "low" }
+      ];
     }
     return { categories: Object.keys(CATEGORIES), availableModels: models };
   }

@@ -32,6 +32,7 @@ async function aiGet(sub) {
   if (data && data.ok === false && data.error) {
     throw new Error(data.error);
   }
+  console.log("API Response for", sub, ":", data);
   return data;
 }
 
