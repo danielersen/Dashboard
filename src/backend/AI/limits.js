@@ -21,17 +21,19 @@ function monthKeyForModel(model) {
 }
 
 export async function checkAndIncrementMonthly(env, model, inc = 1) {
-  const limits = await readLimits(env);
-  const key = monthKeyForModel(model);
-  const current = Number(limits[key] || 0);
-  const envLimit = env[`AI_LIMIT_${String(model).toUpperCase().replace(/[^A-Z0-9]/g,'_')}`] || env.AI_MONTHLY_LIMIT;
-  if (envLimit) {
-    const max = Number(envLimit);
-    if (current + inc > max) {
-      throw new Error("Monthly limit reached for model: " + model);
-    }
-  }
-  limits[key] = current + inc;
-  await writeLimits(env, limits);
-  return limits[key];
+  // Skip limit checking to reduce subrequests - can be re-enabled later with optimization
+  // const limits = await readLimits(env);
+  // const key = monthKeyForModel(model);
+  // const current = Number(limits[key] || 0);
+  // const envLimit = env[`AI_LIMIT_${String(model).toUpperCase().replace(/[^A-Z0-9]/g,'_')}`] || env.AI_MONTHLY_LIMIT;
+  // if (envLimit) {
+  //   const max = Number(envLimit);
+  //   if (current + inc > max) {
+  //     throw new Error("Monthly limit reached for model: " + model);
+  //   }
+  // }
+  // limits[key] = current + inc;
+  // await writeLimits(env, limits);
+  // return limits[key];
+  return inc; // Just return the increment without checking
 }

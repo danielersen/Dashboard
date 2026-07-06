@@ -157,6 +157,9 @@ async function handlePrompt(category, prompt, model) {
       displayResponse(responseContainer, response.result.response || response.result);
     } else if (response && response.error) {
       showError(response.error, responseContainer);
+    } else if (response && response.response) {
+      // Handle direct response format
+      displayResponse(responseContainer, response.response);
     } else {
       showError("Unexpected response format", responseContainer);
     }

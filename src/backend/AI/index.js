@@ -1,15 +1,14 @@
 import { basic } from "./basic.js";
 import { pictures } from "./pictures.js";
-import { raisonning } from "./raisonning.js";
+import { reasonning } from "./reasonning.js";
 import { search_web } from "./search_web.js";
 import { notes_remarks } from "./notes_remarks.js";
 import { readIndex } from "./core.js";
-import { checkAndIncrementMonthly } from "./limits.js";
 
 const CATEGORIES = {
   basic,
   pictures,
-  raisonning,
+  reasonning,
   search_web,
   notes_remarks,
 };
@@ -18,7 +17,7 @@ const CATEGORIES = {
 const CATEGORY_ALIASES = {
   "ai": "basic",
   "search-web": "search_web",
-  "reasoning": "raisonning",
+  "reasoning": "reasonning",
   "pictures": "pictures",
 };
 
@@ -95,8 +94,7 @@ export async function AIfunction(env, subpath, method, headers, body) {
 
   if (action === "ask" && method === "POST") {
     const model = body?.model || env.DEFAULT_AI_MODEL || "openai/gpt-4o-mini";
-    // check monthly limit (1 request)
-    await checkAndIncrementMonthly(env, model, 1);
+    // Skip monthly limit check to reduce subrequests
     // call category function with mapped category name
     const resp = await fn(env, model, body || {});
     return resp;

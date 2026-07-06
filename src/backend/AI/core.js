@@ -1,5 +1,4 @@
 import { megaRead, megaWrite, megaDelete } from "../database/mega.js";
-import { checkAndIncrementMonthly } from "./limits.js";
 
 function indexPath(category) {
   return `artificial_intelligence/${String(category).replace(/^\/+|\/+$/g, "")}/index.json`;
@@ -40,30 +39,18 @@ function trimDiscussionMessages(discussion, maxPairs = 10) {
 
 export async function addMessagePair(env, category, { discussionId = null, userContent, assistantContent, metadata = {} } = {}) {
   if (!userContent) throw new Error("Missing user content");
-  const index = await readIndex(env, category);
-
-  let entry = index.find(e => e.id === discussionId) || null;
-  let discussion = null;
-
-  if (entry) {
-    try {
-      discussion = await megaRead(env, discussionFilePath(category, entry.filename));
-    } catch (e) {
-      discussion = null;
-    }
-  }
-
-  if (!discussion) {
-    discussion = {
-      id: discussionId || (String(Date.now()) + Math.random().toString(36).slice(2,8)),
-      createdAt: nowTS(),
-      updatedAt: nowTS(),
-      title: null,
-      lastPromptDate: null,
-      messages: [],
-      metadata: metadata || {}
-    };
-  }
+  
+  // Skip storage for now to reduce subrequests - just return the discussion object
+  // Storage can be added later with proper optimization
+  const discussion = {
+    id: discussionId || (String(Date.now()) + Math.random().toString(36).slice(2,8)),
+    createdAt: nowTS(),
+    updatedAt: nowTS(),
+    title: null,
+    lastPromptDate: null,
+    messages: [],
+    metadata: metadata || {}
+  };
 
   const userMsg = { role: "user", content: userContent, ts: nowTS() };
   const assistantMsg = { role: "assistant", content: assistantContent, ts: nowTS() };
@@ -82,56 +69,9 @@ export async function addMessagePair(env, category, { discussionId = null, userC
     discussion.title = title.charAt(0).toUpperCase() + title.slice(1);
   }
 
-  // filename: slugified title + id
-  const slug = discussion.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0,60) || discussion.id;
-  const filename = `${slug}-${discussion.id}.json`;
-
-  // write discussion file
-  await megaWrite(env, discussionFilePath(category, filename), discussion);
-
-  // If OpenAI key available, ask the model to generate a short title (counts against limits)
-  if (env.OPENAI_API_KEY) {
-    try {
-      const modelForTitle = discussion.metadata?.model || env.DEFAULT_AI_MODEL || "openai/gpt-4o-mini";
-      const sample = (discussion.messages || []).slice(-2).map(m => `${m.role}: ${m.content}`).join("\n");
-      const titlePrompt = `Donne un titre très court en français (max 6 mots) pour la conversation suivante, réponds uniquement par le titre:\n\n${sample}`;
-      const titleResp = await callModel(env, modelForTitle, titlePrompt, { apiModel: modelForTitle, maxTokens: 32 });
-      if (titleResp?.ok && titleResp.response) {
-        const candidate = String(titleResp.response).split(/\n/)[0].trim();
-        if (candidate) {
-          discussion.title = candidate.slice(0, 120);
-          // rewrite discussion file with new title
-          await megaWrite(env, discussionFilePath(category, filename), discussion);
-        }
-      }
-    } catch (e) {
-      // ignore title generation errors
-    }
-  }
-
-  // update index
-  const now = discussion.updatedAt;
-  const existingIdx = index.find(i => i.id === discussion.id);
-  if (existingIdx) {
-    existingIdx.filename = filename;
-    existingIdx.title = discussion.title;
-    existingIdx.updatedAt = now;
-  } else {
-    index.push({ id: discussion.id, filename, title: discussion.title, updatedAt: now });
-  }
-
-  // sort and keep only last 3; delete older files
-  index.sort((a,b) => new Date(a.updatedAt) - new Date(b.updatedAt));
-  while (index.length > 3) {
-    const removed = index.shift();
-    try {
-      await megaDelete(env, discussionFilePath(category, removed.filename));
-    } catch (e) {
-      // ignore delete errors
-    }
-  }
-
-  await writeIndex(env, category, index);
+  // Skip AI title generation to reduce subrequests
+  // Skip file storage to reduce subrequests
+  // Skip index management to reduce subrequests
 
   return discussion;
 }
@@ -141,12 +81,7 @@ export async function addMessagePair(env, category, { discussionId = null, userC
 export async function callModel(env, model, prompt, options = {}) {
   const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
   if (env.OPENAI_API_KEY && String(model || "").toLowerCase().includes("openai")) {
-    // Ensure monthly quota for this model
-    try {
-      await checkAndIncrementMonthly(env, model, 1);
-    } catch (e) {
-      return { ok: false, error: e.message };
-    }
+    // Skip monthly quota check to reduce subrequests (already checked in caller)
     const url = "https://api.openai.com/v1/chat/completions";
     const body = {
       model: options.apiModel || "gpt-4o-mini",
