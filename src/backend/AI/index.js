@@ -34,76 +34,30 @@ const MODEL_TYPES = {
 
 // limits handled in src/backend/AI/limits.js
 
-// Function to format model name from @cf/company/model to Company - Model
-function formatModelName(modelId) {
-  // Remove @cf/ prefix
-  const withoutPrefix = modelId.replace(/^@cf\//, "");
-  
-  // Split by /
-  const parts = withoutPrefix.split("/");
-  
-  if (parts.length >= 2) {
-    const company = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
-    const model = parts.slice(1).join("/").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-    return `${company} - ${model}`;
-  }
-  
-  // Fallback: just capitalize the whole thing
-  return modelId.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-}
-
 // Function to fetch available models from Cloudflare Workers AI
 async function fetchCloudflareModels(env) {
-  if (!env.AI) {
-    throw new Error("AI binding not configured. Please add [ai] binding = \"AI\" to wrangler.toml");
-  }
-  
-  const accountId = env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = env.CLOUDFLARE_API_TOKEN;
-  
-  if (!accountId) {
-    throw new Error("CLOUDFLARE_ACCOUNT_ID not configured. Please add it to wrangler.toml [vars]");
-  }
-  
-  if (!apiToken) {
-    throw new Error("CLOUDFLARE_API_TOKEN not configured. Please add it as a secret: wrangler secret put CLOUDFLARE_API_TOKEN");
-  }
-  
-  // Fetch models from Cloudflare Workers AI API
   try {
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/models/search`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${apiToken}`,
-        "Content-Type": "application/json"
-      }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Cloudflare API returned ${response.status}: ${response.statusText}`);
+    if (!env.AI) {
+      return [];
     }
     
-    const data = await response.json();
+    // Use the AI binding to list available models
+    const models = await env.AI.list();
     
-    if (!data.success || !data.result) {
-      throw new Error("Invalid response from Cloudflare API");
+    if (!models || !Array.isArray(models)) {
+      return [];
     }
     
-    // Map Cloudflare API response to our model format
-    const models = data.result.map(model => ({
-      id: model.name,
-      name: formatModelName(model.name),
+    return models.map(model => ({
+      id: model.id || model.name,
+      name: model.name || model.id,
       description: model.description || "",
       type: model.type || "text-generation",
       pricing: model.pricing || {}
     }));
-    
-    console.log("Fetched", models.length, "models from Cloudflare API");
-    return models;
-    
   } catch (error) {
-    console.error("Failed to fetch models from Cloudflare API:", error);
-    throw new Error(`Failed to fetch models from Cloudflare: ${error.message}`);
+    console.error("Failed to fetch Cloudflare models:", error);
+    return [];
   }
 }
 
@@ -112,42 +66,29 @@ function categorizeModel(model) {
   const modelId = (model.id || model.name || "").toLowerCase();
   const modelType = (model.type || "text-generation").toLowerCase();
   
-  console.log("Categorizing model:", modelId, "type:", modelType);
-  
   const categories = [];
   
-  // Text generation models (basic)
+  // Text generation models
   if (modelType.includes("text") || modelType.includes("generation") || 
       modelId.includes("llama") || modelId.includes("mistral") || 
-      modelId.includes("gemma") || modelId.includes("phi") ||
-      modelId.includes("qwen") || modelId.includes("yi") ||
-      modelId.includes("deepseek")) {
+      modelId.includes("gemma") || modelId.includes("phi")) {
     categories.push("basic");
   }
   
   // Reasoning models (larger models)
-  if (modelId.includes("70b") || modelId.includes("72b") || 
-      modelId.includes("405b") || modelId.includes("34b") ||
-      modelId.includes("27b") || modelId.includes("large") ||
-      modelId.includes("r1") || modelId.includes("deepseek")) {
-    categories.push("reasonning");
-    console.log("Added to reasonning category");
+  if (modelId.includes("70b") || modelId.includes("405b") || 
+      modelId.includes("large") || modelId.includes("instruct")) {
+    categories.push("reasoning");
   }
   
   // Image generation models
-  if (modelType.includes("image") || modelType.includes("text-to-image") ||
-      modelId.includes("stable") || modelId.includes("flux") || 
-      modelId.includes("sd") || modelId.includes("diffusion") ||
-      modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
-      modelId.includes("runwayml")) {
+  if (modelType.includes("image") || modelId.includes("stable") || 
+      modelId.includes("flux") || modelId.includes("sd")) {
     categories.push("pictures");
   }
   
-  // Search/summarization models - add all text generation models to search_web as well
-  if (modelType.includes("text") || modelType.includes("generation") || 
-      modelId.includes("llama") || modelId.includes("mistral") || 
-      modelId.includes("gemma") || modelId.includes("phi") ||
-      modelId.includes("qwen") || modelId.includes("yi")) {
+  // Search/summarization models
+  if (modelType.includes("summarization") || modelType.includes("translation")) {
     categories.push("search_web");
   }
   
@@ -156,17 +97,13 @@ function categorizeModel(model) {
     categories.push("basic");
   }
   
-  console.log("Final categories for", modelId, ":", categories);
   return categories;
 }
 
-// Function to estimate consumption based on model pricing (returns score 0-20, 20 = heaviest)
+// Function to estimate consumption based on model pricing
 function estimateConsumption(model) {
   const pricing = model.pricing || {};
   const modelId = (model.id || model.name || "").toLowerCase();
-  const modelType = (model.type || "").toLowerCase();
-  
-  console.log("Estimating consumption for", modelId, "pricing:", pricing, "type:", modelType);
   
   // Check if pricing information is available
   if (pricing.input && pricing.output) {
@@ -174,36 +111,24 @@ function estimateConsumption(model) {
     const outputCost = parseFloat(pricing.output) || 0;
     const totalCost = inputCost + outputCost;
     
-    // Convert cost to score (0-20 scale)
-    // very low (<0.0001) -> 0-3
-    // low (<0.001) -> 4-7
-    // medium (<0.01) -> 8-14
-    // high (>=0.01) -> 15-20
-    if (totalCost < 0.0001) return Math.round(totalCost * 30000); // 0-3
-    if (totalCost < 0.001) return Math.round(3 + (totalCost - 0.0001) * 4000); // 4-7
-    if (totalCost < 0.01) return Math.round(7 + (totalCost - 0.001) * 700); // 8-14
-    return Math.min(20, Math.round(14 + (totalCost - 0.01) * 60)); // 15-20
+    if (totalCost < 0.0001) return "very low";
+    if (totalCost < 0.001) return "low";
+    if (totalCost < 0.01) return "medium";
+    return "high";
   }
   
   // Fallback based on model name patterns
-  if (modelType.includes("image") || modelType.includes("text-to-image")) {
-    return 18; // Image generation is always expensive
+  if (modelId.includes("8b") || modelId.includes("7b") || modelId.includes("small")) {
+    return "very low";
+  }
+  if (modelId.includes("70b") || modelId.includes("large")) {
+    return "high";
+  }
+  if (modelId.includes("405b") || modelId.includes("xl")) {
+    return "very high";
   }
   
-  if (modelId.includes("8b") || modelId.includes("7b") || modelId.includes("small") || modelId.includes("mini")) {
-    return 3;
-  }
-  if (modelId.includes("70b") || modelId.includes("72b") || modelId.includes("large") || modelId.includes("opus")) {
-    return 18;
-  }
-  if (modelId.includes("27b") || modelId.includes("34b") || modelId.includes("405b") || modelId.includes("sonnet")) {
-    return 12;
-  }
-  if (modelId.includes("9b") || modelId.includes("haiku")) {
-    return 6;
-  }
-  
-  return 5; // Default fallback
+  return "medium";
 }
 
 export async function AIfunction(env, subpath, method, headers, body) {
@@ -213,7 +138,6 @@ export async function AIfunction(env, subpath, method, headers, body) {
   if (parts.length === 1 && parts[0] === "categories" && method === "GET") {
     // Fetch models from Cloudflare Workers AI
     const cloudflareModels = await fetchCloudflareModels(env);
-    console.log("Fetched models:", cloudflareModels.length, "models");
     
     // Categorize models and add consumption info
     const categorizedModels = {};
@@ -237,8 +161,6 @@ export async function AIfunction(env, subpath, method, headers, body) {
         pricing: model.pricing
       };
       
-      console.log("Processing model:", model.name, "categories:", categories);
-      
       // Add model to each applicable category
       categories.forEach(cat => {
         if (categorizedModels[cat]) {
@@ -246,8 +168,6 @@ export async function AIfunction(env, subpath, method, headers, body) {
         }
       });
     });
-    
-    console.log("Final categorized models:", categorizedModels);
     
     // Also create a flat list of all models for the frontend
     const allModels = cloudflareModels.map(model => ({
