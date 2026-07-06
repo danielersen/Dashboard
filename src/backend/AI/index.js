@@ -21,68 +21,169 @@ const CATEGORY_ALIASES = {
   "pictures": "pictures",
 };
 
+// Model type categorization based on Cloudflare Workers AI capabilities
+const MODEL_TYPES = {
+  "text-generation": ["basic", "reasoning"],
+  "text-embedding": ["basic"],
+  "image-generation": ["pictures"],
+  "image-classification": ["pictures"],
+  "text-to-image": ["pictures"],
+  "translation": ["basic", "search_web"],
+  "summarization": ["basic", "search_web", "reasoning"],
+};
+
 // limits handled in src/backend/AI/limits.js
+
+// Function to fetch available models from Cloudflare Workers AI
+async function fetchCloudflareModels(env) {
+  try {
+    if (!env.AI) {
+      return [];
+    }
+    
+    // Use the AI binding to list available models
+    const models = await env.AI.list();
+    
+    if (!models || !Array.isArray(models)) {
+      return [];
+    }
+    
+    return models.map(model => ({
+      id: model.id || model.name,
+      name: model.name || model.id,
+      description: model.description || "",
+      type: model.type || "text-generation",
+      pricing: model.pricing || {}
+    }));
+  } catch (error) {
+    console.error("Failed to fetch Cloudflare models:", error);
+    return [];
+  }
+}
+
+// Function to categorize models based on their capabilities
+function categorizeModel(model) {
+  const modelId = (model.id || model.name || "").toLowerCase();
+  const modelType = (model.type || "text-generation").toLowerCase();
+  
+  const categories = [];
+  
+  // Text generation models
+  if (modelType.includes("text") || modelType.includes("generation") || 
+      modelId.includes("llama") || modelId.includes("mistral") || 
+      modelId.includes("gemma") || modelId.includes("phi")) {
+    categories.push("basic");
+  }
+  
+  // Reasoning models (larger models)
+  if (modelId.includes("70b") || modelId.includes("405b") || 
+      modelId.includes("large") || modelId.includes("instruct")) {
+    categories.push("reasoning");
+  }
+  
+  // Image generation models
+  if (modelType.includes("image") || modelId.includes("stable") || 
+      modelId.includes("flux") || modelId.includes("sd")) {
+    categories.push("pictures");
+  }
+  
+  // Search/summarization models
+  if (modelType.includes("summarization") || modelType.includes("translation")) {
+    categories.push("search_web");
+  }
+  
+  // Default to basic if no specific category
+  if (categories.length === 0) {
+    categories.push("basic");
+  }
+  
+  return categories;
+}
+
+// Function to estimate consumption based on model pricing
+function estimateConsumption(model) {
+  const pricing = model.pricing || {};
+  const modelId = (model.id || model.name || "").toLowerCase();
+  
+  // Check if pricing information is available
+  if (pricing.input && pricing.output) {
+    const inputCost = parseFloat(pricing.input) || 0;
+    const outputCost = parseFloat(pricing.output) || 0;
+    const totalCost = inputCost + outputCost;
+    
+    if (totalCost < 0.0001) return "very low";
+    if (totalCost < 0.001) return "low";
+    if (totalCost < 0.01) return "medium";
+    return "high";
+  }
+  
+  // Fallback based on model name patterns
+  if (modelId.includes("8b") || modelId.includes("7b") || modelId.includes("small")) {
+    return "very low";
+  }
+  if (modelId.includes("70b") || modelId.includes("large")) {
+    return "high";
+  }
+  if (modelId.includes("405b") || modelId.includes("xl")) {
+    return "very high";
+  }
+  
+  return "medium";
+}
 
 export async function AIfunction(env, subpath, method, headers, body) {
   const parts = (subpath || "").split("/").filter(Boolean);
   if (parts.length === 0) return { error: "no action" };
 
   if (parts.length === 1 && parts[0] === "categories" && method === "GET") {
-    // Build human-readable consumption info
-    let models = [];
-    try {
-      const raw = env.AI_AVAILABLE_MODELS ? JSON.parse(env.AI_AVAILABLE_MODELS) : [
-        "openai/gpt-4o-mini",
-        "openai/gpt-4o",
-        "openai/gpt-4-turbo",
-        "openai/gpt-4",
-        "openai/gpt-3.5-turbo",
-        "openai/gpt-3.5-turbo-16k",
-        "claude-3-5-sonnet-20241022",
-        "claude-3-5-haiku-20241022",
-        "claude-3-opus-20240229",
-        "gemini-1.5-pro",
-        "gemini-1.5-flash",
-        "meta-llama/llama-3.1-405b-instruct",
-        "meta-llama/llama-3.1-70b-instruct",
-        "meta-llama/llama-3.1-8b-instruct"
-      ];
-      const consumption = env.AI_MODEL_CONSUMPTION ? JSON.parse(env.AI_MODEL_CONSUMPTION) : {
-        "openai/gpt-4o-mini": "very low",
-        "openai/gpt-4o": "medium",
-        "openai/gpt-4-turbo": "medium",
-        "openai/gpt-4": "high",
-        "openai/gpt-3.5-turbo": "very low",
-        "openai/gpt-3.5-turbo-16k": "low",
-        "claude-3-5-sonnet-20241022": "medium",
-        "claude-3-5-haiku-20241022": "very low",
-        "claude-3-opus-20240229": "high",
-        "gemini-1.5-pro": "medium",
-        "gemini-1.5-flash": "very low",
-        "meta-llama/llama-3.1-405b-instruct": "high",
-        "meta-llama/llama-3.1-70b-instruct": "medium",
-        "meta-llama/llama-3.1-8b-instruct": "very low"
+    // Fetch models from Cloudflare Workers AI
+    const cloudflareModels = await fetchCloudflareModels(env);
+    
+    // Categorize models and add consumption info
+    const categorizedModels = {};
+    
+    // Initialize categories
+    Object.keys(CATEGORIES).forEach(cat => {
+      categorizedModels[cat] = [];
+    });
+    
+    // Process each model
+    cloudflareModels.forEach(model => {
+      const categories = categorizeModel(model);
+      const consumption = estimateConsumption(model);
+      
+      const modelInfo = {
+        id: model.id,
+        name: model.name,
+        description: model.description,
+        type: model.type,
+        consumption: consumption,
+        pricing: model.pricing
       };
-      models = raw.map(m => ({ model: m, consumption: (consumption[m] || "unknown") }));
-    } catch (e) {
-      models = [
-        { model: "openai/gpt-4o-mini", consumption: "very low" },
-        { model: "openai/gpt-4o", consumption: "medium" },
-        { model: "openai/gpt-4-turbo", consumption: "medium" },
-        { model: "openai/gpt-4", consumption: "high" },
-        { model: "openai/gpt-3.5-turbo", consumption: "very low" },
-        { model: "openai/gpt-3.5-turbo-16k", consumption: "low" },
-        { model: "claude-3-5-sonnet-20241022", consumption: "medium" },
-        { model: "claude-3-5-haiku-20241022", consumption: "very low" },
-        { model: "claude-3-opus-20240229", consumption: "high" },
-        { model: "gemini-1.5-pro", consumption: "medium" },
-        { model: "gemini-1.5-flash", consumption: "very low" },
-        { model: "meta-llama/llama-3.1-405b-instruct", consumption: "high" },
-        { model: "meta-llama/llama-3.1-70b-instruct", consumption: "medium" },
-        { model: "meta-llama/llama-3.1-8b-instruct", consumption: "very low" }
-      ];
-    }
-    return { categories: Object.keys(CATEGORIES), availableModels: models };
+      
+      // Add model to each applicable category
+      categories.forEach(cat => {
+        if (categorizedModels[cat]) {
+          categorizedModels[cat].push(modelInfo);
+        }
+      });
+    });
+    
+    // Also create a flat list of all models for the frontend
+    const allModels = cloudflareModels.map(model => ({
+      model: model.id || model.name,
+      name: model.name,
+      description: model.description,
+      type: model.type,
+      consumption: estimateConsumption(model),
+      categories: categorizeModel(model)
+    }));
+    
+    return { 
+      categories: Object.keys(CATEGORIES), 
+      availableModels: allModels,
+      categorizedModels: categorizedModels
+    };
   }
 
   const category = parts[0];

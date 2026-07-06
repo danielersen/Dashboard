@@ -76,29 +76,26 @@ export async function addMessagePair(env, category, { discussionId = null, userC
   return discussion;
 }
 
-// Simple model caller: if OPENAI_API_KEY present and model includes "openai",
-// call OpenAI chat completions; otherwise return a placeholder response.
+// Simple model caller using Cloudflare Workers AI
 export async function callModel(env, model, prompt, options = {}) {
   const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
-  if (env.OPENAI_API_KEY && String(model || "").toLowerCase().includes("openai")) {
-    // Skip monthly quota check to reduce subrequests (already checked in caller)
-    const url = "https://api.openai.com/v1/chat/completions";
-    const body = {
-      model: options.apiModel || "gpt-4o-mini",
-      messages: [{ role: "user", content: message }],
-      max_tokens: options.maxTokens || 512,
-    };
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-    const json = await resp.json();
-    const content = json?.choices?.[0]?.message?.content ?? JSON.stringify(json);
-    return { ok: true, model: model, response: content, raw: json };
+  
+  // Use Cloudflare Workers AI binding
+  if (env.AI) {
+    try {
+      const aiModel = env.AI.run(model, {
+        messages: [{ role: "user", content: message }],
+        max_tokens: options.maxTokens || 512,
+      });
+      
+      const response = await aiModel;
+      const content = response?.response || response?.output || JSON.stringify(response);
+      
+      return { ok: true, model: model, response: content, raw: response };
+    } catch (error) {
+      console.error("Cloudflare AI error:", error);
+      return { ok: false, error: error.message || "Failed to call AI model" };
+    }
   }
 
   // Fallback: mocked response

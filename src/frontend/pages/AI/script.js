@@ -4,6 +4,7 @@ const AI_BASE = "/api/ai";
 
 const state = {
   models: [],
+  categorizedModels: {},
   currentSection: "ai",
   loading: false,
 };
@@ -78,6 +79,7 @@ async function loadModels() {
     const data = await aiGet("categories");
     if (data && data.availableModels) {
       state.models = data.availableModels;
+      state.categorizedModels = data.categorizedModels || {};
       populateModelSelects();
     }
   } catch (error) {
@@ -87,28 +89,37 @@ async function loadModels() {
 }
 
 function populateModelSelects() {
-  const selects = document.querySelectorAll("[data-model-select]");
-  selects.forEach(select => {
+  const categories = ["ai", "search-web", "reasoning", "pictures"];
+  
+  categories.forEach(category => {
+    const select = document.querySelector(`#${category} [data-model-select]`);
+    if (!select) return;
+    
     select.innerHTML = "";
-    if (state.models.length === 0) {
+    
+    // Get models for this specific category
+    const categoryModels = state.categorizedModels[category] || [];
+    
+    if (categoryModels.length === 0) {
       const option = document.createElement("option");
       option.value = "";
-      option.textContent = "No models available";
+      option.textContent = "No models available for this category";
       select.appendChild(option);
       return;
     }
     
-    state.models.forEach(model => {
+    categoryModels.forEach(model => {
       const option = document.createElement("option");
-      option.value = model.model;
-      option.textContent = model.model;
+      option.value = model.id || model.model;
+      option.textContent = model.name || model.model;
       option.dataset.consumption = model.consumption || "unknown";
+      option.dataset.description = model.description || "";
       select.appendChild(option);
     });
 
     // Set first model as default
-    if (state.models.length > 0) {
-      select.value = state.models[0].model;
+    if (categoryModels.length > 0) {
+      select.value = categoryModels[0].id || categoryModels[0].model;
       // Force immediate update
       setTimeout(() => updateConsumptionDisplay(select), 0);
     }
@@ -123,7 +134,11 @@ function updateConsumptionDisplay(select) {
   const consumptionDisplay = select.parentElement.querySelector("[data-consumption]");
   if (selectedOption && consumptionDisplay) {
     const consumption = selectedOption.dataset.consumption || "unknown";
-    consumptionDisplay.textContent = `Consumption: ${consumption}`;
+    const description = selectedOption.dataset.description || "";
+    const displayText = description 
+      ? `Consumption: ${consumption} • ${description}`
+      : `Consumption: ${consumption}`;
+    consumptionDisplay.textContent = displayText;
   }
 }
 
