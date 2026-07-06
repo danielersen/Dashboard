@@ -34,18 +34,26 @@ const MODEL_TYPES = {
 
 // limits handled in src/backend/AI/limits.js
 
-// Function to format model name from @cf/company/model to Company - Model
-function formatModelName(modelId) {
-  // Remove @cf/ prefix
+// Function to extract brand from model ID
+function extractBrand(modelId) {
   const withoutPrefix = modelId.replace(/^@cf\//, "");
+  const parts = withoutPrefix.split("/");
   
-  // Split by /
+  if (parts.length >= 1) {
+    return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+  }
+  
+  return "Unknown";
+}
+
+// Function to format model name from @cf/company/model to Model (without brand)
+function formatModelName(modelId) {
+  const withoutPrefix = modelId.replace(/^@cf\//, "");
   const parts = withoutPrefix.split("/");
   
   if (parts.length >= 2) {
-    const company = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
     const model = parts.slice(1).join("/").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-    return `${company} - ${model}`;
+    return model;
   }
   
   // Fallback: just capitalize the whole thing
@@ -93,6 +101,7 @@ async function fetchCloudflareModels(env) {
     const models = data.result.map(model => ({
       id: model.name,
       name: formatModelName(model.name),
+      brand: extractBrand(model.name),
       description: model.description || "",
       type: model.type || "text-generation",
       pricing: model.pricing || {}
@@ -231,6 +240,7 @@ export async function AIfunction(env, subpath, method, headers, body) {
       const modelInfo = {
         id: model.id,
         name: model.name,
+        brand: model.brand,
         description: model.description,
         type: model.type,
         consumption: consumption,

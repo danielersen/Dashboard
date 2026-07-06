@@ -100,14 +100,19 @@ function populateModelSelects() {
   const categories = ["ai", "search-web", "reasoning", "pictures"];
   
   categories.forEach(category => {
-    const customSelect = document.querySelector(`#${category}-model-select`);
-    if (!customSelect) return;
+    const brandSelect = document.querySelector(`#${category}-brand-select`);
+    const modelSelect = document.querySelector(`#${category}-model-select`);
     
-    const trigger = customSelect.querySelector(".custom-select-trigger");
-    const optionsContainer = customSelect.querySelector(".custom-options");
+    if (!brandSelect || !modelSelect) return;
+    
+    const brandTrigger = brandSelect.querySelector(".custom-select-trigger");
+    const brandOptionsContainer = brandSelect.querySelector(".custom-options");
+    const modelTrigger = modelSelect.querySelector(".custom-select-trigger");
+    const modelOptionsContainer = modelSelect.querySelector(".custom-options");
     
     // Clear existing options
-    optionsContainer.innerHTML = "";
+    brandOptionsContainer.innerHTML = "";
+    modelOptionsContainer.innerHTML = "";
     
     // Map frontend category name to backend category name
     const backendCategory = CATEGORY_ALIASES[category] || category;
@@ -116,78 +121,144 @@ function populateModelSelects() {
     const categoryModels = state.categorizedModels[backendCategory] || [];
     
     if (categoryModels.length === 0) {
-      trigger.textContent = "No models available";
+      brandTrigger.textContent = "No models available";
       return;
     }
     
-    // Sort models by consumption score (lightest first)
-    const sortedModels = [...categoryModels].sort((a, b) => {
-      const scoreA = parseInt(a.consumption) || 0;
-      const scoreB = parseInt(b.consumption) || 0;
-      return scoreA - scoreB;
-    });
+    // Extract unique brands and sort alphabetically
+    const brands = [...new Set(categoryModels.map(model => model.brand || "Unknown"))].sort();
     
-    sortedModels.forEach(model => {
+    // Populate brand dropdown
+    brands.forEach(brand => {
       const option = document.createElement("div");
       option.className = "custom-option";
-      const consumptionScore = model.consumption || 0;
-      option.innerHTML = `
-        <span class="custom-option-name">${model.name || model.model}</span>
-        <span class="custom-option-score">${consumptionScore}/20</span>
-      `;
-      option.dataset.value = model.id || model.model;
-      option.dataset.consumption = consumptionScore;
-      option.dataset.description = model.description || "";
-      option.dataset.rawName = model.name || model.model;
-      console.log("Setting option dataset for", model.name, "consumption:", consumptionScore, "description:", model.description);
-      optionsContainer.appendChild(option);
+      option.textContent = brand;
+      option.dataset.brand = brand;
+      brandOptionsContainer.appendChild(option);
       
-      // Click handler
+      // Click handler for brand
       option.addEventListener("click", () => {
-        // Remove selected class from all options
-        optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+        // Remove selected class from all brand options
+        brandOptionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
         // Add selected class to clicked option
         option.classList.add("selected");
         // Update trigger text
-        trigger.textContent = model.name || model.model;
-        // Store selected value
-        customSelect.dataset.selectedValue = model.id || model.model;
-        customSelect.dataset.selectedConsumption = consumptionScore;
-        customSelect.dataset.selectedDescription = model.description || "";
-        // Close dropdown
-        customSelect.classList.remove("open");
-        // Update consumption display
-        updateConsumptionDisplay(customSelect);
+        brandTrigger.textContent = brand;
+        // Store selected brand
+        brandSelect.dataset.selectedBrand = brand;
+        // Close brand dropdown
+        brandSelect.classList.remove("open");
+        // Populate model dropdown with models from this brand
+        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, brand);
       });
     });
-
-    // Set first model as default
-    if (sortedModels.length > 0) {
-      const firstOption = optionsContainer.querySelector(".custom-option");
-      if (firstOption) {
-        firstOption.classList.add("selected");
-        trigger.textContent = sortedModels[0].name || sortedModels[0].model;
-        customSelect.dataset.selectedValue = sortedModels[0].id || sortedModels[0].model;
-        customSelect.dataset.selectedConsumption = sortedModels[0].consumption || 0;
-        customSelect.dataset.selectedDescription = sortedModels[0].description || "";
-        // Force immediate update
-        setTimeout(() => updateConsumptionDisplay(customSelect), 0);
+    
+    // Set first brand as default
+    if (brands.length > 0) {
+      const firstBrandOption = brandOptionsContainer.querySelector(".custom-option");
+      if (firstBrandOption) {
+        firstBrandOption.classList.add("selected");
+        brandTrigger.textContent = brands[0];
+        brandSelect.dataset.selectedBrand = brands[0];
+        // Populate models for first brand
+        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, brands[0]);
       }
     }
-
-    // Toggle dropdown on click
-    customSelect.addEventListener("click", (e) => {
-      if (e.target.closest(".custom-option")) return; // Don't toggle if clicking an option
-      customSelect.classList.toggle("open");
+    
+    // Toggle brand dropdown on click
+    brandSelect.addEventListener("click", (e) => {
+      if (e.target.closest(".custom-option")) return;
+      brandSelect.classList.toggle("open");
     });
     
-    // Close dropdown when clicking outside
+    // Toggle model dropdown on click
+    modelSelect.addEventListener("click", (e) => {
+      if (e.target.closest(".custom-option")) return;
+      modelSelect.classList.toggle("open");
+    });
+    
+    // Close dropdowns when clicking outside
     document.addEventListener("click", (e) => {
-      if (!customSelect.contains(e.target)) {
-        customSelect.classList.remove("open");
+      if (!brandSelect.contains(e.target)) {
+        brandSelect.classList.remove("open");
+      }
+      if (!modelSelect.contains(e.target)) {
+        modelSelect.classList.remove("open");
       }
     });
   });
+}
+
+function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, brand) {
+  // Clear existing model options
+  modelOptionsContainer.innerHTML = "";
+  
+  // Filter models by brand
+  const brandModels = categoryModels.filter(model => (model.brand || "Unknown") === brand);
+  
+  if (brandModels.length === 0) {
+    modelTrigger.textContent = "No models for this brand";
+    return;
+  }
+  
+  // Sort models by consumption score (ascending), then alphabetically
+  const sortedModels = [...brandModels].sort((a, b) => {
+    const scoreA = parseInt(a.consumption) || 0;
+    const scoreB = parseInt(b.consumption) || 0;
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    // If scores are equal, sort alphabetically
+    const nameA = (a.name || "").toLowerCase();
+    const nameB = (b.name || "").toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+  
+  // Populate model dropdown
+  sortedModels.forEach(model => {
+    const option = document.createElement("div");
+    option.className = "custom-option";
+    const consumptionScore = model.consumption || 0;
+    option.innerHTML = `
+      <span class="custom-option-name">${model.name || model.model}</span>
+      <span class="custom-option-score">${consumptionScore}/20</span>
+    `;
+    option.dataset.value = model.id || model.model;
+    option.dataset.consumption = consumptionScore;
+    option.dataset.description = model.description || "";
+    option.dataset.rawName = model.name || model.model;
+    modelOptionsContainer.appendChild(option);
+    
+    // Click handler for model
+    option.addEventListener("click", () => {
+      // Remove selected class from all model options
+      modelOptionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+      // Add selected class to clicked option
+      option.classList.add("selected");
+      // Update trigger text
+      modelTrigger.textContent = model.name || model.model;
+      // Store selected value
+      modelSelect.dataset.selectedValue = model.id || model.model;
+      modelSelect.dataset.selectedConsumption = consumptionScore;
+      modelSelect.dataset.selectedDescription = model.description || "";
+      // Close model dropdown
+      modelSelect.classList.remove("open");
+      // Update consumption display
+      updateConsumptionDisplay(modelSelect);
+    });
+  });
+  
+  // Set first model as default
+  if (sortedModels.length > 0) {
+    const firstModelOption = modelOptionsContainer.querySelector(".custom-option");
+    if (firstModelOption) {
+      firstModelOption.classList.add("selected");
+      modelTrigger.textContent = sortedModels[0].name || sortedModels[0].model;
+      modelSelect.dataset.selectedValue = sortedModels[0].id || sortedModels[0].model;
+      modelSelect.dataset.selectedConsumption = sortedModels[0].consumption || 0;
+      modelSelect.dataset.selectedDescription = sortedModels[0].description || "";
+      // Force immediate update
+      setTimeout(() => updateConsumptionDisplay(modelSelect), 0);
+    }
+  }
 }
 
 function updateConsumptionDisplay(customSelect) {
