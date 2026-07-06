@@ -264,6 +264,10 @@ a {
   display: block;
 }
 
+.custom-select.open {
+  z-index: 1000;
+}
+
 .custom-option {
   padding: 8px 12px;
   cursor: pointer;
@@ -324,7 +328,6 @@ a {
   flex: 1;
   min-width: 180px;
   position: relative;
-  z-index: 100;
 }
 
 .selector-label {
@@ -341,6 +344,8 @@ a {
   align-items: center;
   justify-content: center;
   height: 40px;
+  position: relative;
+  z-index: 1;
 }
 
 .consumption-bar-container {
@@ -434,7 +439,7 @@ a {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  padding-bottom: 100px;
+  padding-bottom: 80px;
   display: flex;
   flex-direction: column;
   gap: 16px;

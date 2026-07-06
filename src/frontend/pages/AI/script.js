@@ -125,6 +125,14 @@ function setupCategoryDropdown(select) {
   
   select.addEventListener("click", (e) => {
     if (e.target.closest(".custom-option")) return;
+    
+    // Close all other dropdowns
+    document.querySelectorAll(".custom-select.open").forEach(openSelect => {
+      if (openSelect !== select) {
+        openSelect.classList.remove("open");
+      }
+    });
+    
     select.classList.toggle("open");
   });
   
@@ -152,6 +160,14 @@ function setupCompanyDropdown(select) {
   
   select.addEventListener("click", (e) => {
     if (e.target.closest(".custom-option")) return;
+    
+    // Close all other dropdowns
+    document.querySelectorAll(".custom-select.open").forEach(openSelect => {
+      if (openSelect !== select) {
+        openSelect.classList.remove("open");
+      }
+    });
+    
     select.classList.toggle("open");
   });
   
@@ -168,6 +184,14 @@ function setupModelDropdown(select) {
   
   select.addEventListener("click", (e) => {
     if (e.target.closest(".custom-option")) return;
+    
+    // Close all other dropdowns
+    document.querySelectorAll(".custom-select.open").forEach(openSelect => {
+      if (openSelect !== select) {
+        openSelect.classList.remove("open");
+      }
+    });
+    
     select.classList.toggle("open");
   });
   
