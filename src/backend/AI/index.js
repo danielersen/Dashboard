@@ -34,6 +34,24 @@ const MODEL_TYPES = {
 
 // limits handled in src/backend/AI/limits.js
 
+// Function to format model name from @cf/company/model to Company - Model
+function formatModelName(modelId) {
+  // Remove @cf/ prefix
+  const withoutPrefix = modelId.replace(/^@cf\//, "");
+  
+  // Split by /
+  const parts = withoutPrefix.split("/");
+  
+  if (parts.length >= 2) {
+    const company = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+    const model = parts.slice(1).join("/").replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    return `${company} - ${model}`;
+  }
+  
+  // Fallback: just capitalize the whole thing
+  return modelId.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
 // Function to fetch available models from Cloudflare Workers AI
 async function fetchCloudflareModels(env) {
   if (!env.AI) {
@@ -74,7 +92,7 @@ async function fetchCloudflareModels(env) {
     // Map Cloudflare API response to our model format
     const models = data.result.map(model => ({
       id: model.name,
-      name: model.name,
+      name: formatModelName(model.name),
       description: model.description || "",
       type: model.type || "text-generation",
       pricing: model.pricing || {}
@@ -146,6 +164,9 @@ function categorizeModel(model) {
 function estimateConsumption(model) {
   const pricing = model.pricing || {};
   const modelId = (model.id || model.name || "").toLowerCase();
+  const modelType = (model.type || "").toLowerCase();
+  
+  console.log("Estimating consumption for", modelId, "pricing:", pricing, "type:", modelType);
   
   // Check if pricing information is available
   if (pricing.input && pricing.output) {
@@ -160,17 +181,24 @@ function estimateConsumption(model) {
   }
   
   // Fallback based on model name patterns
-  if (modelId.includes("8b") || modelId.includes("7b") || modelId.includes("small")) {
-    return "very low";
-  }
-  if (modelId.includes("70b") || modelId.includes("large")) {
-    return "high";
-  }
-  if (modelId.includes("405b") || modelId.includes("xl")) {
-    return "very high";
+  if (modelType.includes("image") || modelType.includes("text-to-image")) {
+    return "high"; // Image generation is always expensive
   }
   
-  return "medium";
+  if (modelId.includes("8b") || modelId.includes("7b") || modelId.includes("small") || modelId.includes("mini")) {
+    return "very low";
+  }
+  if (modelId.includes("70b") || modelId.includes("72b") || modelId.includes("large") || modelId.includes("opus")) {
+    return "high";
+  }
+  if (modelId.includes("27b") || modelId.includes("34b") || modelId.includes("405b") || modelId.includes("sonnet")) {
+    return "medium";
+  }
+  if (modelId.includes("9b") || modelId.includes("haiku")) {
+    return "low";
+  }
+  
+  return "low"; // Default fallback
 }
 
 export async function AIfunction(env, subpath, method, headers, body) {
