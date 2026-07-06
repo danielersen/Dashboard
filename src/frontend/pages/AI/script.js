@@ -125,12 +125,14 @@ function populateModelSelects() {
       option.textContent = model.name || model.model;
       option.dataset.consumption = model.consumption || "unknown";
       option.dataset.description = model.description || "";
+      console.log("Setting option dataset for", model.name, "consumption:", model.consumption, "description:", model.description);
       select.appendChild(option);
     });
 
     // Set first model as default
     if (categoryModels.length > 0) {
       select.value = categoryModels[0].id || categoryModels[0].model;
+      console.log("Set default value to:", select.value);
       // Force immediate update
       setTimeout(() => updateConsumptionDisplay(select), 0);
     }
@@ -143,13 +145,18 @@ function populateModelSelects() {
 function updateConsumptionDisplay(select) {
   const selectedOption = select.selectedOptions[0];
   const consumptionDisplay = select.parentElement.querySelector("[data-consumption]");
+  console.log("updateConsumptionDisplay - selectedOption:", selectedOption, "consumptionDisplay:", consumptionDisplay);
+  
   if (selectedOption && consumptionDisplay) {
     const consumption = selectedOption.dataset.consumption || "unknown";
     const description = selectedOption.dataset.description || "";
+    console.log("Consumption data:", consumption, "Description:", description);
     const displayText = description 
       ? `Consumption: ${consumption} • ${description}`
       : `Consumption: ${consumption}`;
     consumptionDisplay.textContent = displayText;
+  } else {
+    console.log("Missing selectedOption or consumptionDisplay");
   }
 }
 

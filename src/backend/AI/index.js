@@ -36,75 +36,27 @@ const MODEL_TYPES = {
 
 // Function to fetch available models from Cloudflare Workers AI
 async function fetchCloudflareModels(env) {
-  try {
-    if (!env.AI) {
-      console.log("AI binding not available, using fallback models");
-      return getFallbackModels();
-    }
-    
-    // Use the AI binding to list available models
-    const models = await env.AI.list();
-    console.log("AI binding returned models:", models);
-    
-    if (!models || !Array.isArray(models) || models.length === 0) {
-      console.log("No models returned from AI binding, using fallback models");
-      return getFallbackModels();
-    }
-    
-    const mappedModels = models.map(model => ({
-      id: model.id || model.name,
-      name: model.name || model.id,
-      description: model.description || "",
-      type: model.type || "text-generation",
-      pricing: model.pricing || {}
-    }));
-    console.log("Mapped models:", mappedModels);
-    return mappedModels;
-  } catch (error) {
-    console.error("Failed to fetch Cloudflare models:", error);
-    return getFallbackModels();
+  if (!env.AI) {
+    throw new Error("AI binding not configured. Please add [ai] binding = \"AI\" to wrangler.toml");
   }
-}
-
-// Fallback models in case AI binding is not available or returns no models
-function getFallbackModels() {
-  return [
-    {
-      id: "@cf/meta/llama-3.1-8b-instruct",
-      name: "Llama 3.1 8B Instruct",
-      description: "Meta's Llama 3.1 8B instruction-tuned model for general text generation",
-      type: "text-generation",
-      pricing: { input: "0.00000015", output: "0.0000006" }
-    },
-    {
-      id: "@cf/meta/llama-3.1-70b-instruct",
-      name: "Llama 3.1 70B Instruct",
-      description: "Meta's Llama 3.1 70B instruction-tuned model for advanced reasoning",
-      type: "text-generation",
-      pricing: { input: "0.0000007", output: "0.0000028" }
-    },
-    {
-      id: "@cf/mistral/mistral-7b-instruct-v0.3",
-      name: "Mistral 7B Instruct v0.3",
-      description: "Mistral AI's 7B instruction-tuned model for efficient text generation",
-      type: "text-generation",
-      pricing: { input: "0.0000001", output: "0.0000004" }
-    },
-    {
-      id: "@cf/google/gemma-2-9b-it",
-      name: "Gemma 2 9B IT",
-      description: "Google's Gemma 2 9B instruction-tuned model for general tasks",
-      type: "text-generation",
-      pricing: { input: "0.0000002", output: "0.0000008" }
-    },
-    {
-      id: "@cf/stabilityai/stable-diffusion-xl-base-1.0",
-      name: "Stable Diffusion XL Base 1.0",
-      description: "Stability AI's image generation model for creating high-quality images",
-      type: "text-to-image",
-      pricing: { input: "0.00002", output: "0.00002" }
-    }
-  ];
+  
+  // Use the AI binding to list available models
+  const models = await env.AI.list();
+  console.log("AI binding returned models:", models);
+  
+  if (!models || !Array.isArray(models) || models.length === 0) {
+    throw new Error("No models available from Cloudflare Workers AI. Please check your AI binding configuration.");
+  }
+  
+  const mappedModels = models.map(model => ({
+    id: model.id || model.name,
+    name: model.name || model.id,
+    description: model.description || "",
+    type: model.type || "text-generation",
+    pricing: model.pricing || {}
+  }));
+  console.log("Mapped models:", mappedModels);
+  return mappedModels;
 }
 
 // Function to categorize models based on their capabilities
@@ -116,16 +68,20 @@ function categorizeModel(model) {
   
   const categories = [];
   
-  // Text generation models
+  // Text generation models (basic)
   if (modelType.includes("text") || modelType.includes("generation") || 
       modelId.includes("llama") || modelId.includes("mistral") || 
-      modelId.includes("gemma") || modelId.includes("phi")) {
+      modelId.includes("gemma") || modelId.includes("phi") ||
+      modelId.includes("qwen") || modelId.includes("yi") ||
+      modelId.includes("deepseek")) {
     categories.push("basic");
   }
   
   // Reasoning models (larger models)
-  if (modelId.includes("70b") || modelId.includes("405b") || 
-      modelId.includes("large")) {
+  if (modelId.includes("70b") || modelId.includes("72b") || 
+      modelId.includes("405b") || modelId.includes("34b") ||
+      modelId.includes("27b") || modelId.includes("large") ||
+      modelId.includes("r1") || modelId.includes("deepseek")) {
     categories.push("reasonning");
     console.log("Added to reasonning category");
   }
@@ -133,12 +89,17 @@ function categorizeModel(model) {
   // Image generation models
   if (modelType.includes("image") || modelType.includes("text-to-image") ||
       modelId.includes("stable") || modelId.includes("flux") || 
-      modelId.includes("sd") || modelId.includes("diffusion")) {
+      modelId.includes("sd") || modelId.includes("diffusion") ||
+      modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
+      modelId.includes("runwayml")) {
     categories.push("pictures");
   }
   
-  // Search/summarization models
-  if (modelType.includes("summarization") || modelType.includes("translation")) {
+  // Search/summarization models - add all text generation models to search_web as well
+  if (modelType.includes("text") || modelType.includes("generation") || 
+      modelId.includes("llama") || modelId.includes("mistral") || 
+      modelId.includes("gemma") || modelId.includes("phi") ||
+      modelId.includes("qwen") || modelId.includes("yi")) {
     categories.push("search_web");
   }
   
