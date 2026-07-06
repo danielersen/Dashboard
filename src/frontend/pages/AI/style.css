@@ -1,0 +1,328 @@
+:root {
+  --navbar-height: 72px;
+  color-scheme: dark;
+  --bg-a: #08100f;
+  --bg-b: #0d1917;
+  --text: #f3fbf7;
+  --muted: rgba(243, 251, 247, 0.68);
+  --faint: rgba(243, 251, 247, 0.4);
+  --line: rgba(255, 255, 255, 0.1);
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-strong: rgba(255, 255, 255, 0.08);
+  --accent: #52d6a8;
+  --accent-2: #77b7ff;
+  --accent-soft: rgba(82, 214, 168, 0.14);
+  --radius: 10px;
+  --sidebar-w: 76px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(82, 214, 168, 0.18), transparent 28rem),
+    radial-gradient(circle at top right, rgba(119, 183, 255, 0.12), transparent 30rem),
+    linear-gradient(145deg, var(--bg-a), var(--bg-b));
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: transparent;
+  padding-top: var(--navbar-height);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ===================== SHELL ===================== */
+.ai-shell {
+  width: min(1180px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 22px 0 48px;
+  min-height: calc(100vh - var(--navbar-height));
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ===================== SIDEBAR ===================== */
+.ai-sidebar {
+  position: sticky;
+  top: calc(var(--navbar-height) + 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+}
+
+.ai-nav {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: transparent;
+  color: rgba(243, 251, 247, 0.55);
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.ai-nav svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.ai-nav:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ai-nav:active {
+  transform: translateY(1px);
+}
+
+.ai-nav[data-active="true"] {
+  color: #f4fbf8;
+  background: var(--accent-soft);
+  border-color: rgba(82, 214, 168, 0.28);
+}
+
+/* ===================== MAIN ===================== */
+.ai-main {
+  min-width: 0;
+}
+
+.ai-section[hidden] {
+  display: none;
+}
+
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.section-head h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  letter-spacing: -0.02em;
+}
+
+.state-msg {
+  margin: 0;
+  padding: 40px 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ===================== AI CONTAINER ===================== */
+.ai-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ai-model-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ai-model-selector label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.ai-model-selector select {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(10, 18, 17, 0.6);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 180ms ease;
+}
+
+.ai-model-selector select:hover {
+  border-color: rgba(82, 214, 168, 0.4);
+}
+
+.ai-model-selector select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.model-consumption {
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ===================== PROMPT AREA ===================== */
+.ai-prompt-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-prompt-area textarea {
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(10, 18, 17, 0.6);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 180ms ease;
+}
+
+.ai-prompt-area textarea:hover {
+  border-color: rgba(82, 214, 168, 0.4);
+}
+
+.ai-prompt-area textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.ai-prompt-area button {
+  align-self: flex-end;
+  padding: 10px 24px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: #f4fbf8;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.ai-prompt-area button:hover {
+  background: rgba(82, 214, 168, 0.24);
+  border-color: var(--accent);
+}
+
+.ai-prompt-area button:active {
+  transform: translateY(1px);
+}
+
+.ai-prompt-area button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===================== RESPONSE AREA ===================== */
+.ai-response {
+  min-height: 200px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  overflow: auto;
+}
+
+.ai-response .state-msg {
+  padding: 20px 0;
+}
+
+.ai-response-content {
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.ai-response-content p {
+  margin: 0 0 12px 0;
+}
+
+.ai-response-content p:last-child {
+  margin-bottom: 0;
+}
+
+.ai-response-content pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.ai-response-content code {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.9rem;
+}
+
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.ai-loading::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--accent);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ai-error {
+  color: #ff6b6b;
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+}
