@@ -38,14 +38,16 @@ const MODEL_TYPES = {
 async function fetchCloudflareModels(env) {
   try {
     if (!env.AI) {
-      return [];
+      console.log("AI binding not available, using fallback models");
+      return getFallbackModels();
     }
     
     // Use the AI binding to list available models
     const models = await env.AI.list();
     
-    if (!models || !Array.isArray(models)) {
-      return [];
+    if (!models || !Array.isArray(models) || models.length === 0) {
+      console.log("No models returned from AI binding, using fallback models");
+      return getFallbackModels();
     }
     
     return models.map(model => ({
@@ -57,8 +59,49 @@ async function fetchCloudflareModels(env) {
     }));
   } catch (error) {
     console.error("Failed to fetch Cloudflare models:", error);
-    return [];
+    return getFallbackModels();
   }
+}
+
+// Fallback models in case AI binding is not available or returns no models
+function getFallbackModels() {
+  return [
+    {
+      id: "@cf/meta/llama-3.1-8b-instruct",
+      name: "Llama 3.1 8B Instruct",
+      description: "Meta's Llama 3.1 8B instruction-tuned model for general text generation",
+      type: "text-generation",
+      pricing: { input: "0.00000015", output: "0.0000006" }
+    },
+    {
+      id: "@cf/meta/llama-3.1-70b-instruct",
+      name: "Llama 3.1 70B Instruct",
+      description: "Meta's Llama 3.1 70B instruction-tuned model for advanced reasoning",
+      type: "text-generation",
+      pricing: { input: "0.0000007", output: "0.0000028" }
+    },
+    {
+      id: "@cf/mistral/mistral-7b-instruct-v0.3",
+      name: "Mistral 7B Instruct v0.3",
+      description: "Mistral AI's 7B instruction-tuned model for efficient text generation",
+      type: "text-generation",
+      pricing: { input: "0.0000001", output: "0.0000004" }
+    },
+    {
+      id: "@cf/google/gemma-2-9b-it",
+      name: "Gemma 2 9B IT",
+      description: "Google's Gemma 2 9B instruction-tuned model for general tasks",
+      type: "text-generation",
+      pricing: { input: "0.0000002", output: "0.0000008" }
+    },
+    {
+      id: "@cf/stabilityai/stable-diffusion-xl-base-1.0",
+      name: "Stable Diffusion XL Base 1.0",
+      description: "Stability AI's image generation model for creating high-quality images",
+      type: "text-to-image",
+      pricing: { input: "0.00002", output: "0.00002" }
+    }
+  ];
 }
 
 // Function to categorize models based on their capabilities
