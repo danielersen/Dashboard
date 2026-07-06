@@ -100,10 +100,14 @@ function populateModelSelects() {
   const categories = ["ai", "search-web", "reasoning", "pictures"];
   
   categories.forEach(category => {
-    const select = document.querySelector(`#${category}-model-select`);
-    if (!select) return;
+    const customSelect = document.querySelector(`#${category}-model-select`);
+    if (!customSelect) return;
     
-    select.innerHTML = "";
+    const trigger = customSelect.querySelector(".custom-select-trigger");
+    const optionsContainer = customSelect.querySelector(".custom-options");
+    
+    // Clear existing options
+    optionsContainer.innerHTML = "";
     
     // Map frontend category name to backend category name
     const backendCategory = CATEGORY_ALIASES[category] || category;
@@ -112,10 +116,7 @@ function populateModelSelects() {
     const categoryModels = state.categorizedModels[backendCategory] || [];
     
     if (categoryModels.length === 0) {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "No models available for this category";
-      select.appendChild(option);
+      trigger.textContent = "No models available";
       return;
     }
     
@@ -127,51 +128,74 @@ function populateModelSelects() {
     });
     
     sortedModels.forEach(model => {
-      const option = document.createElement("option");
-      option.value = model.id || model.model;
+      const option = document.createElement("div");
+      option.className = "custom-option";
       const consumptionScore = model.consumption || 0;
-      option.textContent = `${model.name || model.model} ⚡${consumptionScore}/20`;
+      option.innerHTML = `
+        <span class="custom-option-name">${model.name || model.model}</span>
+        <span class="custom-option-score">${consumptionScore}/20</span>
+      `;
+      option.dataset.value = model.id || model.model;
       option.dataset.consumption = consumptionScore;
       option.dataset.description = model.description || "";
       option.dataset.rawName = model.name || model.model;
       console.log("Setting option dataset for", model.name, "consumption:", consumptionScore, "description:", model.description);
-      select.appendChild(option);
+      optionsContainer.appendChild(option);
+      
+      // Click handler
+      option.addEventListener("click", () => {
+        // Remove selected class from all options
+        optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+        // Add selected class to clicked option
+        option.classList.add("selected");
+        // Update trigger text
+        trigger.textContent = model.name || model.model;
+        // Store selected value
+        customSelect.dataset.selectedValue = model.id || model.model;
+        customSelect.dataset.selectedConsumption = consumptionScore;
+        customSelect.dataset.selectedDescription = model.description || "";
+        // Close dropdown
+        customSelect.classList.remove("open");
+        // Update consumption display
+        updateConsumptionDisplay(customSelect);
+      });
     });
 
     // Set first model as default
-    if (categoryModels.length > 0) {
-      select.value = sortedModels[0].id || sortedModels[0].model;
-      console.log("Set default value to:", select.value);
-      // Hide score from selected option
-      hideScoreFromSelectedOption(select);
-      // Force immediate update
-      setTimeout(() => updateConsumptionDisplay(select), 0);
+    if (sortedModels.length > 0) {
+      const firstOption = optionsContainer.querySelector(".custom-option");
+      if (firstOption) {
+        firstOption.classList.add("selected");
+        trigger.textContent = sortedModels[0].name || sortedModels[0].model;
+        customSelect.dataset.selectedValue = sortedModels[0].id || sortedModels[0].model;
+        customSelect.dataset.selectedConsumption = sortedModels[0].consumption || 0;
+        customSelect.dataset.selectedDescription = sortedModels[0].description || "";
+        // Force immediate update
+        setTimeout(() => updateConsumptionDisplay(customSelect), 0);
+      }
     }
 
-    // Add change listener
-    select.addEventListener("change", () => {
-      hideScoreFromSelectedOption(select);
-      updateConsumptionDisplay(select);
+    // Toggle dropdown on click
+    customSelect.addEventListener("click", (e) => {
+      if (e.target.closest(".custom-option")) return; // Don't toggle if clicking an option
+      customSelect.classList.toggle("open");
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!customSelect.contains(e.target)) {
+        customSelect.classList.remove("open");
+      }
     });
   });
 }
 
-function hideScoreFromSelectedOption(select) {
-  const selectedOption = select.selectedOptions[0];
-  if (selectedOption && selectedOption.dataset.rawName) {
-    selectedOption.textContent = selectedOption.dataset.rawName;
-  }
-}
-
-function updateConsumptionDisplay(select) {
-  const selectedOption = select.selectedOptions[0];
-  const consumptionDisplay = select.parentElement.querySelector("[data-consumption]");
-  console.log("updateConsumptionDisplay - selectedOption:", selectedOption, "consumptionDisplay:", consumptionDisplay);
+function updateConsumptionDisplay(customSelect) {
+  const consumptionDisplay = customSelect.parentElement.querySelector("[data-consumption]");
+  const consumptionScore = parseInt(customSelect.dataset.selectedConsumption) || 0;
+  console.log("updateConsumptionDisplay - consumptionScore:", consumptionScore, "consumptionDisplay:", consumptionDisplay);
   
-  if (selectedOption && consumptionDisplay) {
-    const consumptionScore = parseInt(selectedOption.dataset.consumption) || 0;
-    console.log("Consumption score:", consumptionScore);
-    
+  if (consumptionDisplay) {
     // Create energy bar with simple white SVG icon
     const barWidth = Math.min(100, (consumptionScore / 20) * 100);
     const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
@@ -187,7 +211,7 @@ function updateConsumptionDisplay(select) {
       </div>
     `;
   } else {
-    console.log("Missing selectedOption or consumptionDisplay");
+    console.log("Missing consumptionDisplay");
   }
 }
 
@@ -273,7 +297,7 @@ function setupPromptHandlers() {
     if (promptInput && submitButton && modelSelect) {
       submitButton.addEventListener("click", () => {
         const prompt = promptInput.value;
-        const model = modelSelect.value;
+        const model = modelSelect.dataset.selectedValue || "";
         handlePrompt(category, prompt, model);
       });
 
@@ -281,7 +305,7 @@ function setupPromptHandlers() {
       promptInput.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.key === "Enter") {
           const prompt = promptInput.value;
-          const model = modelSelect.value;
+          const model = modelSelect.dataset.selectedValue || "";
           handlePrompt(category, prompt, model);
         }
       });

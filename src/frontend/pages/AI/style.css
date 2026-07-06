@@ -183,7 +183,82 @@ a {
 .ai-model-selector select option {
   padding-right: 8px;
   text-align: left;
-  text-align-last: right;
+}
+
+/* Custom Select Styles */
+.custom-select-wrapper {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+
+.custom-select {
+  position: relative;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(10, 18, 17, 0.6);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 180ms ease;
+}
+
+.custom-select:hover {
+  border-color: rgba(82, 214, 168, 0.4);
+}
+
+.custom-select-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.custom-select-trigger::after {
+  content: "▼";
+  font-size: 0.7em;
+  margin-left: 8px;
+}
+
+.custom-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  background: rgba(10, 18, 17, 0.95);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  z-index: 1000;
+  display: none;
+}
+
+.custom-select.open .custom-options {
+  display: block;
+}
+
+.custom-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 180ms ease;
+}
+
+.custom-option:hover {
+  background: rgba(82, 214, 168, 0.1);
+}
+
+.custom-option.selected {
+  background: rgba(82, 214, 168, 0.2);
+}
+
+.custom-option-score {
+  color: var(--muted);
+  font-size: 0.85em;
 }
 
 .ai-model-selector select:hover {
