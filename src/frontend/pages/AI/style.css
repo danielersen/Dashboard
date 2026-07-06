@@ -176,10 +176,14 @@ a {
   font-size: 0.9rem;
   cursor: pointer;
   transition: border-color 180ms ease;
+  text-align: left;
+  direction: ltr;
 }
 
 .ai-model-selector select option {
   padding-right: 8px;
+  text-align: left;
+  text-align-last: right;
 }
 
 .ai-model-selector select:hover {
