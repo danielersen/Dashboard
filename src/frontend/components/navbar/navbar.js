@@ -3,7 +3,7 @@ import { appendAuthParams, logout } from "/lib/auth.js";
 const NAV_ITEMS = [
   { slug: "home", label: "Home", href: "/pages/home", icon: "home" },
   { slug: "workspace", label: "Workspace", href: "/pages/workspace", icon: "grid" },
-  { slug: "AI", label: "AI", href: "/pages/AI", icon: "sparkles" },
+  { slug: "AI", label: "Artificial Intelligence", href: "/pages/AI", icon: "sparkles" },
   { slug: "files", label: "Files", href: "/pages/files", icon: "database" },
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
