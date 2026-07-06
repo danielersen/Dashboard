@@ -130,8 +130,10 @@ function populateModelSelects() {
       const option = document.createElement("option");
       option.value = model.id || model.model;
       const consumptionScore = model.consumption || 0;
-      // Use unicode spaces to push score to the right
-      const padding = "\u2003\u2003\u2003\u2003\u2003\u2003\u2003\u2003";
+      // Calculate padding based on name length to align scores to right
+      const nameLength = (model.name || model.model).length;
+      const paddingCount = Math.max(0, 60 - nameLength); // Increased target width
+      const padding = "\u2003".repeat(paddingCount); // Use em spaces for wider spacing
       option.textContent = `${model.name || model.model}${padding}⚡${consumptionScore}/20`;
       option.dataset.consumption = consumptionScore;
       option.dataset.description = model.description || "";
