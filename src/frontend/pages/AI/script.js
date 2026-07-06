@@ -100,18 +100,18 @@ function populateModelSelects() {
   const categories = ["ai", "search-web", "reasoning", "pictures"];
   
   categories.forEach(category => {
-    const brandSelect = document.querySelector(`#${category}-brand-select`);
+    const companySelect = document.querySelector(`#${category}-company-select`);
     const modelSelect = document.querySelector(`#${category}-model-select`);
     
-    if (!brandSelect || !modelSelect) return;
+    if (!companySelect || !modelSelect) return;
     
-    const brandTrigger = brandSelect.querySelector(".custom-select-trigger");
-    const brandOptionsContainer = brandSelect.querySelector(".custom-options");
+    const companyTrigger = companySelect.querySelector(".custom-select-trigger");
+    const companyOptionsContainer = companySelect.querySelector(".custom-options");
     const modelTrigger = modelSelect.querySelector(".custom-select-trigger");
     const modelOptionsContainer = modelSelect.querySelector(".custom-options");
     
     // Clear existing options
-    brandOptionsContainer.innerHTML = "";
+    companyOptionsContainer.innerHTML = "";
     modelOptionsContainer.innerHTML = "";
     
     // Map frontend category name to backend category name
@@ -121,54 +121,54 @@ function populateModelSelects() {
     const categoryModels = state.categorizedModels[backendCategory] || [];
     
     if (categoryModels.length === 0) {
-      brandTrigger.textContent = "No models available";
+      companyTrigger.textContent = "No models available";
       return;
     }
     
-    // Extract unique brands and sort alphabetically
-    const brands = [...new Set(categoryModels.map(model => model.brand || "Unknown"))].sort();
+    // Extract unique companies and sort alphabetically
+    const companies = [...new Set(categoryModels.map(model => model.brand || "Unknown"))].sort();
     
-    // Populate brand dropdown
-    brands.forEach(brand => {
+    // Populate company dropdown
+    companies.forEach(company => {
       const option = document.createElement("div");
       option.className = "custom-option";
-      option.textContent = brand;
-      option.dataset.brand = brand;
-      brandOptionsContainer.appendChild(option);
+      option.textContent = company;
+      option.dataset.company = company;
+      companyOptionsContainer.appendChild(option);
       
-      // Click handler for brand
+      // Click handler for company
       option.addEventListener("click", () => {
-        // Remove selected class from all brand options
-        brandOptionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+        // Remove selected class from all company options
+        companyOptionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
         // Add selected class to clicked option
         option.classList.add("selected");
         // Update trigger text
-        brandTrigger.textContent = brand;
-        // Store selected brand
-        brandSelect.dataset.selectedBrand = brand;
-        // Close brand dropdown
-        brandSelect.classList.remove("open");
-        // Populate model dropdown with models from this brand
-        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, brand);
+        companyTrigger.textContent = company;
+        // Store selected company
+        companySelect.dataset.selectedCompany = company;
+        // Close company dropdown
+        companySelect.classList.remove("open");
+        // Populate model dropdown with models from this company
+        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, company);
       });
     });
     
-    // Set first brand as default
-    if (brands.length > 0) {
-      const firstBrandOption = brandOptionsContainer.querySelector(".custom-option");
-      if (firstBrandOption) {
-        firstBrandOption.classList.add("selected");
-        brandTrigger.textContent = brands[0];
-        brandSelect.dataset.selectedBrand = brands[0];
-        // Populate models for first brand
-        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, brands[0]);
+    // Set first company as default
+    if (companies.length > 0) {
+      const firstCompanyOption = companyOptionsContainer.querySelector(".custom-option");
+      if (firstCompanyOption) {
+        firstCompanyOption.classList.add("selected");
+        companyTrigger.textContent = companies[0];
+        companySelect.dataset.selectedCompany = companies[0];
+        // Populate models for first company
+        populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, companies[0]);
       }
     }
     
-    // Toggle brand dropdown on click
-    brandSelect.addEventListener("click", (e) => {
+    // Toggle company dropdown on click
+    companySelect.addEventListener("click", (e) => {
       if (e.target.closest(".custom-option")) return;
-      brandSelect.classList.toggle("open");
+      companySelect.classList.toggle("open");
     });
     
     // Toggle model dropdown on click
@@ -179,8 +179,8 @@ function populateModelSelects() {
     
     // Close dropdowns when clicking outside
     document.addEventListener("click", (e) => {
-      if (!brandSelect.contains(e.target)) {
-        brandSelect.classList.remove("open");
+      if (!companySelect.contains(e.target)) {
+        companySelect.classList.remove("open");
       }
       if (!modelSelect.contains(e.target)) {
         modelSelect.classList.remove("open");
@@ -189,20 +189,20 @@ function populateModelSelects() {
   });
 }
 
-function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, brand) {
+function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer, categoryModels, company) {
   // Clear existing model options
   modelOptionsContainer.innerHTML = "";
   
-  // Filter models by brand
-  const brandModels = categoryModels.filter(model => (model.brand || "Unknown") === brand);
+  // Filter models by company
+  const companyModels = categoryModels.filter(model => (model.brand || "Unknown") === company);
   
-  if (brandModels.length === 0) {
-    modelTrigger.textContent = "No models for this brand";
+  if (companyModels.length === 0) {
+    modelTrigger.textContent = "No models for this company";
     return;
   }
   
   // Sort models by consumption score (ascending), then alphabetically
-  const sortedModels = [...brandModels].sort((a, b) => {
+  const sortedModels = [...companyModels].sort((a, b) => {
     const scoreA = parseInt(a.consumption) || 0;
     const scoreB = parseInt(b.consumption) || 0;
     if (scoreA !== scoreB) return scoreA - scoreB;
@@ -217,9 +217,13 @@ function populateModelDropdown(modelSelect, modelTrigger, modelOptionsContainer,
     const option = document.createElement("div");
     option.className = "custom-option";
     const consumptionScore = model.consumption || 0;
+    const percentage = Math.round((consumptionScore / 20) * 100);
     option.innerHTML = `
       <span class="custom-option-name">${model.name || model.model}</span>
-      <span class="custom-option-score">${consumptionScore}/20</span>
+      <span class="custom-option-score">${percentage}%</span>
+      <svg class="custom-option-icon" width="10" height="10" viewBox="0 0 24 24" fill="white">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+      </svg>
     `;
     option.dataset.value = model.id || model.model;
     option.dataset.consumption = consumptionScore;
@@ -267,18 +271,14 @@ function updateConsumptionDisplay(customSelect) {
   console.log("updateConsumptionDisplay - consumptionScore:", consumptionScore, "consumptionDisplay:", consumptionDisplay);
   
   if (consumptionDisplay) {
-    // Create energy bar with simple white SVG icon
+    // Create consumption bar with centered "Consumption" text
     const barWidth = Math.min(100, (consumptionScore / 20) * 100);
     const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
     
     consumptionDisplay.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-        <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
-          <div style="width: ${barWidth}%; height: 100%; background: ${barColor}; border-radius: 3px; transition: width 300ms ease;"></div>
-        </div>
+      <div class="consumption-bar-container">
+        <div class="consumption-bar-fill" style="width: ${barWidth}%; background: ${barColor};"></div>
+        <span class="consumption-bar-text">Consumption</span>
       </div>
     `;
   } else {
