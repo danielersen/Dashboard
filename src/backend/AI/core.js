@@ -85,8 +85,31 @@ export async function callModel(env, model, prompt, options = {}) {
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
+    // Check if this is a translation model FIRST (NLLB, translation, etc.)
+    if (modelId.includes("translation") || modelId.includes("translate") || modelId.includes("nllb")) {
+      try {
+        console.log("Using translation format for model:", model);
+        // Use proper target_language format (e.g., "eng_Latn" instead of "en")
+        const targetLang = options.targetLanguage || "eng_Latn";
+        const input = {
+          text: message,
+          target_language: targetLang
+        };
+        
+        const aiModel = env.AI.run(model, input);
+        const response = await aiModel;
+        const content = response?.response || response?.output || response?.result?.response || response?.result?.output || response?.translated_text || JSON.stringify(response);
+        
+        console.log("AI response with translation format:", content);
+        return { ok: true, model: model, response: content, raw: response };
+      } catch (error) {
+        console.error("Cloudflare AI error with translation format:", error);
+        return { ok: false, error: error.message || "Failed to call AI model" };
+      }
+    }
+    
+    // Standard text generation model
     try {
-      // Try standard text generation format first (most models)
       let input = {
         messages: [{ role: "user", content: message }],
         max_tokens: options.maxTokens || 512,
@@ -100,25 +123,7 @@ export async function callModel(env, model, prompt, options = {}) {
       return { ok: true, model: model, response: content, raw: response };
     } catch (error) {
       console.error("Cloudflare AI error with standard format:", error);
-      
-      // If standard format fails, try translation format as fallback
-      try {
-        console.log("Retrying with translation format...");
-        const input = {
-          text: message,
-          target_language: options.targetLanguage || "en"
-        };
-        
-        const aiModel = env.AI.run(model, input);
-        const response = await aiModel;
-        const content = response?.response || response?.output || response?.result?.response || JSON.stringify(response);
-        
-        console.log("AI response with translation format:", content);
-        return { ok: true, model: model, response: content, raw: response };
-      } catch (retryError) {
-        console.error("Cloudflare AI error with translation format:", retryError);
-        return { ok: false, error: retryError.message || "Failed to call AI model" };
-      }
+      return { ok: false, error: error.message || "Failed to call AI model" };
     }
   }
 
