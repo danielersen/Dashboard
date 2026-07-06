@@ -33,17 +33,10 @@
 
       <main class="ai-main">
         <div class="ai-selector-bar" id="selector-bar">
-          <!-- Labels Row -->
-          <div class="selector-labels">
-            <span class="selector-label">Feature</span>
-            <span class="selector-label">Company</span>
-            <span class="selector-label">Model</span>
-            <span class="selector-label">Consumption</span>
-          </div>
-          
-          <!-- Dropdowns Row -->
-          <div class="selector-dropdowns">
+          <!-- Selector Items (Label + Dropdown grouped) -->
+          <div class="selector-items">
             <div class="selector-item">
+              <span class="selector-label">Feature</span>
               <div class="custom-select-wrapper">
                 <div class="custom-select" id="category-select" data-category-select>
                   <span class="custom-select-trigger">Basic</span>
@@ -57,6 +50,7 @@
               </div>
             </div>
             <div class="selector-item">
+              <span class="selector-label">Company</span>
               <div class="custom-select-wrapper">
                 <div class="custom-select" id="company-select" data-company-select>
                   <span class="custom-select-trigger">Loading...</span>
@@ -67,6 +61,7 @@
               </div>
             </div>
             <div class="selector-item">
+              <span class="selector-label">Model</span>
               <div class="custom-select-wrapper">
                 <div class="custom-select" id="model-select" data-model-select>
                   <span class="custom-select-trigger">Select company first</span>
@@ -77,6 +72,7 @@
               </div>
             </div>
             <div class="selector-item">
+              <span class="selector-label">Consumption</span>
               <div class="consumption-display" id="consumption-display">
                 <!-- Consumption bar will be populated by JS -->
               </div>

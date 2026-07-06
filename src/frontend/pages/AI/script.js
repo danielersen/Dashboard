@@ -457,13 +457,34 @@ async function sendToAPI(prompt) {
     console.log("API response data:", data);
     removeLoading();
     
-    if (data.response) {
-      displayAIMessage(data.response);
+    let content = null;
+    
+    // Try to extract content from nested response
+    if (data.resp?.result?.response) {
+      const responseStr = data.resp.result.response;
+      // Check if response is a JSON string
+      try {
+        const parsedResponse = JSON.parse(responseStr);
+        if (parsedResponse.choices && parsedResponse.choices[0]?.message?.content) {
+          content = parsedResponse.choices[0].message.content;
+        } else {
+          content = responseStr;
+        }
+      } catch {
+        // Not a JSON string, use as-is
+        content = responseStr;
+      }
+    } else if (data.response) {
+      content = data.response;
     } else if (data.error) {
       displayAIMessage(`Error: ${data.error}`);
+      return;
     } else if (data.result || data.output || data.text || data.message) {
-      // Try alternative response field names
-      displayAIMessage(data.result || data.output || data.text || data.message);
+      content = data.result || data.output || data.text || data.message;
+    }
+    
+    if (content) {
+      displayAIMessage(content);
     } else {
       displayAIMessage("No response received. Data: " + JSON.stringify(data));
     }
