@@ -238,6 +238,26 @@ a {
   z-index: 1000;
   display: none;
   backdrop-filter: blur(10px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) rgba(255, 255, 255, 0.1);
+}
+
+.custom-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-options::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.custom-options::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.custom-options::-webkit-scrollbar-thumb:hover {
+  background: var(--text);
 }
 
 .custom-select.open .custom-options {
