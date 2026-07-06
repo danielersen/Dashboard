@@ -103,8 +103,9 @@ async function fetchCloudflareModels(env) {
       name: formatModelName(model.name),
       brand: extractBrand(model.name),
       description: model.description || "",
-      type: model.type || "text-generation",
-      pricing: model.pricing || {}
+      type: model.task?.name || model.type || "text-generation",
+      pricing: model.pricing || {},
+      task: model.task?.name || model.type || "text-generation"
     }));
     
     console.log("Fetched", models.length, "models from Cloudflare API");
@@ -120,8 +121,17 @@ async function fetchCloudflareModels(env) {
 function categorizeModel(model) {
   const modelId = (model.id || model.name || "").toLowerCase();
   const modelType = (model.type || "text-generation").toLowerCase();
+  const modelTask = (model.task || "").toLowerCase();
   
-  console.log("Categorizing model:", modelId, "type:", modelType);
+  console.log("Categorizing model:", modelId, "type:", modelType, "task:", modelTask);
+  
+  // Exclude translation models from all categories
+  if (modelTask.includes("translation") || modelType.includes("translation") || 
+      modelId.includes("translation") || modelId.includes("nllb") || 
+      modelId.includes("m2m100") || modelId.includes("translate")) {
+    console.log("Excluding translation model:", modelId);
+    return [];
+  }
   
   const categories = [];
   
