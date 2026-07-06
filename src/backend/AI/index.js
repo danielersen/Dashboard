@@ -40,23 +40,53 @@ async function fetchCloudflareModels(env) {
     throw new Error("AI binding not configured. Please add [ai] binding = \"AI\" to wrangler.toml");
   }
   
-  // Use the AI binding to list available models
-  const models = await env.AI.list();
-  console.log("AI binding returned models:", models);
+  const accountId = env.CLOUDFLARE_ACCOUNT_ID;
+  const apiToken = env.CLOUDFLARE_API_TOKEN;
   
-  if (!models || !Array.isArray(models) || models.length === 0) {
-    throw new Error("No models available from Cloudflare Workers AI. Please check your AI binding configuration.");
+  if (!accountId) {
+    throw new Error("CLOUDFLARE_ACCOUNT_ID not configured. Please add it to wrangler.toml [vars]");
   }
   
-  const mappedModels = models.map(model => ({
-    id: model.id || model.name,
-    name: model.name || model.id,
-    description: model.description || "",
-    type: model.type || "text-generation",
-    pricing: model.pricing || {}
-  }));
-  console.log("Mapped models:", mappedModels);
-  return mappedModels;
+  if (!apiToken) {
+    throw new Error("CLOUDFLARE_API_TOKEN not configured. Please add it as a secret: wrangler secret put CLOUDFLARE_API_TOKEN");
+  }
+  
+  // Fetch models from Cloudflare Workers AI API
+  try {
+    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/models/search`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+        "Content-Type": "application/json"
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Cloudflare API returned ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success || !data.result) {
+      throw new Error("Invalid response from Cloudflare API");
+    }
+    
+    // Map Cloudflare API response to our model format
+    const models = data.result.map(model => ({
+      id: model.name,
+      name: model.name,
+      description: model.description || "",
+      type: model.type || "text-generation",
+      pricing: model.pricing || {}
+    }));
+    
+    console.log("Fetched", models.length, "models from Cloudflare API");
+    return models;
+    
+  } catch (error) {
+    console.error("Failed to fetch models from Cloudflare API:", error);
+    throw new Error(`Failed to fetch models from Cloudflare: ${error.message}`);
+  }
 }
 
 // Function to categorize models based on their capabilities
