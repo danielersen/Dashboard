@@ -348,6 +348,9 @@ function submitPrompt() {
     return;
   }
   
+  console.log("Selected model:", state.selectedModel);
+  console.log("Selected category:", state.selectedCategory);
+  
   // Hide selector bar
   const selectorBar = document.getElementById("selector-bar");
   if (selectorBar) {
