@@ -44,19 +44,22 @@ async function fetchCloudflareModels(env) {
     
     // Use the AI binding to list available models
     const models = await env.AI.list();
+    console.log("AI binding returned models:", models);
     
     if (!models || !Array.isArray(models) || models.length === 0) {
       console.log("No models returned from AI binding, using fallback models");
       return getFallbackModels();
     }
     
-    return models.map(model => ({
+    const mappedModels = models.map(model => ({
       id: model.id || model.name,
       name: model.name || model.id,
       description: model.description || "",
       type: model.type || "text-generation",
       pricing: model.pricing || {}
     }));
+    console.log("Mapped models:", mappedModels);
+    return mappedModels;
   } catch (error) {
     console.error("Failed to fetch Cloudflare models:", error);
     return getFallbackModels();
@@ -120,13 +123,14 @@ function categorizeModel(model) {
   
   // Reasoning models (larger models)
   if (modelId.includes("70b") || modelId.includes("405b") || 
-      modelId.includes("large") || modelId.includes("instruct")) {
+      modelId.includes("large")) {
     categories.push("reasoning");
   }
   
   // Image generation models
-  if (modelType.includes("image") || modelId.includes("stable") || 
-      modelId.includes("flux") || modelId.includes("sd")) {
+  if (modelType.includes("image") || modelType.includes("text-to-image") ||
+      modelId.includes("stable") || modelId.includes("flux") || 
+      modelId.includes("sd") || modelId.includes("diffusion")) {
     categories.push("pictures");
   }
   
@@ -181,6 +185,7 @@ export async function AIfunction(env, subpath, method, headers, body) {
   if (parts.length === 1 && parts[0] === "categories" && method === "GET") {
     // Fetch models from Cloudflare Workers AI
     const cloudflareModels = await fetchCloudflareModels(env);
+    console.log("Fetched models:", cloudflareModels.length, "models");
     
     // Categorize models and add consumption info
     const categorizedModels = {};
@@ -204,6 +209,8 @@ export async function AIfunction(env, subpath, method, headers, body) {
         pricing: model.pricing
       };
       
+      console.log("Processing model:", model.name, "categories:", categories);
+      
       // Add model to each applicable category
       categories.forEach(cat => {
         if (categorizedModels[cat]) {
@@ -211,6 +218,8 @@ export async function AIfunction(env, subpath, method, headers, body) {
         }
       });
     });
+    
+    console.log("Final categorized models:", categorizedModels);
     
     // Also create a flat list of all models for the frontend
     const allModels = cloudflareModels.map(model => ({
