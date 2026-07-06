@@ -85,8 +85,8 @@ export async function callModel(env, model, prompt, options = {}) {
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
-    // Check if this is a translation model FIRST (NLLB, translation, etc.)
-    if (modelId.includes("translation") || modelId.includes("translate") || modelId.includes("nllb")) {
+    // Check if this is a translation model FIRST (NLLB, m2m100, translation, etc.)
+    if (modelId.includes("translation") || modelId.includes("translate") || modelId.includes("nllb") || modelId.includes("m2m100")) {
       try {
         console.log("Using translation format for model:", model);
         // Use proper target_language format (e.g., "eng_Latn" instead of "en")
@@ -98,7 +98,7 @@ export async function callModel(env, model, prompt, options = {}) {
         
         const aiModel = env.AI.run(model, input);
         const response = await aiModel;
-        const content = response?.response || response?.output || response?.result?.response || response?.result?.output || response?.translated_text || JSON.stringify(response);
+        const content = response?.response || response?.output || response?.result?.response || response?.result?.output || response?.translated_text || response?.result?.translated_text || JSON.stringify(response);
         
         console.log("AI response with translation format:", content);
         return { ok: true, model: model, response: content, raw: response };

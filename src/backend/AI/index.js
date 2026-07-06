@@ -28,7 +28,7 @@ const MODEL_TYPES = {
   "image-generation": ["pictures"],
   "image-classification": ["pictures"],
   "text-to-image": ["pictures"],
-  "translation": ["basic", "search_web"],
+  "translation": [], // Exclude translation models from general categories
   "summarization": ["basic", "search_web", "reasoning"],
 };
 
