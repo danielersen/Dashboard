@@ -156,15 +156,13 @@ export async function callModel(env, model, prompt, options = {}) {
         // Try all formats in parallel and return first successful result
         const formatPromises = inputFormats.map(async (format) => {
           try {
-            input = format;
-            console.log("Trying image model format:", JSON.stringify(input));
-            console.log("Format has prompt property:", 'prompt' in input);
-            console.log("Format prompt value:", input.prompt);
-            console.log("Format keys:", Object.keys(input));
-            console.log("Input object type:", typeof input);
-            console.log("Input object constructor:", input.constructor.name);
+            console.log("Trying image model format:", JSON.stringify(format));
+            console.log("Format has prompt property:", 'prompt' in format);
+            console.log("Format prompt value:", format.prompt);
+            console.log("Format keys:", Object.keys(format));
             
-            const aiModel = env.AI.run(model, input);
+            // Pass format directly to avoid any variable reassignment issues
+            const aiModel = env.AI.run(model, format);
             const response = await aiModel;
             
             console.log("Raw Cloudflare AI response type:", typeof response);
