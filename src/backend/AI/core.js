@@ -88,7 +88,10 @@ export async function callModel(env, model, prompt, options = {}) {
                        modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
                        modelId.includes("runwayml") || modelId.includes("lightning");
   
-  console.log("isImageModel:", isImageModel, "for model:", model);
+  // Leonardo models are also image models
+  const isLeonardoModel = modelId.includes("leonardo");
+  
+  console.log("isImageModel:", isImageModel, "isLeonardoModel:", isLeonardoModel, "for model:", model);
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
@@ -256,6 +259,109 @@ export async function callModel(env, model, prompt, options = {}) {
         
         // All formats failed
         return { ok: false, error: `All input formats failed for model ${model}` };
+      } else if (isLeonardoModel) {
+        // Leonardo models - use same format handling as other image models
+        let promptText;
+        if (typeof prompt === "string") {
+          promptText = prompt;
+        } else if (prompt && typeof prompt === "object" && prompt.prompt) {
+          promptText = prompt.prompt;
+        } else {
+          promptText = JSON.stringify(prompt);
+        }
+        
+        // Try all formats in parallel and return first successful result
+        const formatPromises = inputFormats.map(async (format) => {
+          try {
+            console.log("Trying Leonardo format:", JSON.stringify(format));
+            console.log("Format has prompt property:", 'prompt' in format);
+            console.log("Format prompt value:", format.prompt);
+            console.log("Format keys:", Object.keys(format));
+            
+            const aiModel = env.AI.run(model, format);
+            const response = await aiModel;
+            
+            console.log("Raw Cloudflare AI response type:", typeof response);
+            console.log("Response is ReadableStream:", response instanceof ReadableStream);
+            
+            // Handle ReadableStream responses (image models)
+            if (response instanceof ReadableStream) {
+              console.log("Processing ReadableStream response...");
+              const reader = response.getReader();
+              const chunks = [];
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+              }
+              const uint8Array = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+              let offset = 0;
+              for (const chunk of chunks) {
+                uint8Array.set(chunk, offset);
+                offset += chunk.length;
+              }
+              const base64 = btoa(String.fromCharCode(...uint8Array));
+              const content = `data:image/jpeg;base64,${base64}`;
+              return { ok: true, result: { content, isImage: true } };
+            }
+            
+            // For non-stream responses, log as JSON
+            if (typeof response === 'object') {
+              console.log("Response keys:", response ? Object.keys(response) : "null/undefined");
+              console.log("Raw response:", JSON.stringify(response));
+            } else {
+              console.log("Raw response:", response);
+            }
+            
+            // Check for empty response
+            if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
+              console.log("Empty response with this format");
+              return null;
+            }
+            
+            // If we got a valid response, process it
+            let content = null;
+            if (response?.image) {
+              if (response.image.startsWith('data:')) {
+                content = response.image;
+              } else {
+                content = `data:image/png;base64,${response.image}`;
+              }
+            } else if (response?.result?.image) {
+              if (response.result.image.startsWith('data:')) {
+                content = response.result.image;
+              } else {
+                content = `data:image/png;base64,${response.result.image}`;
+              }
+            } else if (typeof response === 'string') {
+              if (response.startsWith('data:')) {
+                content = response;
+              } else {
+                content = `data:image/png;base64,${response}`;
+              }
+            }
+            
+            if (content) {
+              return { ok: true, result: { content, isImage: true } };
+            } else {
+              return null;
+            }
+          } catch (err) {
+            console.log("Error with format:", format, "Error:", err.message);
+            return null;
+          }
+        });
+        
+        // Wait for all promises to complete
+        const results = await Promise.all(formatPromises);
+        const firstSuccess = results.find(r => r !== null && r.ok);
+        
+        if (firstSuccess) {
+          return firstSuccess;
+        }
+        
+        // All formats failed
+        return { ok: false, error: `All input formats failed for Leonardo model ${model}` };
       }
       
       // Text generation models use { messages: [...] } format
