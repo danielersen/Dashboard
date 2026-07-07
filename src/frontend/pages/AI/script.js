@@ -425,7 +425,7 @@ function displayUserMessage(message) {
   });
 }
 
-function displayAIMessage(message) {
+function displayAIMessage(message, isImage = false) {
   const chatContainer = document.getElementById("chat-container");
   if (!chatContainer) return;
   
@@ -437,6 +437,23 @@ function displayAIMessage(message) {
   messageDiv.appendChild(bubble);
   chatContainer.appendChild(messageDiv);
   
+  // If this is an image response, display it as an image
+  if (isImage && message) {
+    // Convert base64 to data URI
+    const dataURI = `data:image/jpeg;charset=utf-8;base64,${message}`;
+    bubble.innerHTML = `<img src="${dataURI}" alt="Generated image" style="max-width: 100%; border-radius: 8px;" />`;
+    
+    // Scroll to bottom
+    requestAnimationFrame(() => {
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: "smooth"
+      });
+    });
+    return;
+  }
+  
+  // Otherwise, use typewriter effect for text
   let index = 0;
   const speed = 15; // 15ms per character - fast but visible
   
@@ -518,9 +535,13 @@ async function sendToAPI(prompt) {
     removeLoading();
     
     let content = null;
+    let isImage = false;
     
-    // Try to extract content from nested response
-    if (data.resp?.result?.response) {
+    // Check if this is an image response from pictures category
+    if (data.resp?.result?.isImage) {
+      isImage = true;
+      content = data.resp.result.imageData || data.resp.result.response;
+    } else if (data.resp?.result?.response) {
       const responseStr = data.resp.result.response;
       // Check if response is a JSON string
       try {
@@ -544,7 +565,7 @@ async function sendToAPI(prompt) {
     }
     
     if (content) {
-      displayAIMessage(content);
+      displayAIMessage(content, isImage);
     } else {
       displayAIMessage("No response received. Data: " + JSON.stringify(data));
     }
