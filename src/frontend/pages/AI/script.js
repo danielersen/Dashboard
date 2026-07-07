@@ -438,7 +438,7 @@ function displayAIMessage(message) {
   chatContainer.appendChild(messageDiv);
   
   let index = 0;
-  const speed = 5; // Ultra fast - 5ms per character
+  const speed = 15; // 15ms per character - fast but visible
   
   function typeWriter() {
     if (index < message.length) {

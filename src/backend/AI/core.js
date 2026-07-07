@@ -86,7 +86,7 @@ export async function callModel(env, model, prompt, options = {}) {
   const isImageModel = modelId.includes("stable") || modelId.includes("flux") || 
                        modelId.includes("sd") || modelId.includes("diffusion") ||
                        modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
-                       modelId.includes("runwayml");
+                       modelId.includes("runwayml") || modelId.includes("lightning");
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
@@ -95,12 +95,27 @@ export async function callModel(env, model, prompt, options = {}) {
       
       if (isImageModel) {
         // Image generation models use { prompt: string } format
-        const promptText = typeof prompt === "string" ? prompt : prompt?.prompt || "";
+        // Handle both string and object inputs
+        let promptText;
+        if (typeof prompt === "string") {
+          promptText = prompt;
+        } else if (prompt && typeof prompt === "object" && prompt.prompt) {
+          promptText = prompt.prompt;
+        } else {
+          promptText = JSON.stringify(prompt);
+        }
         input = { prompt: promptText };
         console.log("Using image model format:", input);
       } else {
         // Text generation models use { messages: [...] } format
-        const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
+        let message;
+        if (typeof prompt === "string") {
+          message = prompt;
+        } else if (prompt && typeof prompt === "object" && prompt.prompt) {
+          message = prompt.prompt;
+        } else {
+          message = JSON.stringify(prompt);
+        }
         input = {
           messages: [{ role: "user", content: message }],
           max_tokens: options.maxTokens || 1024,
@@ -123,6 +138,9 @@ export async function callModel(env, model, prompt, options = {}) {
         } else if (response?.result?.image) {
           content = response.result.image;
         } else if (typeof response === 'string') {
+          content = response;
+        } else if (response instanceof Uint8Array || response instanceof ArrayBuffer) {
+          // Raw binary image data
           content = response;
         } else {
           console.error("Could not extract image from response. Full response:", JSON.stringify(response));
