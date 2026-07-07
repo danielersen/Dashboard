@@ -78,55 +78,84 @@ export async function addMessagePair(env, category, { discussionId = null, userC
 
 // Simple model caller using Cloudflare Workers AI
 export async function callModel(env, model, prompt, options = {}) {
-  const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
   const modelId = model.toLowerCase();
   
-  console.log("callModel - model:", model, "modelId:", modelId, "prompt:", message);
+  console.log("callModel - model:", model, "modelId:", modelId, "prompt:", prompt);
+  
+  // Check if this is an image generation model
+  const isImageModel = modelId.includes("stable") || modelId.includes("flux") || 
+                       modelId.includes("sd") || modelId.includes("diffusion") ||
+                       modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
+                       modelId.includes("runwayml");
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
     try {
-      let input = {
-        messages: [{ role: "user", content: message }],
-        max_tokens: options.maxTokens || 1024,
-      };
+      let input;
       
-      console.log("Sending to Cloudflare AI:", input);
+      if (isImageModel) {
+        // Image generation models use { prompt: string } format
+        const promptText = typeof prompt === "string" ? prompt : prompt?.prompt || "";
+        input = { prompt: promptText };
+        console.log("Using image model format:", input);
+      } else {
+        // Text generation models use { messages: [...] } format
+        const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
+        input = {
+          messages: [{ role: "user", content: message }],
+          max_tokens: options.maxTokens || 1024,
+        };
+        console.log("Using text model format:", input);
+      }
+      
       const aiModel = env.AI.run(model, input);
       const response = await aiModel;
       
       console.log("Raw Cloudflare AI response:", JSON.stringify(response));
       
-      // Extract text content from various response formats
+      // Extract content from various response formats
       let content = null;
       
-      // Try different response formats based on Cloudflare AI documentation
-      if (response && typeof response === 'string') {
-        content = response;
-      } else if (response?.response && typeof response.response === 'string') {
-        content = response.response;
-      } else if (response?.result?.response && typeof response.result.response === 'string') {
-        content = response.result.response;
-      } else if (response?.result?.output && typeof response.result.output === 'string') {
-        content = response.result.output;
-      } else if (response?.output && typeof response.output === 'string') {
-        content = response.output;
-      } else if (response?.result && typeof response.result === 'string') {
-        content = response.result;
-      } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.message?.content) {
-        content = response.choices[0].message.content;
-      } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.text) {
-        content = response.choices[0].text;
-      } else if (response?.message?.content && typeof response.message.content === 'string') {
-        content = response.message.content;
-      } else if (response?.text && typeof response.text === 'string') {
-        content = response.text;
-      } else if (response?.generated_text && typeof response.generated_text === 'string') {
-        content = response.generated_text;
+      if (isImageModel) {
+        // Image models return image data (base64 or URL)
+        if (response?.image) {
+          content = response.image;
+        } else if (response?.result?.image) {
+          content = response.result.image;
+        } else if (typeof response === 'string') {
+          content = response;
+        } else {
+          console.error("Could not extract image from response. Full response:", JSON.stringify(response));
+          content = JSON.stringify(response);
+        }
       } else {
-        // If no string content found, log the full response for debugging
-        console.error("Could not extract text content from response. Full response:", JSON.stringify(response));
-        content = JSON.stringify(response);
+        // Text models return text content
+        if (response && typeof response === 'string') {
+          content = response;
+        } else if (response?.response && typeof response.response === 'string') {
+          content = response.response;
+        } else if (response?.result?.response && typeof response.result.response === 'string') {
+          content = response.result.response;
+        } else if (response?.result?.output && typeof response.result.output === 'string') {
+          content = response.result.output;
+        } else if (response?.output && typeof response.output === 'string') {
+          content = response.output;
+        } else if (response?.result && typeof response.result === 'string') {
+          content = response.result;
+        } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.message?.content) {
+          content = response.choices[0].message.content;
+        } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.text) {
+          content = response.choices[0].text;
+        } else if (response?.message?.content && typeof response.message.content === 'string') {
+          content = response.message.content;
+        } else if (response?.text && typeof response.text === 'string') {
+          content = response.text;
+        } else if (response?.generated_text && typeof response.generated_text === 'string') {
+          content = response.generated_text;
+        } else {
+          console.error("Could not extract text content from response. Full response:", JSON.stringify(response));
+          content = JSON.stringify(response);
+        }
       }
       
       console.log("Extracted content:", content);
@@ -138,5 +167,6 @@ export async function callModel(env, model, prompt, options = {}) {
   }
 
   // Fallback: mocked response
+  const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
   return { ok: true, model: model, response: `Mock response for model=${model} prompt=${message}` };
 }

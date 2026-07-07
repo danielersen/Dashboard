@@ -432,24 +432,38 @@ function displayAIMessage(message) {
   const messageDiv = document.createElement("div");
   messageDiv.className = "chat-message ai";
   
-  // Parse markdown using marked.js
-  let parsedMessage = message;
-  if (typeof marked !== 'undefined') {
-    parsedMessage = marked.parse(message);
-  }
-  
-  messageDiv.innerHTML = `
-    <div class="chat-bubble markdown-content">${parsedMessage}</div>
-  `;
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble markdown-content";
+  messageDiv.appendChild(bubble);
   chatContainer.appendChild(messageDiv);
   
-  // Smooth scroll to bottom
-  requestAnimationFrame(() => {
-    chatContainer.scrollTo({
-      top: chatContainer.scrollHeight,
-      behavior: "smooth"
-    });
-  });
+  let index = 0;
+  const speed = 5; // Ultra fast - 5ms per character
+  
+  function typeWriter() {
+    if (index < message.length) {
+      const currentText = message.substring(0, index + 1);
+      
+      // Parse markdown for current text
+      let parsedText = currentText;
+      if (typeof marked !== 'undefined') {
+        parsedText = marked.parse(currentText);
+      }
+      
+      bubble.innerHTML = parsedText;
+      index++;
+      
+      // Scroll to bottom as we type
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: "auto"
+      });
+      
+      setTimeout(typeWriter, speed);
+    }
+  }
+  
+  typeWriter();
 }
 
 function displayLoading() {
