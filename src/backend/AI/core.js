@@ -96,8 +96,8 @@ export async function callModel(env, model, prompt, options = {}) {
       let input;
       
       if (isImageModel) {
-        // Image generation models use comprehensive input format with all possible parameters
-        // This ensures compatibility across different models (flux, stable-diffusion, etc.)
+        // Image generation models use { prompt: string } format only
+        // This is the universal format that all text-to-image models support
         let promptText;
         if (typeof prompt === "string") {
           promptText = prompt;
@@ -107,17 +107,9 @@ export async function callModel(env, model, prompt, options = {}) {
           promptText = JSON.stringify(prompt);
         }
         
-        // Comprehensive input with all common parameters
-        // Models will ignore parameters they don't support
-        input = {
-          prompt: promptText,
-          seed: Math.floor(Math.random() * 1000000), // Random seed for variation
-          steps: 20, // Default number of diffusion steps
-          width: 1024, // Default width
-          height: 1024, // Default height
-          guidance: 7.5 // Default guidance scale
-        };
-        console.log("Using comprehensive image model format:", input);
+        // Use only the prompt parameter for maximum compatibility
+        input = { prompt: promptText };
+        console.log("Using universal image model format (prompt only):", input);
       } else {
         // Text generation models use { messages: [...] } format
         let message;
