@@ -148,8 +148,8 @@ export async function callModel(env, model, prompt, options = {}) {
           { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
         ];
         
-        let lastError = null;
-        for (const format of inputFormats) {
+        // Try all formats in parallel and return first successful result
+        const formatPromises = inputFormats.map(async (format) => {
           try {
             input = format;
             console.log("Trying image model format:", JSON.stringify(input));
@@ -191,19 +191,16 @@ export async function callModel(env, model, prompt, options = {}) {
             
             // Check for empty response
             if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
-              console.log("Empty response with this format, trying next...");
-              lastError = "Empty response";
-              continue;
+              console.log("Empty response with this format");
+              return null;
             }
             
             // If we got a valid response, process it
             let content = null;
             if (response?.image) {
-              // If it's already a data URI, use it as-is
               if (response.image.startsWith('data:')) {
                 content = response.image;
               } else {
-                // Otherwise, convert base64 to data URI
                 content = `data:image/png;base64,${response.image}`;
               }
             } else if (response?.result?.image) {
@@ -218,39 +215,38 @@ export async function callModel(env, model, prompt, options = {}) {
               } else {
                 content = `data:image/png;base64,${response}`;
               }
-            } else if (response instanceof ReadableStream) {
-              const reader = response.getReader();
-              const chunks = [];
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                chunks.push(value);
-              }
-              const uint8Array = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-              let offset = 0;
-              for (const chunk of chunks) {
-                uint8Array.set(chunk, offset);
-                offset += chunk.length;
-              }
-              const base64 = btoa(String.fromCharCode(...uint8Array));
-              content = `data:image/png;base64,${base64}`;
             }
             
             if (content) {
               return { ok: true, result: { content, isImage: true } };
             } else {
-              lastError = "No image content in response";
-              continue;
+              return null;
             }
           } catch (err) {
             console.log("Error with format:", format, "Error:", err.message);
-            lastError = err.message;
-            continue;
+            return null;
           }
+        });
+        
+        // Use Promise.race to get first successful result
+        const racePromises = formatPromises.map(p => 
+          p.then(result => {
+            if (result && result.ok) {
+              throw result; // Throw success to stop race
+            }
+            return null;
+          })
+        );
+        
+        try {
+          const firstSuccess = await Promise.race(racePromises);
+          return firstSuccess;
+        } catch (successResult) {
+          return successResult;
         }
         
         // All formats failed
-        return { ok: false, error: `All input formats failed for model ${model}. Last error: ${lastError}` };
+        return { ok: false, error: `All input formats failed for model ${model}` };
       }
       
       // Text generation models use { messages: [...] } format

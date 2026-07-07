@@ -4,27 +4,24 @@ export async function pictures(env, model, body = {}) {
 	const category = "pictures";
 	const prompt = body?.prompt || body?.query || body?.text || "Generate an image";
 	
-	console.log("pictures - model:", model, "prompt:", prompt);
+	console.log("pictures - requested model:", model, "prompt:", prompt);
 	
-	// Image generation models need different input format than text models
-	// According to Cloudflare Workers AI docs, image models expect { prompt: string }
+	// Call the requested model with all input formats in parallel
+	// callModel will try all formats and return first successful result
 	const result = await callModel(env, model, { prompt }, body?.options || {});
 	
 	console.log("pictures result:", result);
 	
 	// If the result contains image data (base64), return it with a flag
-	if (result.ok && result.response) {
-		// Check if response is base64 image data
-		if (typeof result.response === 'string' && result.response.length > 100) {
-			// Likely base64 image data
-			return { 
-				result: {
-					...result,
-					isImage: true,
-					imageData: result.response
-				}
-			};
-		}
+	if (result.ok && result.result?.content) {
+		return { 
+			result: {
+				ok: true,
+				model: model,
+				isImage: true,
+				imageData: result.result.content
+			}
+		};
 	}
 	
 	return { result };
