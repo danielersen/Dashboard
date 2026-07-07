@@ -164,16 +164,27 @@ function categorizeModel(model) {
     return [];
   }
   
+  // Exclude inpainting models (require mask_image input)
+  if (modelId.includes("inpaint") || modelId.includes("inpainting")) {
+    console.log("Excluding inpainting model (requires mask_image input):", modelId);
+    return [];
+  }
+  
   const categories = [];
   
   // Image generation models - ONLY add to pictures category
-  if (modelTask.includes("image") || modelType.includes("image") || modelType.includes("text-to-image") ||
-      modelId.includes("stable") || modelId.includes("flux") || 
-      modelId.includes("sd") || modelId.includes("diffusion") ||
-      modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
-      modelId.includes("runwayml")) {
+  // Use whitelist of known text-to-image models that work with prompt-only input
+  const textToImageModels = [
+    "@cf/black-forest-labs/flux-1-schnell",
+    "@cf/stabilityai/stable-diffusion-xl-base-1.0",
+    "@cf/bytedance/stable-diffusion-xl-lightning"
+  ];
+  
+  if (textToImageModels.includes(model) || modelId.includes("flux-1-schnell") || 
+      modelId.includes("stable-diffusion-xl-base-1.0") || 
+      modelId.includes("stable-diffusion-xl-lightning")) {
     categories.push("pictures");
-    console.log("Added to pictures category:", modelId);
+    console.log("Added to pictures category (whitelisted):", modelId);
     return categories; // Return early - image models only in pictures
   }
   
