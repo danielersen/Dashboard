@@ -88,10 +88,7 @@ export async function callModel(env, model, prompt, options = {}) {
                        modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
                        modelId.includes("runwayml") || modelId.includes("lightning");
   
-  // Leonardo models are also image models
-  const isLeonardoModel = modelId.includes("leonardo");
-  
-  console.log("isImageModel:", isImageModel, "isLeonardoModel:", isLeonardoModel, "for model:", model);
+  console.log("isImageModel:", isImageModel, "for model:", model);
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
@@ -99,7 +96,7 @@ export async function callModel(env, model, prompt, options = {}) {
       let input;
       
       if (isImageModel) {
-        // Image generation models - use simple format per Cloudflare docs
+        // Image generation models - try multiple formats for compatibility
         let promptText;
         if (typeof prompt === "string") {
           promptText = prompt;
@@ -109,13 +106,64 @@ export async function callModel(env, model, prompt, options = {}) {
           promptText = JSON.stringify(prompt);
         }
         
-        // Simple format that works per Cloudflare docs
-        input = { prompt: promptText };
+        // According to Cloudflare docs, try all possible input format combinations
+        // Cover all parameter variations across different models
+        const inputFormats = [
+          { prompt: promptText },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000) },
+          { prompt: promptText, steps: 1 },
+          { prompt: promptText, steps: 10 },
+          { prompt: promptText, steps: 20 },
+          { prompt: promptText, steps: 25 },
+          { prompt: promptText, steps: 50 },
+          { prompt: promptText, num_steps: 1 },
+          { prompt: promptText, num_steps: 10 },
+          { prompt: promptText, num_steps: 20 },
+          { prompt: promptText, num_steps: 25 },
+          { prompt: promptText, num_steps: 40 },
+          { prompt: promptText, num_steps: 50 },
+          { prompt: promptText, guidance: 2 },
+          { prompt: promptText, guidance: 5 },
+          { prompt: promptText, guidance: 7.5 },
+          { prompt: promptText, guidance: 10 },
+          { prompt: promptText, width: 512, height: 512 },
+          { prompt: promptText, width: 768, height: 768 },
+          { prompt: promptText, width: 1024, height: 1024 },
+          { prompt: promptText, steps: 20, guidance: 7.5 },
+          { prompt: promptText, steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, steps: 20, guidance: 7.5, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 20, guidance: 7.5 },
+          { prompt: promptText, num_steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 25, guidance: 5 },
+          { prompt: promptText, num_steps: 25, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 25, guidance: 5, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, guidance: 7.5 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, guidance: 7.5, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
+          // Additional formats for Leonardo-specific requirements
+          { prompt: promptText, num_inference_steps: 25 },
+          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5 },
+          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5, width: 1024, height: 1024 },
+          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5, width: 1024, height: 1024, seed: Math.floor(Math.random() * 1000000) },
+        ];
         
-        console.log("Image model input:", JSON.stringify(input));
-        
-        const aiModel = env.AI.run(model, input);
-        const response = await aiModel;
+        // Try all formats in parallel and return first successful result
+        const formatPromises = inputFormats.map(async (format) => {
+          try {
+            console.log("Trying image model format:", JSON.stringify(format));
+            console.log("Format has prompt property:", 'prompt' in format);
+            console.log("Format prompt value:", format.prompt);
+            console.log("Format keys:", Object.keys(format));
+            
+            // Pass format directly to avoid any variable reassignment issues
+            const aiModel = env.AI.run(model, format);
+            const response = await aiModel;
             
             console.log("Raw Cloudflare AI response type:", typeof response);
             console.log("Response is ReadableStream:", response instanceof ReadableStream);
@@ -208,109 +256,6 @@ export async function callModel(env, model, prompt, options = {}) {
         
         // All formats failed
         return { ok: false, error: `All input formats failed for model ${model}` };
-      } else if (isLeonardoModel) {
-        // Leonardo models - use same format handling as other image models
-        let promptText;
-        if (typeof prompt === "string") {
-          promptText = prompt;
-        } else if (prompt && typeof prompt === "object" && prompt.prompt) {
-          promptText = prompt.prompt;
-        } else {
-          promptText = JSON.stringify(prompt);
-        }
-        
-        // Try all formats in parallel and return first successful result
-        const formatPromises = inputFormats.map(async (format) => {
-          try {
-            console.log("Trying Leonardo format:", JSON.stringify(format));
-            console.log("Format has prompt property:", 'prompt' in format);
-            console.log("Format prompt value:", format.prompt);
-            console.log("Format keys:", Object.keys(format));
-            
-            const aiModel = env.AI.run(model, format);
-            const response = await aiModel;
-            
-            console.log("Raw Cloudflare AI response type:", typeof response);
-            console.log("Response is ReadableStream:", response instanceof ReadableStream);
-            
-            // Handle ReadableStream responses (image models)
-            if (response instanceof ReadableStream) {
-              console.log("Processing ReadableStream response...");
-              const reader = response.getReader();
-              const chunks = [];
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                chunks.push(value);
-              }
-              const uint8Array = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
-              let offset = 0;
-              for (const chunk of chunks) {
-                uint8Array.set(chunk, offset);
-                offset += chunk.length;
-              }
-              const base64 = btoa(String.fromCharCode(...uint8Array));
-              const content = `data:image/jpeg;base64,${base64}`;
-              return { ok: true, result: { content, isImage: true } };
-            }
-            
-            // For non-stream responses, log as JSON
-            if (typeof response === 'object') {
-              console.log("Response keys:", response ? Object.keys(response) : "null/undefined");
-              console.log("Raw response:", JSON.stringify(response));
-            } else {
-              console.log("Raw response:", response);
-            }
-            
-            // Check for empty response
-            if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
-              console.log("Empty response with this format");
-              return null;
-            }
-            
-            // If we got a valid response, process it
-            let content = null;
-            if (response?.image) {
-              if (response.image.startsWith('data:')) {
-                content = response.image;
-              } else {
-                content = `data:image/png;base64,${response.image}`;
-              }
-            } else if (response?.result?.image) {
-              if (response.result.image.startsWith('data:')) {
-                content = response.result.image;
-              } else {
-                content = `data:image/png;base64,${response.result.image}`;
-              }
-            } else if (typeof response === 'string') {
-              if (response.startsWith('data:')) {
-                content = response;
-              } else {
-                content = `data:image/png;base64,${response}`;
-              }
-            }
-            
-            if (content) {
-              return { ok: true, result: { content, isImage: true } };
-            } else {
-              return null;
-            }
-          } catch (err) {
-            console.log("Error with format:", format, "Error:", err.message);
-            return null;
-          }
-        });
-        
-        // Wait for all promises to complete
-        const results = await Promise.all(formatPromises);
-        const firstSuccess = results.find(r => r !== null && r.ok);
-        
-        if (firstSuccess) {
-          return firstSuccess;
-        }
-        
-        // All formats failed
-        return { ok: false, error: `All input formats failed for Leonardo model ${model}` };
       }
       
       // Text generation models use { messages: [...] } format
