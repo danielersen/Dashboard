@@ -314,6 +314,7 @@ a {
   position: relative;
   z-index: 50;
   min-height: auto;
+  flex-shrink: 0;
 }
 
 .selector-items {

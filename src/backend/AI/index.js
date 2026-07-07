@@ -79,6 +79,7 @@ async function fetchCloudflareModels(env) {
   
   // Fetch models from Cloudflare Workers AI API
   try {
+    console.log("Fetching models from Cloudflare API for account:", accountId);
     const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/models/search`, {
       method: "GET",
       headers: {
@@ -87,11 +88,16 @@ async function fetchCloudflareModels(env) {
       }
     });
     
+    console.log("Cloudflare API response status:", response.status);
+    
     if (!response.ok) {
-      throw new Error(`Cloudflare API returned ${response.status}: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error("Cloudflare API error response:", errorText);
+      throw new Error(`Cloudflare API returned ${response.status}: ${response.statusText} - ${errorText}`);
     }
     
     const data = await response.json();
+    console.log("Cloudflare API response data:", data);
     
     if (!data.success || !data.result) {
       throw new Error("Invalid response from Cloudflare API");
