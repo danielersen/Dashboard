@@ -88,9 +88,6 @@ export async function callModel(env, model, prompt, options = {}) {
                        modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
                        modelId.includes("runwayml") || modelId.includes("lightning");
   
-  // Leonardo models are also image models but need special handling
-  const isLeonardoModel = modelId.includes("leonardo");
-  
   console.log("isImageModel:", isImageModel, "for model:", model);
   
   // Use Cloudflare Workers AI binding
@@ -98,7 +95,7 @@ export async function callModel(env, model, prompt, options = {}) {
     try {
       let input;
       
-      if (isImageModel || isLeonardoModel) {
+      if (isImageModel) {
         // Image generation models - try multiple formats for compatibility
         let promptText;
         if (typeof prompt === "string") {
