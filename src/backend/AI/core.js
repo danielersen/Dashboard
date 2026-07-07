@@ -96,8 +96,8 @@ export async function callModel(env, model, prompt, options = {}) {
       let input;
       
       if (isImageModel) {
-        // Image generation models use { prompt: string } format
-        // Handle both string and object inputs
+        // Image generation models use { prompt: string } format according to Cloudflare docs
+        // All text-to-image models (flux-1-schnell, stable-diffusion-xl-lightning, etc.) use this format
         let promptText;
         if (typeof prompt === "string") {
           promptText = prompt;
@@ -106,8 +106,11 @@ export async function callModel(env, model, prompt, options = {}) {
         } else {
           promptText = JSON.stringify(prompt);
         }
+        
+        // Some models like flux-1-schnell accept optional seed parameter
+        // But prompt is always required
         input = { prompt: promptText };
-        console.log("Using image model format:", input);
+        console.log("Using image model format (Cloudflare standard):", input);
       } else {
         // Text generation models use { messages: [...] } format
         let message;
@@ -136,7 +139,9 @@ export async function callModel(env, model, prompt, options = {}) {
       let content = null;
       
       if (isImageModel) {
-        // Image models return image data (base64 or URL)
+        // Image models return image data in different formats:
+        // - flux-1-schnell: response.image (base64 string)
+        // - stable-diffusion models: ReadableStream or binary data
         if (response?.image) {
           content = response.image;
         } else if (response?.result?.image) {
@@ -184,13 +189,6 @@ export async function callModel(env, model, prompt, options = {}) {
       return { ok: true, model: model, response: content, raw: response };
     } catch (error) {
       console.error("Cloudflare AI error:", error.message, error.stack);
-      
-      // If error mentions required 'image' or 'mask_image', this model needs different input
-      if (error.message.includes("required properties") && (error.message.includes("image") || error.message.includes("mask_image"))) {
-        console.error("Model requires image input, not text-only. Model:", model);
-        return { ok: false, error: `This model requires image input. Please use a text-to-image model instead. Model: ${model}` };
-      }
-      
       return { ok: false, error: error.message || "Failed to call AI model" };
     }
   }
