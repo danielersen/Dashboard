@@ -184,6 +184,13 @@ export async function callModel(env, model, prompt, options = {}) {
       return { ok: true, model: model, response: content, raw: response };
     } catch (error) {
       console.error("Cloudflare AI error:", error.message, error.stack);
+      
+      // If error mentions required 'image' or 'mask_image', this model needs different input
+      if (error.message.includes("required properties") && (error.message.includes("image") || error.message.includes("mask_image"))) {
+        console.error("Model requires image input, not text-only. Model:", model);
+        return { ok: false, error: `This model requires image input. Please use a text-to-image model instead. Model: ${model}` };
+      }
+      
       return { ok: false, error: error.message || "Failed to call AI model" };
     }
   }

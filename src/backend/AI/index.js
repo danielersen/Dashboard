@@ -129,8 +129,9 @@ function categorizeModel(model) {
   const modelId = (model.id || model.name || "").toLowerCase();
   const modelType = (model.type || "text-generation").toLowerCase();
   const modelTask = (model.task || "").toLowerCase();
+  const modelDescription = (model.description || "").toLowerCase();
   
-  console.log("Categorizing model:", modelId, "type:", modelType, "task:", modelTask);
+  console.log("Categorizing model:", modelId, "type:", modelType, "task:", modelTask, "description:", modelDescription);
   
   // Exclude translation models from all categories
   if (modelTask.includes("translation") || modelType.includes("translation") || 
@@ -158,34 +159,37 @@ function categorizeModel(model) {
     return [];
   }
   
-  // Exclude img2img models (require image input, not text-only)
-  if (modelId.includes("img2img")) {
-    console.log("Excluding img2img model (requires image input):", modelId);
-    return [];
-  }
-  
-  // Exclude inpainting models (require mask_image input)
-  if (modelId.includes("inpaint") || modelId.includes("inpainting")) {
-    console.log("Excluding inpainting model (requires mask_image input):", modelId);
-    return [];
-  }
-  
   const categories = [];
   
-  // Image generation models - ONLY add to pictures category
-  // Use whitelist of known text-to-image models that work with prompt-only input
-  const textToImageModels = [
-    "@cf/black-forest-labs/flux-1-schnell",
-    "@cf/stabilityai/stable-diffusion-xl-base-1.0",
-    "@cf/bytedance/stable-diffusion-xl-lightning"
-  ];
+  // Use Cloudflare metadata to determine if model is text-to-image
+  // Check task/type and description for text-to-image indicators
+  const isTextToImage = (modelTask === "text-to-image" || 
+                        modelType === "text-to-image" ||
+                        modelTask.includes("text-to-image") ||
+                        modelType.includes("text-to-image") ||
+                        (modelTask.includes("image") && modelDescription.includes("text-to-image")) ||
+                        (modelType.includes("image") && modelDescription.includes("text-to-image")));
   
-  if (textToImageModels.includes(model) || modelId.includes("flux-1-schnell") || 
-      modelId.includes("stable-diffusion-xl-base-1.0") || 
-      modelId.includes("stable-diffusion-xl-lightning")) {
+  // Exclude models that require image input (img2img, inpainting) based on metadata
+  const requiresImageInput = (modelTask.includes("img2img") ||
+                             modelType.includes("img2img") ||
+                             modelId.includes("img2img") ||
+                             modelTask.includes("inpaint") ||
+                             modelType.includes("inpaint") ||
+                             modelId.includes("inpaint") ||
+                             modelId.includes("inpainting") ||
+                             modelDescription.includes("img2img") ||
+                             modelDescription.includes("inpaint"));
+  
+  if (isTextToImage && !requiresImageInput) {
     categories.push("pictures");
-    console.log("Added to pictures category (whitelisted):", modelId);
+    console.log("Added to pictures category (text-to-image from metadata):", modelId);
     return categories; // Return early - image models only in pictures
+  }
+  
+  if (requiresImageInput) {
+    console.log("Excluding model that requires image input:", modelId);
+    return [];
   }
   
   // Reasoning models (larger models) - ONLY add to reasonning category, NOT basic or search_web
