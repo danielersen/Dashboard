@@ -303,13 +303,17 @@ export async function AIfunction(env, subpath, method, headers, body) {
     const model = body?.model || env.DEFAULT_AI_MODEL || "openai/gpt-4o-mini";
     const prompt = body?.prompt || "";
     
+    console.log("Chat request - category:", category, "model:", model, "prompt:", prompt);
+    
     // Map frontend category names to backend category names
     const mappedCategory = CATEGORY_ALIASES[category] || category;
     const fn = CATEGORIES[mappedCategory];
     if (!fn) return { error: "unknown category" };
     
-    // Call category function with proper body structure
-    const resp = await fn(env, model, { prompt, text: prompt });
+    console.log("Using mapped category:", mappedCategory, "function:", fn.name);
+    
+    // Call category function with proper body structure, including category
+    const resp = await fn(env, model, { prompt, text: prompt, category: mappedCategory });
     return resp;
   }
 
