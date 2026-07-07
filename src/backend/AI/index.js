@@ -140,6 +140,24 @@ function categorizeModel(model) {
     return [];
   }
   
+  // Exclude audio models from all text categories
+  if (modelTask.includes("audio") || modelType.includes("audio") || modelType.includes("speech") ||
+      modelTask.includes("speech") || modelId.includes("audio") || 
+      modelId.includes("speech") || modelId.includes("tts") || 
+      modelId.includes("whisper") || modelId.includes("vad")) {
+    console.log("Excluding audio model:", modelId);
+    return [];
+  }
+  
+  // Exclude embedding/vector models from text categories
+  if (modelTask.includes("embedding") || modelType.includes("embedding") || 
+      modelTask.includes("vector") || modelType.includes("vector") ||
+      modelId.includes("embedding") || modelId.includes("vector") ||
+      modelId.includes("bge") || modelId.includes("e5")) {
+    console.log("Excluding embedding/vector model:", modelId);
+    return [];
+  }
+  
   const categories = [];
   
   // Image generation models - ONLY add to pictures category
