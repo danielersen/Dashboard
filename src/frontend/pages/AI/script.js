@@ -142,6 +142,7 @@ function setupCategoryDropdown(select) {
       option.classList.add("selected");
       trigger.textContent = option.textContent;
       state.selectedCategory = option.dataset.value;
+      state.selectedModel = null; // Reset selected model when category changes
       select.classList.remove("open");
       populateCompanies();
     });
@@ -232,6 +233,7 @@ function populateCompanies() {
       option.classList.add("selected");
       trigger.textContent = company;
       state.selectedCompany = company;
+      state.selectedModel = null; // Reset selected model when company changes
       companySelect.classList.remove("open");
       populateModels();
     });
@@ -244,6 +246,7 @@ function populateCompanies() {
       firstOption.classList.add("selected");
       trigger.textContent = companies[0];
       state.selectedCompany = companies[0];
+      state.selectedModel = null; // Reset selected model when category changes
       populateModels();
     }
   }

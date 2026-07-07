@@ -313,12 +313,15 @@ a {
   margin: 20px;
   position: relative;
   z-index: 50;
+  min-height: auto;
 }
 
 .selector-items {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+  min-height: 0;
+ align-items: flex-start;
 }
 
 .selector-item {
@@ -439,7 +442,7 @@ a {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
-  padding-bottom: 80px;
+  padding-bottom: 100px;
   display: flex;
   flex-direction: column;
   gap: 16px;
