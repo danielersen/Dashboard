@@ -96,8 +96,7 @@ export async function callModel(env, model, prompt, options = {}) {
       let input;
       
       if (isImageModel) {
-        // Image generation models use { prompt: string } format only
-        // This is the universal format that all text-to-image models support
+        // Image generation models - try multiple formats for compatibility
         let promptText;
         if (typeof prompt === "string") {
           promptText = prompt;
@@ -107,27 +106,89 @@ export async function callModel(env, model, prompt, options = {}) {
           promptText = JSON.stringify(prompt);
         }
         
-        // Use only the prompt parameter for maximum compatibility
-        input = { prompt: promptText };
-        console.log("Using universal image model format (prompt only):", input);
-      } else {
-        // Text generation models use { messages: [...] } format
-        let message;
-        if (typeof prompt === "string") {
-          message = prompt;
-        } else if (prompt && typeof prompt === "object" && prompt.prompt) {
-          message = prompt.prompt;
-        } else {
-          message = JSON.stringify(prompt);
+        // Try multiple input formats in sequence
+        const inputFormats = [
+          { prompt: promptText }, // Basic format
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000) }, // With seed
+        ];
+        
+        let lastError = null;
+        for (const format of inputFormats) {
+          try {
+            input = format;
+            console.log("Trying image model format:", JSON.stringify(input));
+            
+            const aiModel = env.AI.run(model, input);
+            const response = await aiModel;
+            
+            console.log("Raw Cloudflare AI response:", JSON.stringify(response));
+            console.log("Response type:", typeof response);
+            console.log("Response keys:", response ? Object.keys(response) : "null/undefined");
+            
+            // Check for empty response
+            if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
+              console.log("Empty response with this format, trying next...");
+              lastError = "Empty response";
+              continue;
+            }
+            
+            // If we got a valid response, process it
+            let content = null;
+            if (response?.image) {
+              content = response.image;
+            } else if (response?.result?.image) {
+              content = response.result.image;
+            } else if (typeof response === 'string') {
+              content = response;
+            } else if (response instanceof ReadableStream) {
+              const reader = response.getReader();
+              const chunks = [];
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+              }
+              const uint8Array = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+              let offset = 0;
+              for (const chunk of chunks) {
+                uint8Array.set(chunk, offset);
+                offset += chunk.length;
+              }
+              const base64 = btoa(String.fromCharCode(...uint8Array));
+              content = `data:image/png;base64,${base64}`;
+            }
+            
+            if (content) {
+              return { ok: true, result: { content, isImage: true } };
+            } else {
+              lastError = "No image content in response";
+              continue;
+            }
+          } catch (err) {
+            console.log("Error with format:", format, "Error:", err.message);
+            lastError = err.message;
+            continue;
+          }
         }
-        input = {
-          messages: [{ role: "user", content: message }],
-          max_tokens: options.maxTokens || 1024,
-        };
-        console.log("Using text model format:", input);
+        
+        // All formats failed
+        return { ok: false, error: `All input formats failed for model ${model}. Last error: ${lastError}` };
       }
       
-      console.log("Final input to env.AI.run:", JSON.stringify(input));
+      // Text generation models use { messages: [...] } format
+      let message;
+      if (typeof prompt === "string") {
+        message = prompt;
+      } else if (prompt && typeof prompt === "object" && prompt.prompt) {
+        message = prompt.prompt;
+      } else {
+        message = JSON.stringify(prompt);
+      }
+      input = {
+        messages: [{ role: "user", content: message }],
+        max_tokens: options.maxTokens || 1024,
+      };
+      console.log("Using text model format:", input);
       
       const aiModel = env.AI.run(model, input);
       const response = await aiModel;
@@ -142,54 +203,33 @@ export async function callModel(env, model, prompt, options = {}) {
         return { ok: false, error: `Empty response from Cloudflare AI for model ${model}. The model may be unavailable or requires a different input format.` };
       }
       
-      // Extract content from various response formats
+      // Extract content from text response
       let content = null;
-      
-      if (isImageModel) {
-        // Image models return image data in different formats:
-        // - flux-1-schnell: response.image (base64 string)
-        // - stable-diffusion models: ReadableStream or binary data
-        if (response?.image) {
-          content = response.image;
-        } else if (response?.result?.image) {
-          content = response.result.image;
-        } else if (typeof response === 'string') {
-          content = response;
-        } else if (response instanceof Uint8Array || response instanceof ArrayBuffer) {
-          // Raw binary image data
-          content = response;
-        } else {
-          console.error("Could not extract image from response. Full response:", JSON.stringify(response));
-          content = JSON.stringify(response);
-        }
+      if (response && typeof response === 'string') {
+        content = response;
+      } else if (response?.response && typeof response.response === 'string') {
+        content = response.response;
+      } else if (response?.result?.response && typeof response.result.response === 'string') {
+        content = response.result.response;
+      } else if (response?.result?.output && typeof response.result.output === 'string') {
+        content = response.result.output;
+      } else if (response?.output && typeof response.output === 'string') {
+        content = response.output;
+      } else if (response?.result && typeof response.result === 'string') {
+        content = response.result;
+      } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.message?.content) {
+        content = response.choices[0].message.content;
+      } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.text) {
+        content = response.choices[0].text;
+      } else if (response?.message?.content && typeof response.message.content === 'string') {
+        content = response.message.content;
+      } else if (response?.text && typeof response.text === 'string') {
+        content = response.text;
+      } else if (response?.generated_text && typeof response.generated_text === 'string') {
+        content = response.generated_text;
       } else {
-        // Text models return text content
-        if (response && typeof response === 'string') {
-          content = response;
-        } else if (response?.response && typeof response.response === 'string') {
-          content = response.response;
-        } else if (response?.result?.response && typeof response.result.response === 'string') {
-          content = response.result.response;
-        } else if (response?.result?.output && typeof response.result.output === 'string') {
-          content = response.result.output;
-        } else if (response?.output && typeof response.output === 'string') {
-          content = response.output;
-        } else if (response?.result && typeof response.result === 'string') {
-          content = response.result;
-        } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.message?.content) {
-          content = response.choices[0].message.content;
-        } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.text) {
-          content = response.choices[0].text;
-        } else if (response?.message?.content && typeof response.message.content === 'string') {
-          content = response.message.content;
-        } else if (response?.text && typeof response.text === 'string') {
-          content = response.text;
-        } else if (response?.generated_text && typeof response.generated_text === 'string') {
-          content = response.generated_text;
-        } else {
-          console.error("Could not extract text content from response. Full response:", JSON.stringify(response));
-          content = JSON.stringify(response);
-        }
+        console.error("Could not extract text content from response. Full response:", JSON.stringify(response));
+        content = JSON.stringify(response);
       }
       
       console.log("Extracted content:", content);
