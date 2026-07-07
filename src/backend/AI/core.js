@@ -106,30 +106,46 @@ export async function callModel(env, model, prompt, options = {}) {
           promptText = JSON.stringify(prompt);
         }
         
-        // Try multiple input formats in sequence based on Cloudflare docs
-        // Cover various parameter combinations that different models might require
+        // According to Cloudflare docs, try all possible input format combinations
+        // Cover all parameter variations across different models
         const inputFormats = [
-          { prompt: promptText }, // Basic format (most common)
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000) }, // With seed
-          { prompt: promptText, steps: 1 }, // With steps only (no seed)
-          { prompt: promptText, steps: 2 }, // With steps (very low)
-          { prompt: promptText, steps: 4 }, // With steps (low)
-          { prompt: promptText, steps: 6 }, // With steps (medium)
-          { prompt: promptText, steps: 8 }, // With steps (max for some models)
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 1 }, // With seed and minimal steps
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 2 }, // With seed and very low steps
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4 }, // With seed and low steps
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 6 }, // With seed and medium steps
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 8 }, // With seed and max steps
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 512, height: 512 }, // With dimensions
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 768, height: 768 }, // With medium dimensions
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 1024, height: 1024 }, // With larger dimensions
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), guidance: 3 }, // With low guidance
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), guidance: 5 }, // With guidance
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), guidance: 7.5 }, // With high guidance
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, guidance: 5 }, // With steps and guidance
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 512, height: 512, guidance: 5 }, // Full parameters
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 1024, height: 1024, guidance: 7.5 }, // Full parameters with larger dimensions
+          { prompt: promptText },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000) },
+          { prompt: promptText, steps: 1 },
+          { prompt: promptText, steps: 10 },
+          { prompt: promptText, steps: 20 },
+          { prompt: promptText, steps: 25 },
+          { prompt: promptText, steps: 50 },
+          { prompt: promptText, num_steps: 1 },
+          { prompt: promptText, num_steps: 10 },
+          { prompt: promptText, num_steps: 20 },
+          { prompt: promptText, num_steps: 25 },
+          { prompt: promptText, num_steps: 40 },
+          { prompt: promptText, num_steps: 50 },
+          { prompt: promptText, guidance: 2 },
+          { prompt: promptText, guidance: 5 },
+          { prompt: promptText, guidance: 7.5 },
+          { prompt: promptText, guidance: 10 },
+          { prompt: promptText, width: 512, height: 512 },
+          { prompt: promptText, width: 768, height: 768 },
+          { prompt: promptText, width: 1024, height: 1024 },
+          { prompt: promptText, steps: 20, guidance: 7.5 },
+          { prompt: promptText, steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, steps: 20, guidance: 7.5, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 20, guidance: 7.5 },
+          { prompt: promptText, num_steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 25, guidance: 5 },
+          { prompt: promptText, num_steps: 25, width: 1024, height: 1024 },
+          { prompt: promptText, num_steps: 25, guidance: 5, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, guidance: 7.5 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, guidance: 7.5, width: 1024, height: 1024 },
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
         ];
         
         let lastError = null;
@@ -141,9 +157,37 @@ export async function callModel(env, model, prompt, options = {}) {
             const aiModel = env.AI.run(model, input);
             const response = await aiModel;
             
-            console.log("Raw Cloudflare AI response:", JSON.stringify(response));
-            console.log("Response type:", typeof response);
-            console.log("Response keys:", response ? Object.keys(response) : "null/undefined");
+            console.log("Raw Cloudflare AI response type:", typeof response);
+            console.log("Response is ReadableStream:", response instanceof ReadableStream);
+            
+            // Handle ReadableStream responses (image models)
+            if (response instanceof ReadableStream) {
+              console.log("Processing ReadableStream response...");
+              const reader = response.getReader();
+              const chunks = [];
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+              }
+              const uint8Array = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+              let offset = 0;
+              for (const chunk of chunks) {
+                uint8Array.set(chunk, offset);
+                offset += chunk.length;
+              }
+              const base64 = btoa(String.fromCharCode(...uint8Array));
+              const content = `data:image/jpeg;base64,${base64}`;
+              return { ok: true, result: { content, isImage: true } };
+            }
+            
+            // For non-stream responses, log as JSON
+            if (typeof response === 'object') {
+              console.log("Response keys:", response ? Object.keys(response) : "null/undefined");
+              console.log("Raw response:", JSON.stringify(response));
+            } else {
+              console.log("Raw response:", response);
+            }
             
             // Check for empty response
             if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
