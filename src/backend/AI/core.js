@@ -81,45 +81,59 @@ export async function callModel(env, model, prompt, options = {}) {
   const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
   const modelId = model.toLowerCase();
   
-  console.log("callModel - model:", model, "modelId:", modelId);
+  console.log("callModel - model:", model, "modelId:", modelId, "prompt:", message);
   
   // Use Cloudflare Workers AI binding
   if (env.AI) {
-    // Try standard text generation format first (works for most models)
     try {
       let input = {
         messages: [{ role: "user", content: message }],
-        max_tokens: options.maxTokens || 512,
+        max_tokens: options.maxTokens || 1024,
       };
       
+      console.log("Sending to Cloudflare AI:", input);
       const aiModel = env.AI.run(model, input);
       const response = await aiModel;
-      const content = response?.response || response?.output || response?.result?.response || JSON.stringify(response);
       
-      console.log("AI response with standard format:", content);
+      console.log("Raw Cloudflare AI response:", JSON.stringify(response));
+      
+      // Extract text content from various response formats
+      let content = null;
+      
+      // Try different response formats based on Cloudflare AI documentation
+      if (response && typeof response === 'string') {
+        content = response;
+      } else if (response?.response && typeof response.response === 'string') {
+        content = response.response;
+      } else if (response?.result?.response && typeof response.result.response === 'string') {
+        content = response.result.response;
+      } else if (response?.result?.output && typeof response.result.output === 'string') {
+        content = response.result.output;
+      } else if (response?.output && typeof response.output === 'string') {
+        content = response.output;
+      } else if (response?.result && typeof response.result === 'string') {
+        content = response.result;
+      } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.message?.content) {
+        content = response.choices[0].message.content;
+      } else if (response?.choices && Array.isArray(response.choices) && response.choices[0]?.text) {
+        content = response.choices[0].text;
+      } else if (response?.message?.content && typeof response.message.content === 'string') {
+        content = response.message.content;
+      } else if (response?.text && typeof response.text === 'string') {
+        content = response.text;
+      } else if (response?.generated_text && typeof response.generated_text === 'string') {
+        content = response.generated_text;
+      } else {
+        // If no string content found, log the full response for debugging
+        console.error("Could not extract text content from response. Full response:", JSON.stringify(response));
+        content = JSON.stringify(response);
+      }
+      
+      console.log("Extracted content:", content);
       return { ok: true, model: model, response: content, raw: response };
     } catch (error) {
-      console.error("Cloudflare AI error with standard format:", error.message);
-      
-      // If standard format fails, try translation format as fallback
-      try {
-        console.log("Retrying with translation format for model:", model);
-        const targetLang = options.targetLanguage || "eng_Latn";
-        const input = {
-          text: message,
-          target_language: targetLang
-        };
-        
-        const aiModel = env.AI.run(model, input);
-        const response = await aiModel;
-        const content = response?.response || response?.output || response?.result?.response || response?.result?.output || response?.translated_text || response?.result?.translated_text || JSON.stringify(response);
-        
-        console.log("AI response with translation format:", content);
-        return { ok: true, model: model, response: content, raw: response };
-      } catch (retryError) {
-        console.error("Cloudflare AI error with translation format:", retryError.message);
-        return { ok: false, error: retryError.message || "Failed to call AI model" };
-      }
+      console.error("Cloudflare AI error:", error.message, error.stack);
+      return { ok: false, error: error.message || "Failed to call AI model" };
     }
   }
 
