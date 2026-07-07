@@ -106,10 +106,12 @@ export async function callModel(env, model, prompt, options = {}) {
           promptText = JSON.stringify(prompt);
         }
         
-        // Try multiple input formats in sequence
+        // Try multiple input formats in sequence based on Cloudflare docs
         const inputFormats = [
           { prompt: promptText }, // Basic format
           { prompt: promptText, seed: Math.floor(Math.random() * 1000000) }, // With seed
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4 }, // With steps (low value for compatibility)
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 512, height: 512 }, // With dimensions
         ];
         
         let lastError = null;
@@ -135,11 +137,25 @@ export async function callModel(env, model, prompt, options = {}) {
             // If we got a valid response, process it
             let content = null;
             if (response?.image) {
-              content = response.image;
+              // If it's already a data URI, use it as-is
+              if (response.image.startsWith('data:')) {
+                content = response.image;
+              } else {
+                // Otherwise, convert base64 to data URI
+                content = `data:image/png;base64,${response.image}`;
+              }
             } else if (response?.result?.image) {
-              content = response.result.image;
+              if (response.result.image.startsWith('data:')) {
+                content = response.result.image;
+              } else {
+                content = `data:image/png;base64,${response.result.image}`;
+              }
             } else if (typeof response === 'string') {
-              content = response;
+              if (response.startsWith('data:')) {
+                content = response;
+              } else {
+                content = `data:image/png;base64,${response}`;
+              }
             } else if (response instanceof ReadableStream) {
               const reader = response.getReader();
               const chunks = [];

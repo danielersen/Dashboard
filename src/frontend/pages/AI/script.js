@@ -439,8 +439,8 @@ function displayAIMessage(message, isImage = false) {
   
   // If this is an image response, display it as an image
   if (isImage && message) {
-    // Convert base64 to data URI
-    const dataURI = `data:image/jpeg;charset=utf-8;base64,${message}`;
+    // Check if message is already a data URI
+    const dataURI = message.startsWith('data:') ? message : `data:image/jpeg;charset=utf-8;base64,${message}`;
     bubble.innerHTML = `<img src="${dataURI}" alt="Generated image" style="max-width: 100%; border-radius: 8px;" />`;
     
     // Scroll to bottom
