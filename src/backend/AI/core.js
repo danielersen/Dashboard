@@ -96,8 +96,8 @@ export async function callModel(env, model, prompt, options = {}) {
       let input;
       
       if (isImageModel) {
-        // Image generation models use { prompt: string } format according to Cloudflare docs
-        // All text-to-image models (flux-1-schnell, stable-diffusion-xl-lightning, etc.) use this format
+        // Image generation models use comprehensive input format with all possible parameters
+        // This ensures compatibility across different models (flux, stable-diffusion, etc.)
         let promptText;
         if (typeof prompt === "string") {
           promptText = prompt;
@@ -107,10 +107,17 @@ export async function callModel(env, model, prompt, options = {}) {
           promptText = JSON.stringify(prompt);
         }
         
-        // Some models like flux-1-schnell accept optional seed parameter
-        // But prompt is always required
-        input = { prompt: promptText };
-        console.log("Using image model format (Cloudflare standard):", input);
+        // Comprehensive input with all common parameters
+        // Models will ignore parameters they don't support
+        input = {
+          prompt: promptText,
+          seed: Math.floor(Math.random() * 1000000), // Random seed for variation
+          steps: 20, // Default number of diffusion steps
+          width: 1024, // Default width
+          height: 1024, // Default height
+          guidance: 7.5 // Default guidance scale
+        };
+        console.log("Using comprehensive image model format:", input);
       } else {
         // Text generation models use { messages: [...] } format
         let message;
@@ -136,6 +143,12 @@ export async function callModel(env, model, prompt, options = {}) {
       console.log("Raw Cloudflare AI response:", JSON.stringify(response));
       console.log("Response type:", typeof response);
       console.log("Response keys:", response ? Object.keys(response) : "null/undefined");
+      
+      // Check for empty response
+      if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
+        console.error("Empty response from Cloudflare AI for model:", model);
+        return { ok: false, error: `Empty response from Cloudflare AI for model ${model}. The model may be unavailable or requires a different input format.` };
+      }
       
       // Extract content from various response formats
       let content = null;
