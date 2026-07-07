@@ -99,7 +99,7 @@ export async function callModel(env, model, prompt, options = {}) {
       let input;
       
       if (isImageModel) {
-        // Image generation models - try multiple formats for compatibility
+        // Image generation models - use simple format per Cloudflare docs
         let promptText;
         if (typeof prompt === "string") {
           promptText = prompt;
@@ -109,62 +109,13 @@ export async function callModel(env, model, prompt, options = {}) {
           promptText = JSON.stringify(prompt);
         }
         
-        // According to Cloudflare docs, try all possible input format combinations
-        // Cover all parameter variations across different models
-        const inputFormats = [
-          { prompt: promptText },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000) },
-          { prompt: promptText, steps: 1 },
-          { prompt: promptText, steps: 10 },
-          { prompt: promptText, steps: 20 },
-          { prompt: promptText, steps: 25 },
-          { prompt: promptText, steps: 50 },
-          { prompt: promptText, num_steps: 1 },
-          { prompt: promptText, num_steps: 10 },
-          { prompt: promptText, num_steps: 20 },
-          { prompt: promptText, num_steps: 25 },
-          { prompt: promptText, num_steps: 40 },
-          { prompt: promptText, num_steps: 50 },
-          { prompt: promptText, guidance: 2 },
-          { prompt: promptText, guidance: 5 },
-          { prompt: promptText, guidance: 7.5 },
-          { prompt: promptText, guidance: 10 },
-          { prompt: promptText, width: 512, height: 512 },
-          { prompt: promptText, width: 768, height: 768 },
-          { prompt: promptText, width: 1024, height: 1024 },
-          { prompt: promptText, steps: 20, guidance: 7.5 },
-          { prompt: promptText, steps: 20, width: 1024, height: 1024 },
-          { prompt: promptText, steps: 20, guidance: 7.5, width: 1024, height: 1024 },
-          { prompt: promptText, num_steps: 20, guidance: 7.5 },
-          { prompt: promptText, num_steps: 20, width: 1024, height: 1024 },
-          { prompt: promptText, num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
-          { prompt: promptText, num_steps: 25, guidance: 5 },
-          { prompt: promptText, num_steps: 25, width: 1024, height: 1024 },
-          { prompt: promptText, num_steps: 25, guidance: 5, width: 1024, height: 1024 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, guidance: 7.5 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, width: 1024, height: 1024 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, width: 1024, height: 1024 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, guidance: 7.5, width: 1024, height: 1024 },
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
-          // Additional formats for Leonardo-specific requirements
-          { prompt: promptText, num_inference_steps: 25 },
-          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5 },
-          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5, width: 1024, height: 1024 },
-          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5, width: 1024, height: 1024, seed: Math.floor(Math.random() * 1000000) },
-        ];
+        // Simple format that works per Cloudflare docs
+        input = { prompt: promptText };
         
-        // Try all formats in parallel and return first successful result
-        const formatPromises = inputFormats.map(async (format) => {
-          try {
-            console.log("Trying image model format:", JSON.stringify(format));
-            console.log("Format has prompt property:", 'prompt' in format);
-            console.log("Format prompt value:", format.prompt);
-            
-            const aiModel = env.AI.run(model, format);
-            const response = await aiModel;
+        console.log("Image model input:", JSON.stringify(input));
+        
+        const aiModel = env.AI.run(model, input);
+        const response = await aiModel;
             
             console.log("Raw Cloudflare AI response type:", typeof response);
             console.log("Response is ReadableStream:", response instanceof ReadableStream);
