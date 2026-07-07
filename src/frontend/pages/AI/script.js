@@ -460,7 +460,9 @@ function displayLoading() {
   messageDiv.className = "chat-message ai loading";
   messageDiv.id = "loading-message";
   messageDiv.innerHTML = `
-    <div class="chat-bubble">Thinking...</div>
+    <div class="chat-bubble">
+      <div class="loading-dot"></div>
+    </div>
   `;
   chatContainer.appendChild(messageDiv);
   

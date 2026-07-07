@@ -153,22 +153,22 @@ function categorizeModel(model) {
     return categories; // Return early - image models only in pictures
   }
   
-  // Text generation models (basic)
-  if (modelTask.includes("text") || modelType.includes("text") || modelType.includes("generation") || 
-      modelId.includes("llama") || modelId.includes("mistral") || 
-      modelId.includes("gemma") || modelId.includes("phi") ||
-      modelId.includes("qwen") || modelId.includes("yi") ||
-      modelId.includes("deepseek")) {
-    categories.push("basic");
-  }
-  
-  // Reasoning models (larger models)
+  // Reasoning models (larger models) - ONLY add to reasonning category, NOT basic or search_web
   if (modelId.includes("70b") || modelId.includes("72b") || 
       modelId.includes("405b") || modelId.includes("34b") ||
       modelId.includes("27b") || modelId.includes("large") ||
-      modelId.includes("r1") || modelId.includes("deepseek")) {
+      modelId.includes("r1") || modelId.includes("deepseek-r1")) {
     categories.push("reasonning");
-    console.log("Added to reasonning category");
+    console.log("Added to reasonning category ONLY:", modelId);
+    return categories; // Return early - reasoning models only in reasonning
+  }
+  
+  // Text generation models (basic) - smaller models only
+  if (modelTask.includes("text") || modelType.includes("text") || modelType.includes("generation") || 
+      modelId.includes("llama") || modelId.includes("mistral") || 
+      modelId.includes("gemma") || modelId.includes("phi") ||
+      modelId.includes("qwen") || modelId.includes("yi")) {
+    categories.push("basic");
   }
   
   // Search/summarization models - add text generation models to search_web as well
