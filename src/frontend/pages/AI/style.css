@@ -490,7 +490,8 @@ a {
   }
   
   .selector-item {
-    min-width: 120px;
+    min-width: 100%;
+    flex-basis: 100%;
   }
   
   .selector-label {

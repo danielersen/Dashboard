@@ -109,6 +109,7 @@ async function fetchCloudflareModels(env) {
     }));
     
     console.log("Fetched", models.length, "models from Cloudflare API");
+    console.log("Sample models:", models.slice(0, 5));
     return models;
     
   } catch (error) {
@@ -248,6 +249,8 @@ export async function AIfunction(env, subpath, method, headers, body) {
     cloudflareModels.forEach(model => {
       const categories = categorizeModel(model);
       const consumption = estimateConsumption(model);
+      
+      console.log("Model", model.id, "categories:", categories, "consumption:", consumption);
       
       const modelInfo = {
         id: model.id,

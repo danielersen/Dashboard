@@ -88,9 +88,11 @@ sidebarButtons.forEach((btn) => {
 async function loadModels() {
   try {
     const data = await aiGet("categories");
+    console.log("Loaded models data:", data);
     if (data && data.availableModels) {
       state.models = data.availableModels;
       state.categorizedModels = data.categorizedModels || {};
+      console.log("Categorized models:", state.categorizedModels);
       populateModelSelects();
     }
   } catch (error) {
