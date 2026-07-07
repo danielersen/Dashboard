@@ -107,11 +107,29 @@ export async function callModel(env, model, prompt, options = {}) {
         }
         
         // Try multiple input formats in sequence based on Cloudflare docs
+        // Cover various parameter combinations that different models might require
         const inputFormats = [
-          { prompt: promptText }, // Basic format
+          { prompt: promptText }, // Basic format (most common)
           { prompt: promptText, seed: Math.floor(Math.random() * 1000000) }, // With seed
-          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4 }, // With steps (low value for compatibility)
+          { prompt: promptText, steps: 1 }, // With steps only (no seed)
+          { prompt: promptText, steps: 2 }, // With steps (very low)
+          { prompt: promptText, steps: 4 }, // With steps (low)
+          { prompt: promptText, steps: 6 }, // With steps (medium)
+          { prompt: promptText, steps: 8 }, // With steps (max for some models)
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 1 }, // With seed and minimal steps
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 2 }, // With seed and very low steps
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4 }, // With seed and low steps
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 6 }, // With seed and medium steps
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 8 }, // With seed and max steps
           { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 512, height: 512 }, // With dimensions
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 768, height: 768 }, // With medium dimensions
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 1024, height: 1024 }, // With larger dimensions
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), guidance: 3 }, // With low guidance
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), guidance: 5 }, // With guidance
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), guidance: 7.5 }, // With high guidance
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, guidance: 5 }, // With steps and guidance
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 512, height: 512, guidance: 5 }, // Full parameters
+          { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 4, width: 1024, height: 1024, guidance: 7.5 }, // Full parameters with larger dimensions
         ];
         
         let lastError = null;
