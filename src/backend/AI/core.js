@@ -86,7 +86,9 @@ export async function callModel(env, model, prompt, options = {}) {
   const isImageModel = modelId.includes("stable") || modelId.includes("flux") || 
                        modelId.includes("sd") || modelId.includes("diffusion") ||
                        modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
-                       modelId.includes("runwayml") || modelId.includes("lightning");
+                       modelId.includes("runwayml") || modelId.includes("lightning") ||
+                       modelId.includes("leonardo") || modelId.includes("phoenix") ||
+                       modelId.includes("lucid");
   
   console.log("isImageModel:", isImageModel, "for model:", model);
   
