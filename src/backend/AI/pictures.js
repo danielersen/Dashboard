@@ -8,7 +8,8 @@ export async function pictures(env, model, body = {}) {
 	
 	// Call the requested model with all input formats in parallel
 	// callModel will try all formats and return first successful result
-	const result = await callModel(env, model, { prompt }, body?.options || {});
+	// Pass prompt as string directly, not as object
+	const result = await callModel(env, model, prompt, body?.options || {});
 	
 	console.log("pictures result:", result);
 	

@@ -162,9 +162,7 @@ export async function callModel(env, model, prompt, options = {}) {
             console.log("Trying image model format:", JSON.stringify(format));
             console.log("Format has prompt property:", 'prompt' in format);
             console.log("Format prompt value:", format.prompt);
-            console.log("Format keys:", Object.keys(format));
             
-            // Pass format directly to avoid any variable reassignment issues
             const aiModel = env.AI.run(model, format);
             const response = await aiModel;
             
