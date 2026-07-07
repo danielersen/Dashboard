@@ -88,6 +88,8 @@ export async function callModel(env, model, prompt, options = {}) {
                        modelId.includes("dreamshaper") || modelId.includes("realistic-vision") ||
                        modelId.includes("runwayml") || modelId.includes("lightning");
   
+  console.log("isImageModel:", isImageModel, "for model:", model);
+  
   // Use Cloudflare Workers AI binding
   if (env.AI) {
     try {
@@ -122,6 +124,8 @@ export async function callModel(env, model, prompt, options = {}) {
         };
         console.log("Using text model format:", input);
       }
+      
+      console.log("Final input to env.AI.run:", JSON.stringify(input));
       
       const aiModel = env.AI.run(model, input);
       const response = await aiModel;
