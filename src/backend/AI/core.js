@@ -134,6 +134,8 @@ export async function callModel(env, model, prompt, options = {}) {
       const response = await aiModel;
       
       console.log("Raw Cloudflare AI response:", JSON.stringify(response));
+      console.log("Response type:", typeof response);
+      console.log("Response keys:", response ? Object.keys(response) : "null/undefined");
       
       // Extract content from various response formats
       let content = null;
