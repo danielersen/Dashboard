@@ -232,17 +232,18 @@ export async function callModel(env, model, prompt, options = {}) {
         const racePromises = formatPromises.map(p => 
           p.then(result => {
             if (result && result.ok) {
-              throw result; // Throw success to stop race
+              return result; // Return success directly
             }
             return null;
           })
         );
         
-        try {
-          const firstSuccess = await Promise.race(racePromises);
+        // Wait for all promises to complete
+        const results = await Promise.all(racePromises);
+        const firstSuccess = results.find(r => r !== null && r.ok);
+        
+        if (firstSuccess) {
           return firstSuccess;
-        } catch (successResult) {
-          return successResult;
         }
         
         // All formats failed
