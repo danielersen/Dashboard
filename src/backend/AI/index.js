@@ -158,6 +158,12 @@ function categorizeModel(model) {
     return [];
   }
   
+  // Exclude img2img models (require image input, not text-only)
+  if (modelId.includes("img2img")) {
+    console.log("Excluding img2img model (requires image input):", modelId);
+    return [];
+  }
+  
   const categories = [];
   
   // Image generation models - ONLY add to pictures category
