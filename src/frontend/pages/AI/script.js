@@ -212,7 +212,9 @@ function populateCompanies() {
   
   optionsContainer.innerHTML = "";
   
+  console.log("Populating companies for category:", state.selectedCategory);
   const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+  console.log("Category models:", categoryModels);
   
   if (categoryModels.length === 0) {
     trigger.textContent = "No models available";
@@ -220,6 +222,7 @@ function populateCompanies() {
   }
   
   const companies = [...new Set(categoryModels.map(model => model.brand || "Unknown"))].sort();
+  console.log("Available companies:", companies);
   
   companies.forEach(company => {
     const option = document.createElement("div");
@@ -261,8 +264,11 @@ function populateModels() {
   
   optionsContainer.innerHTML = "";
   
+  console.log("Populating models for category:", state.selectedCategory, "company:", state.selectedCompany);
   const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+  console.log("Category models:", categoryModels);
   const companyModels = categoryModels.filter(model => (model.brand || "Unknown") === state.selectedCompany);
+  console.log("Company models:", companyModels);
   
   if (companyModels.length === 0) {
     trigger.textContent = "No models for this company";
@@ -277,6 +283,8 @@ function populateModels() {
     const nameB = (b.name || "").toLowerCase();
     return nameA.localeCompare(nameB);
   });
+  
+  console.log("Sorted models:", sortedModels);
   
   sortedModels.forEach(model => {
     const option = document.createElement("div");
