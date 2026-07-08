@@ -29,7 +29,11 @@ async function loadIcons() {
   const icons = {};
   for (const [name, path] of Object.entries(iconPaths)) {
     try {
-      const response = await fetch(path + '?nocache=' + Date.now());
+      const response = await fetch(path + '?nocache=' + Date.now(), {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('sessionToken') || ''}`
+        }
+      });
       const svg = await response.text();
       icons[name] = `data:image/svg+xml;base64,${btoa(svg)}`;
     } catch (error) {
