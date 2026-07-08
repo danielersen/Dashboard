@@ -146,6 +146,15 @@ export default {
     // 🌐 SITE (Cloudflare assets)
     // =========================
     
+    // Log requests for debugging
+    console.log(`Request: ${method} ${url.pathname}`);
+    
+    // Debug SVG requests
+    if (url.pathname.endsWith('.svg')) {
+      console.log(`SVG Request: ${url.pathname}`);
+      console.log(`Headers:`, Object.fromEntries(request.headers));
+    }
+    
     // Sitemap served from file
     if (url.pathname === "/sitemap.xml") {
       const sitemapResponse = await env.ASSETS.fetch(new Request(request.url.replace('/sitemap.xml', '/sitemap.xml'), request));
