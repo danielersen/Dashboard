@@ -1,0 +1,9 @@
+.DS_Store
+.VolumeIcon.icns
+.Spotlight-V100
+.Trashes
+.fseventsd
+.AppleDouble
+.LSOverride
+._*
+icons/
