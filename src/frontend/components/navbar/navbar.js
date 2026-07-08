@@ -1,4 +1,4 @@
-import { appendAuthParams, logout } from "/lib/auth.js";
+import { appendAuthParams, logout, ensureSessionToken } from "/lib/auth.js";
 
 const NAV_ITEMS = [
   { slug: "home", label: "Home", href: "/pages/home", icon: "home" },
@@ -26,12 +26,13 @@ async function loadIcons() {
     clock: '/api/icons/clock.svg',
   };
 
+  const sessionToken = await ensureSessionToken();
   const icons = {};
   for (const [name, path] of Object.entries(iconPaths)) {
     try {
       const response = await fetch(path + '?nocache=' + Date.now(), {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('sessionToken') || ''}`
+          'Authorization': `Bearer ${sessionToken || ''}`
         }
       });
       const svg = await response.text();
