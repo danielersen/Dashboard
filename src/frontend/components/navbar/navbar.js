@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
 
-// Load SVG files from API endpoint and convert to data URLs at runtime
+// Load SVG files from API endpoint and use URLs directly
 async function loadIcons() {
   const iconPaths = {
     home: '/api/icons/home.svg',
@@ -29,18 +29,7 @@ async function loadIcons() {
   const sessionToken = await ensureSessionToken();
   const icons = {};
   for (const [name, path] of Object.entries(iconPaths)) {
-    try {
-      const response = await fetch(path + '?nocache=' + Date.now(), {
-        headers: {
-          'Authorization': `Bearer ${sessionToken || ''}`
-        }
-      });
-      const svg = await response.text();
-      icons[name] = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-    } catch (error) {
-      console.error(`Failed to load icon ${name}:`, error);
-      icons[name] = path; // Fallback to path
-    }
+    icons[name] = path + '?nocache=' + Date.now() + '&token=' + (sessionToken || '');
   }
   return icons;
 }
