@@ -36,7 +36,7 @@ async function loadIcons() {
         }
       });
       const svg = await response.text();
-      icons[name] = `data:image/svg+xml;base64,${btoa(svg)}`;
+      icons[name] = `data:image/svg+xml,${encodeURIComponent(svg)}`;
     } catch (error) {
       console.error(`Failed to load icon ${name}:`, error);
       icons[name] = path; // Fallback to path
