@@ -146,13 +146,20 @@ export default {
     // 🌐 SITE (Cloudflare assets)
     // =========================
     
-    // Log requests for debugging
-    console.log(`Request: ${method} ${url.pathname}`);
-    
-    // Debug SVG requests
-    if (url.pathname.endsWith('.svg')) {
-      console.log(`SVG Request: ${url.pathname}`);
-      console.log(`Headers:`, Object.fromEntries(request.headers));
+    // Serve SVG icons directly from worker to bypass Cloudflare cache
+    if (url.pathname.startsWith("/assets/") && url.pathname.endsWith(".svg")) {
+      const iconPath = url.pathname; // Keep query params for cache busting
+      const response = await env.ASSETS.fetch(new Request(request.url.replace(/\?.*$/, ''), request));
+      
+      if (response.ok) {
+        const svgContent = await response.text();
+        return new Response(svgContent, {
+          headers: {
+            "Content-Type": "image/svg+xml; charset=utf-8",
+            "Cache-Control": "no-cache, no-store, must-revalidate"
+          }
+        });
+      }
     }
     
     // Sitemap served from file
