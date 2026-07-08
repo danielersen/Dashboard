@@ -146,11 +146,6 @@ export async function callModel(env, model, prompt, options = {}) {
           { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, width: 1024, height: 1024 },
           { prompt: promptText, seed: Math.floor(Math.random() * 1000000), steps: 20, guidance: 7.5, width: 1024, height: 1024 },
           { prompt: promptText, seed: Math.floor(Math.random() * 1000000), num_steps: 20, guidance: 7.5, width: 1024, height: 1024 },
-          // Additional formats for Leonardo-specific requirements
-          { prompt: promptText, num_inference_steps: 25 },
-          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5 },
-          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5, width: 1024, height: 1024 },
-          { prompt: promptText, num_inference_steps: 25, guidance_scale: 5, width: 1024, height: 1024, seed: Math.floor(Math.random() * 1000000) },
         ];
         
         // Try all formats in parallel and return first successful result

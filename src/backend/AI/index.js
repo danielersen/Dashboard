@@ -141,6 +141,12 @@ function categorizeModel(model) {
     return [];
   }
   
+  // Exclude Leonardo models from all categories
+  if (modelId.includes("leonardo") || modelId.includes("phoenix") || modelId.includes("lucid")) {
+    console.log("Excluding Leonardo model:", modelId);
+    return [];
+  }
+  
   // Exclude audio models from all text categories
   if (modelTask.includes("audio") || modelType.includes("audio") || modelType.includes("speech") ||
       modelTask.includes("speech") || modelId.includes("audio") || 
