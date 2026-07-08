@@ -159,19 +159,6 @@ export default {
       });
     }
     
-    // Serve SVG icons from assets
-    if (url.pathname.startsWith("/assets/icons/")) {
-      const iconResponse = await env.ASSETS.fetch(request);
-      const iconContent = await iconResponse.text();
-      
-      return new Response(iconContent, {
-        headers: {
-          "Content-Type": "image/svg+xml; charset=utf-8",
-          "Cache-Control": "public, max-age=3600"
-        }
-      });
-    }
-    
     // Robots.txt with correct content-type
     if (url.pathname === "/robots.txt") {
       const assetResponse = await env.ASSETS.fetch(request);

@@ -408,7 +408,7 @@ const NAVBAR_STYLE = `
 `;
 
 function iconFor(name) {
-  return `<span class="icon-placeholder" data-icon="${name}"></span>`;
+  return `<img src="${ICONS[name] || ICONS.grid}" alt="" loading="lazy" />`;
 }
 
 const NAVBAR_TEMPLATE = `
@@ -425,7 +425,7 @@ const NAVBAR_TEMPLATE = `
           <div class="feature-list">
             ${NAV_ITEMS.map((item) => `
               <a class="feature" data-route="${item.slug}" href="${item.href}">
-                <span class="feature-icon"><span class="icon-placeholder" data-icon="${item.icon}"></span></span>
+                <span class="feature-icon"><img src="${ICONS[item.icon] || ICONS.grid}" alt="" loading="lazy" /></span>
                 <span class="feature-label">${item.label}</span>
               </a>
             `).join("")}
