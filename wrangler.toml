@@ -9,6 +9,7 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 MODE = "production" # -> "production" if enabled, or any other name if disabled
 SITE = "enabled" # -> "enabled" if enabled, or any other name if disabled
+TURNSTILE_SITE_KEY = "0x4AAAAAADrlHr788EQ3YFx3" # -> Turnstile site key
 JWT_SECRET = "generate-a-secure-random-key"
 JWT = "generate-a-secure-random-key"
 

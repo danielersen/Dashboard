@@ -15,7 +15,6 @@
     </script>
     <link rel="stylesheet" href="/pages/AI/style.css">
     <link rel="icon" href="/assets/logo/websitelogo.png">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script type="module" src="/components/navbar/navbar.js"></script>
     <script type="module" src="/pages/AI/script.js"></script>
   </head>
@@ -25,93 +24,180 @@
     <div class="ai-shell">
       <aside class="ai-sidebar" aria-label="AI sections">
         <button class="ai-nav" type="button" data-target="ai" aria-label="AI" data-active="true">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm1-13h-2v6h6v-2h-4z"></path>
           </svg>
         </button>
-        <button class="ai-nav" type="button" data-target="chat" aria-label="Chat">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        <button class="ai-nav" type="button" data-target="search-web" aria-label="Search Web">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0a4.5 4.5 0 1 1 4.5-4.5A4.5 4.5 0 0 1 9.5 14z"></path>
           </svg>
         </button>
-        <button class="ai-nav" type="button" data-target="chat-settings" aria-label="Chat with settings">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            <circle cx="18" cy="18" r="3" fill="currentColor" stroke="none"></circle>
-            <path d="M18 16v1.5M18 18.5v1.5" stroke="white" stroke-width="1.5"></path>
+        <button class="ai-nav" type="button" data-target="reasoning" aria-label="Reasoning">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2l-5.5 9h11z"></path>
+            <path d="M12 22l-5.5-9h11z"></path>
+            <circle cx="12" cy="11" r="2"></circle>
           </svg>
         </button>
-        <button class="ai-nav" type="button" data-target="statistics" aria-label="Statistics">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
+        <button class="ai-nav" type="button" data-target="pictures" aria-label="Pictures Generator">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"></circle>
+            <path d="M21 15l-5-5L5 21" fill="none" stroke="currentColor" stroke-width="2"></path>
           </svg>
         </button>
       </aside>
 
       <main class="ai-main">
-        <div class="ai-selector-bar" id="selector-bar">
-          <!-- Selector Items (Label + Dropdown grouped) -->
-          <div class="selector-items">
-            <div class="selector-item">
-              <span class="selector-label">Feature</span>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="category-select" data-category-select>
-                  <span class="custom-select-trigger">Basic</span>
-                  <div class="custom-options">
-                    <div class="custom-option" data-value="basic">Basic</div>
-                    <div class="custom-option" data-value="search_web">Search Web</div>
-                    <div class="custom-option" data-value="reasonning">Reasoning</div>
-                    <div class="custom-option" data-value="pictures">Pictures</div>
-                  </div>
-                </div>
-              </div>
+        <!-- ===================== AI ===================== -->
+        <section id="ai" class="ai-section" aria-label="AI">
+          <header class="section-head">
+            <h1>AI Assistant</h1>
+          </header>
+          <div class="ai-container">
+            <div class="ai-model-selector">
+              <label for="ai-model-select">Model</label>
+              <select id="ai-model-select" data-model-select>
+                <option value="">Loading models...</option>
+              </select>
+              <span class="model-consumption" data-consumption>Consumption: --</span>
             </div>
-            <div class="selector-item">
-              <span class="selector-label">Company</span>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="company-select" data-company-select>
-                  <span class="custom-select-trigger">Loading...</span>
-                  <div class="custom-options">
-                    <!-- Companies will be populated by JS -->
-                  </div>
-                </div>
-              </div>
+            <div class="ai-prompt-area">
+              <textarea id="ai-prompt" data-prompt placeholder="Enter your prompt..." rows="4"></textarea>
+              <button id="ai-submit" data-submit type="button">Send</button>
             </div>
-            <div class="selector-item">
-              <span class="selector-label">Model</span>
-              <div class="custom-select-wrapper">
-                <div class="custom-select" id="model-select" data-model-select>
-                  <span class="custom-select-trigger">Select company first</span>
-                  <div class="custom-options">
-                    <!-- Models will be populated by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="selector-item">
-              <span class="selector-label">Consumption</span>
-              <div class="consumption-display" id="consumption-display">
-                <!-- Consumption bar will be populated by JS -->
-              </div>
+            <div class="ai-response" data-response>
+              <p class="state-msg">Your response will appear here.</p>
             </div>
           </div>
-        </div>
-        
-        <div class="ai-chat-container" id="chat-container">
-          <!-- Chat messages will appear here -->
-        </div>
-        
-        <div class="ai-prompt-bar">
-          <textarea id="prompt-input" placeholder="Type your message..." rows="1"></textarea>
-          <button id="prompt-submit" type="button" aria-label="Send">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 19V5M5 12l7-7 7 7"/>
-            </svg>
-          </button>
-        </div>
+        </section>
+
+        <!-- ===================== SEARCH WEB ===================== -->
+        <section id="search-web" class="ai-section" aria-label="Search Web" hidden>
+          <header class="section-head">
+            <h1>Search Web</h1>
+          </header>
+          <div class="ai-container">
+            <div class="ai-model-selector">
+              <label for="search-web-model-select">Model</label>
+              <select id="search-web-model-select" data-model-select>
+                <option value="">Loading models...</option>
+              </select>
+              <span class="model-consumption" data-consumption>Consumption: --</span>
+            </div>
+            <div class="ai-prompt-area">
+              <textarea id="search-web-prompt" data-prompt placeholder="Enter your search query..." rows="4"></textarea>
+              <button id="search-web-submit" data-submit type="button">Search</button>
+            </div>
+            <div class="ai-response" data-response>
+              <p class="state-msg">Search results will appear here.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== REASONING ===================== -->
+        <section id="reasoning" class="ai-section" aria-label="Reasoning" hidden>
+          <header class="section-head">
+            <h1>Reasoning</h1>
+          </header>
+          <div class="ai-container">
+            <div class="ai-model-selector">
+              <label for="reasoning-model-select">Model</label>
+              <select id="reasoning-model-select" data-model-select>
+                <option value="">Loading models...</option>
+              </select>
+              <span class="model-consumption" data-consumption>Consumption: --</span>
+            </div>
+            <div class="ai-prompt-area">
+              <textarea id="reasoning-prompt" data-prompt placeholder="Enter your reasoning task..." rows="4"></textarea>
+              <button id="reasoning-submit" data-submit type="button">Reason</button>
+            </div>
+            <div class="ai-response" data-response>
+              <p class="state-msg">Reasoning results will appear here.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== PICTURES ===================== -->
+        <section id="pictures" class="ai-section" aria-label="Pictures Generator" hidden>
+          <header class="section-head">
+            <h1>Picture Generator</h1>
+          </header>
+          <div class="ai-container">
+            <div class="ai-model-selector">
+              <label for="pictures-model-select">Model</label>
+              <select id="pictures-model-select" data-model-select>
+                <option value="">Loading models...</option>
+              </select>
+              <span class="model-consumption" data-consumption>Consumption: --</span>
+            </div>
+            <div class="ai-prompt-area">
+              <textarea id="pictures-prompt" data-prompt placeholder="Describe the image you want to generate..." rows="4"></textarea>
+              <button id="pictures-submit" data-submit type="button">Generate</button>
+            </div>
+            <div class="ai-response" data-response>
+              <p class="state-msg">Generated image or description will appear here.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>   <div class="ai-response" data-response>
+          </div>
+          sectponc
+lass="state-msg">Search results will appear here.</p>
+        <!-- ===================== PICTURES ===================== -->
+        <section i/="pdctures"v>ai-in" aialabel="Pcures Genrator hidden
+      </divhederinhed>
+            <h1Pictures Geerarh1
+          </header>
+    </section>ai-aer">
+            <v css=a-deleector
+labelfr="picture-de-sect">Mdel</bl
+        <!-- ==select i=="p=ctures-model-select" data-model-select=============== REASONING ===================== -->
+              <s<optionevalue="">Loadingcmodels...tioptnonid="reasoning" class="ai-section" aria-label="Reasoning" hidden>
+                selecth1>Reasoning</h1>
+               spaniv classmodelntaisumpnro"asumpoConsumption: <d</"pan>
+osr              <label for="reasoning-model-select">Model</label>
+                    <option value=">eaLoading models...</option>
+                  </select>pictures-t" daapromDescribe the imag want togenrt4
+                  <span claictuses-sub=it" damaodel-cosumption" data>Geneopte</tuttonmption: --</span>
+            </did>
+       v<dv cassai-respsdaa-spo
+            <div class="state-msg">Gener ced image orasescription-wileappearhere.<p
+              ditxtarea id="reasoning-prompt" data-prompt placeholder="Enter your reasoning task..." rows="4"></textarea>
+            divton id="reasoning-submit" data-submit type="button">Reason</button>
+          sect on/div>
+            <div class="ai-response" data-response>
+              <p class="state-msg">Reasoning results will appear here.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===================== PICTURES ===================== -->
+        <section id="pictures" class="ai-section" aria-label="Pictures Generator" hidden>
+          <header class="section-head">
+            <h1>Pictures Generator</h1>
+          </header>
+          <div class="ai-container">
+            <div class="ai-model-selector">
+              <label for="pictures-model-select">Model</label>
+              <select id="pictures-model-select" data-model-select>
+                <option value="">Loading models...</option>
+              </select>
+              <span class="model-consumption" data-consumption>Consumption: --</span>
+            </div>
+            <div class="ai-prompt-area">
+              <textarea id="pictures-prompt" data-prompt placeholder="Describe the image you want to generate..." rows="4"></textarea>
+              <button id="pictures-submit" data-submit type="button">Generate</button>
+            </div>
+            <div class="ai-response" data-response>
+              <p class="state-msg">Generated image or description will appear here.</p>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   </body>
