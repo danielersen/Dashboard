@@ -146,24 +146,35 @@ export default {
     // 🌐 SITE (Cloudflare assets)
     // =========================
     
-    // Sitemap with correct XML content-type - bypass cache
+    // Sitemap served directly from worker to ensure correct format
     if (url.pathname === "/sitemap.xml") {
-      const assetUrl = new URL(request.url);
-      assetUrl.pathname = "/sitemap.xml";
-      const assetRequest = new Request(assetUrl, {
-        method: "GET",
+      const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://dashboard.danielersen.workers.dev/pages/home</loc>
+    <lastmod>2026-07-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://dashboard.danielersen.workers.dev/pages/workspace</loc>
+    <lastmod>2026-07-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://dashboard.danielersen.workers.dev/pages/AI</loc>
+    <lastmod>2026-07-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>`;
+      
+      return new Response(sitemapContent, {
         headers: {
-          "Cache-Control": "no-cache",
-          "Pragma": "no-cache"
+          "Content-Type": "application/xml; charset=utf-8",
+          "Cache-Control": "public, max-age=3600"
         }
-      });
-      const assetResponse = await env.ASSETS.fetch(assetRequest);
-      const newHeaders = new Headers(assetResponse.headers);
-      newHeaders.set("Content-Type", "application/xml; charset=utf-8");
-      newHeaders.set("Cache-Control", "public, max-age=3600");
-      return new Response(assetResponse.body, {
-        status: assetResponse.status,
-        headers: newHeaders
       });
     }
     
