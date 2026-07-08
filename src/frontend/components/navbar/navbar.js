@@ -8,20 +8,60 @@ const NAV_ITEMS = [
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
  
-async function loadIcon(name) {
-  try {
-    const response = await fetch(`/assets/icons/${name}.svg`);
-    if (!response.ok) {
-      console.error(`Failed to load icon: ${name}`);
-      return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" fill="currentColor"/></svg>`;
-    }
-    const svg = await response.text();
-    return svg;
-  } catch (error) {
-    console.error(`Error loading icon ${name}:`, error);
-    return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" fill="currentColor"/></svg>`;
-  }
-}
+const ICONS = {
+  home: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"></path>
+    </svg>
+  `,
+  grid: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 5h6v6H5zM13 5h6v6h-6zM5 13h6v6H5zM13 13h6v6h-6z"></path>
+    </svg>
+  `,
+  sparkles: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m12 2 1.7 4.6L18 8.3l-4.3 1.7L12 14l-1.7-4L6 8.3l4.3-1.7zM18.5 14l.9 2.4 2.6 1.1-2.6 1.1-.9 2.4-.9-2.4-2.6-1.1 2.6-1.1z"></path>
+    </svg>
+  `,
+  database: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3zm-8 5v4c0 1.7 3.6 3 8 3s8-1.3 8-3V8c-1.7 1.4-4.8 2-8 2s-6.3-.6-8-2zm0 6v4c0 1.7 3.6 3 8 3s8-1.3 8-3v-4c-1.7 1.4-4.8 2-8 2s-6.3-.6-8-2z"></path>
+    </svg>
+  `,
+  wrench: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M21 7.5a5.8 5.8 0 0 1-7.4 5.6l-7.3 7.3a1 1 0 0 1-1.4 0l-1.3-1.3a1 1 0 0 1 0-1.4l7.3-7.3A5.8 5.8 0 0 1 17.5 3l-2.8 2.8 3.5 3.5L21 7.5z"></path>
+    </svg>
+  `,
+  settings: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 2h4v3l2 .8 2.1-2.1 2.8 2.8-2.1 2.1.8 2H23v4h-3l-.8 2 2.1 2.1-2.8 2.8-2.1-2.1-2 .8V23h-4v-3l-2-.8-2.1 2.1-2.8-2.8 2.1-2.1-.8-2H1v-4h3l.8-2-2.1-2.1 2.8-2.8 2.1 2.1 2-.8zm2 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
+    </svg>
+  `,
+  refresh: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08a5.99 5.99 0 0 1-5.65 4c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"></path>
+    </svg>
+  `,
+  logout: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4v-2H6V5h4zm5.5 3.5-1.4 1.42L16.17 10H9v2h7.17l-2.07 2.08 1.4 1.42L20 11z"></path>
+    </svg>
+  `,
+  more: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="5" cy="12" r="2"></circle>
+      <circle cx="12" cy="12" r="2"></circle>
+      <circle cx="19" cy="12" r="2"></circle>
+    </svg>
+  `,
+  chat: `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `,
+};
 
 const NAVBAR_STYLE = `
   :host {
@@ -209,12 +249,6 @@ const NAVBAR_STYLE = `
     flex: 0 0 auto;
   }
 
-  .feature-icon img,
-  .action-icon img {
-    width: 20px;
-    height: 20px;
-  }
-
   .feature-icon svg,
   .action-icon svg {
     width: 20px;
@@ -277,8 +311,7 @@ const NAVBAR_STYLE = `
     }
   }
 
-  .quick[data-refreshing="true"] .action-icon svg,
-  .quick[data-refreshing="true"] .action-icon img {
+  .quick[data-refreshing="true"] .action-icon svg {
     animation: navbar-refresh-spin 1s linear infinite;
   }
 
@@ -411,7 +444,7 @@ const NAVBAR_STYLE = `
 `;
 
 function iconFor(name) {
-  return `<img src="/assets/icons/${name}.svg" alt="" loading="lazy" />`;
+  return ICONS[name] || ICONS.grid;
 }
 
 const NAVBAR_TEMPLATE = `
@@ -438,19 +471,17 @@ const NAVBAR_TEMPLATE = `
 
       <div class="right">
         <button class="quick" data-kind="refresh" type="button" aria-label="Rafraîchir la page">
-          <span class="action-icon">${iconFor('refresh')}</span>
+          <span class="action-icon">${ICONS.refresh}</span>
         </button>
-        <a class="quick" data-kind="chat" href="/pages/chat" aria-label="Chat">
-          <span class="action-icon">${iconFor('chat')}</span>
-        </a>
+
         <a class="quick" data-kind="settings" href="/pages/settings" aria-label="Ouvrir les paramètres">
-          <span class="action-icon">${iconFor('settings')}</span>
+          <span class="action-icon">${ICONS.settings}</span>
         </a>
         <button class="quick" data-kind="logout" type="button" aria-label="Se déconnecter">
-          <span class="action-icon">${iconFor('logout')}</span>
+          <span class="action-icon">${ICONS.logout}</span>
         </button>
         <button class="quick more-toggle" data-kind="more" type="button" aria-label="Plus d'options" aria-expanded="false">
-          <span class="action-icon">${iconFor('more')}</span>
+          <span class="action-icon">${ICONS.more}</span>
         </button>
       </div>
     </div>
@@ -458,19 +489,16 @@ const NAVBAR_TEMPLATE = `
 
   <div class="more-menu" data-more-menu data-open="false" aria-hidden="true">
     <button class="more-item" data-kind="refresh" type="button">
-      <span class="action-icon">${iconFor('refresh')}</span>
+      <span class="action-icon">${ICONS.refresh}</span>
       <span class="more-item-label">Refresh</span>
     </button>
-    <a class="more-item" data-kind="chat" href="/pages/chat">
-      <span class="action-icon">${iconFor('chat')}</span>
-      <span class="more-item-label">Chat</span>
-    </a>
+
     <a class="more-item" data-kind="settings" href="/pages/settings">
-      <span class="action-icon">${iconFor('settings')}</span>
+      <span class="action-icon">${ICONS.settings}</span>
       <span class="more-item-label">Settings</span>
     </a>
     <button class="more-item" data-kind="logout" type="button">
-      <span class="action-icon">${iconFor('logout')}</span>
+      <span class="action-icon">${ICONS.logout}</span>
       <span class="more-item-label">Log out</span>
     </button>
   </div>
@@ -539,6 +567,10 @@ class SiteNavbar extends HTMLElement {
       case "settings":
         this._closeMoreMenu();
         window.location.href = appendAuthParams("/pages/settings");
+        return;
+      case "chat":
+        this._closeMoreMenu();
+        window.location.href = appendAuthParams("/pages/chat");
         return;
       case "logout":
         this._closeMoreMenu();
