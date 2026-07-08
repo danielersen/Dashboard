@@ -146,20 +146,24 @@ export default {
     // 🌐 SITE (Cloudflare assets)
     // =========================
     
-    // Serve SVG icons directly from worker to bypass Cloudflare cache
-    if (url.pathname.startsWith("/assets/") && url.pathname.endsWith(".svg")) {
-      const iconPath = url.pathname; // Keep query params for cache busting
-      const response = await env.ASSETS.fetch(new Request(request.url.replace(/\?.*$/, ''), request));
+    // API endpoint to serve SVG icons with cache bypass
+    if (url.pathname.startsWith("/api/icons/")) {
+      const iconName = url.pathname.split('/').pop();
+      const iconPath = `/assets/${iconName}`;
+      const response = await env.ASSETS.fetch(new Request(request.url.replace(/\/api\/icons\//, '/assets/'), request));
       
       if (response.ok) {
         const svgContent = await response.text();
         return new Response(svgContent, {
           headers: {
             "Content-Type": "image/svg+xml; charset=utf-8",
-            "Cache-Control": "no-cache, no-store, must-revalidate"
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Access-Control-Allow-Origin": "*"
           }
         });
       }
+      
+      return new Response("Icon not found", { status: 404 });
     }
     
     // Sitemap served from file
