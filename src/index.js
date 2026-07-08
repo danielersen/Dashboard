@@ -159,7 +159,7 @@ export default {
       });
     }
     
-    // Serve SVG icons from files
+    // Serve SVG icons from assets
     if (url.pathname.startsWith("/assets/icons/")) {
       const iconResponse = await env.ASSETS.fetch(request);
       const iconContent = await iconResponse.text();

@@ -18,7 +18,6 @@ const ICONS = {
   refresh: '/assets/icons/refresh.svg',
   logout: '/assets/icons/logout.svg',
   more: '/assets/icons/more.svg',
-  chat: '/assets/icons/chat.svg',
 };
 
 const NAVBAR_STYLE = `
@@ -409,7 +408,7 @@ const NAVBAR_STYLE = `
 `;
 
 function iconFor(name) {
-  return `<img src="${ICONS[name] || ICONS.grid}" alt="" loading="lazy" />`;
+  return `<span class="icon-placeholder" data-icon="${name}"></span>`;
 }
 
 const NAVBAR_TEMPLATE = `
@@ -426,7 +425,7 @@ const NAVBAR_TEMPLATE = `
           <div class="feature-list">
             ${NAV_ITEMS.map((item) => `
               <a class="feature" data-route="${item.slug}" href="${item.href}">
-                <span class="feature-icon"><img src="${ICONS[item.icon] || ICONS.grid}" alt="" loading="lazy" /></span>
+                <span class="feature-icon"><span class="icon-placeholder" data-icon="${item.icon}"></span></span>
                 <span class="feature-label">${item.label}</span>
               </a>
             `).join("")}
@@ -679,4 +678,33 @@ class SiteNavbar extends HTMLElement {
 
 if (!customElements.get("site-navbar")) {
   customElements.define("site-navbar", SiteNavbar);
+}
+
+// Load icons via fetch and inject as data URLs
+async function loadNavbarIcons() {
+  const placeholders = document.querySelectorAll('.icon-placeholder');
+  
+  for (const placeholder of placeholders) {
+    const iconName = placeholder.dataset.icon;
+    const iconPath = ICONS[iconName];
+    
+    if (iconPath) {
+      try {
+        const response = await fetch(iconPath);
+        const svgContent = await response.text();
+        const dataUrl = `data:image/svg+xml,${encodeURIComponent(svgContent)}`;
+        placeholder.innerHTML = `<img src="${dataUrl}" alt="" loading="lazy" />`;
+      } catch (error) {
+        console.error(`Failed to load icon ${iconName}:`, error);
+        placeholder.innerHTML = `<span style="font-size:20px">⚠️</span>`;
+      }
+    }
+  }
+}
+
+// Load icons when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadNavbarIcons);
+} else {
+  loadNavbarIcons();
 }
