@@ -88,13 +88,9 @@ a {
     transform 180ms ease;
 }
 
-.ws-nav svg,
-.ws-nav img {
+.ws-nav svg {
   width: 24px;
   height: 24px;
-}
-
-.ws-nav svg {
   fill: currentColor;
 }
 
@@ -877,8 +873,7 @@ a {
   color: var(--text);
 }
 
-.pomo-arrow svg,
-.pomo-arrow img {
+.pomo-arrow svg {
   width: 16px;
   height: 16px;
 }
@@ -917,8 +912,7 @@ a {
   color: var(--text);
 }
 
-.pomo-dots svg,
-.pomo-dots img {
+.pomo-dots svg {
   width: 16px;
   height: 16px;
 }
