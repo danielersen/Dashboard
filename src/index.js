@@ -99,11 +99,11 @@ export default {
     }
 
     if (url.pathname.startsWith("/api/")) {
-      // Icons endpoint - serve SVG with cache bypass (no auth required for debug)
+      // Icons endpoint - serve SVG with cache bypass (supports token in URL param)
       if (url.pathname.startsWith("/api/icons/")) {
         const iconName = url.pathname.split('/').pop();
         const iconPath = `/assets/icons/${iconName}`;
-        const response = await env.ASSETS.fetch(new Request(request.url.replace(/\/api\/icons\//, '/assets/icons/'), request));
+        const response = await env.ASSETS.fetch(new Request(request.url.replace(/\/api\/icons\//, '/assets/icons/').replace(/[?&]token=[^&]*/, ''), request));
         
         if (response.ok) {
           const svgContent = await response.text();
