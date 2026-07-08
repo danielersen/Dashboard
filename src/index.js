@@ -99,26 +99,6 @@ export default {
     }
 
     if (url.pathname.startsWith("/api/")) {
-      // Icons endpoint - serve SVG with cache bypass (supports token in URL param)
-      if (url.pathname.startsWith("/api/icons/")) {
-        const iconName = url.pathname.split('/').pop();
-        const iconPath = `/assets/icons/${iconName}`;
-        const response = await env.ASSETS.fetch(new Request(request.url.replace(/\/api\/icons\//, '/assets/icons/').replace(/[?&]token=[^&]*/, ''), request));
-        
-        if (response.ok) {
-          const svgContent = await response.text();
-          return new Response(svgContent, {
-            headers: {
-              "Content-Type": "image/svg+xml; charset=utf-8",
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              ...corsHeaders
-            }
-          });
-        }
-        
-        return new Response("Icon not found", { status: 404, headers: corsHeaders });
-      }
-      
       // Every data route requires a valid server-issued JWT in the
       // Authorization header. /api/config and /api/auth/* are intentionally
       // reachable without one (they bootstrap the login + token exchange), and

@@ -1,4 +1,4 @@
-import { appendAuthParams, logout, ensureSessionToken } from "/lib/auth.js";
+import { appendAuthParams, logout } from "/lib/auth.js";
 
 const NAV_ITEMS = [
   { slug: "home", label: "Home", href: "/pages/home", icon: "home" },
@@ -7,34 +7,18 @@ const NAV_ITEMS = [
   { slug: "files", label: "Files", href: "/pages/files", icon: "database" },
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
-
-// Load SVG files from API endpoint and use URLs directly
-async function loadIcons() {
-  const iconPaths = {
-    home: '/api/icons/home.svg',
-    grid: '/api/icons/grid.svg',
-    sparkles: '/api/icons/sparkles.svg',
-    database: '/api/icons/database.svg',
-    wrench: '/api/icons/wrench.svg',
-    settings: '/api/icons/settings.svg',
-    refresh: '/api/icons/refresh.svg',
-    logout: '/api/icons/logout.svg',
-    more: '/api/icons/more.svg',
-    notes: '/api/icons/notes.svg',
-    calendar: '/api/icons/calendar.svg',
-    homework: '/api/icons/homework.svg',
-    clock: '/api/icons/clock.svg',
-  };
-
-  const sessionToken = await ensureSessionToken();
-  const icons = {};
-  for (const [name, path] of Object.entries(iconPaths)) {
-    icons[name] = path + '?nocache=' + Date.now() + '&token=' + (sessionToken || '');
-  }
-  return icons;
-}
-
-let ICONS = loadIcons();
+ 
+const ICONS = {
+  home: '/assets/icons/home.svg',
+  grid: '/assets/icons/grid.svg',
+  sparkles: '/assets/icons/sparkles.svg',
+  database: '/assets/icons/database.svg',
+  wrench: '/assets/icons/wrench.svg',
+  settings: '/assets/icons/settings.svg',
+  refresh: '/assets/icons/refresh.svg',
+  logout: '/assets/icons/logout.svg',
+  more: '/assets/icons/more.svg',
+};
 
 const NAVBAR_STYLE = `
   :host {
@@ -424,8 +408,7 @@ const NAVBAR_STYLE = `
 `;
 
 function iconFor(name) {
-  // Return placeholder initially, will be replaced after icons load
-  return `<span class="icon-placeholder" data-icon="${name}">Loading...</span>`;
+  return `<img src="${ICONS[name] || ICONS.grid}" alt="" loading="lazy" />`;
 }
 
 const NAVBAR_TEMPLATE = `
