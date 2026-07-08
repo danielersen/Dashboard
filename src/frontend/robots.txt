@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
 
+# Explicitly allow important pages
+Allow: /pages/home
+Allow: /pages/workspace
+Allow: /pages/AI
+
+# Disallow authentication and error pages
+Disallow: /pages/auth
+Disallow: /pages/error-token
+
 Sitemap: https://dashboard.danielersen.workers.dev/sitemap.xml
