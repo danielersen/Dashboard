@@ -157,7 +157,7 @@ export async function callModel(env, model, prompt, options = {}) {
             console.log("Format keys:", Object.keys(format));
             
             // Pass format directly to avoid any variable reassignment issues
-            const aiModel = env.AI.run(model, format);
+            const aiModel = env.AI.run(model, format, { gateway: { id: env.GATEWAY_ID } });
             const response = await aiModel;
             
             console.log("Response received for format:", JSON.stringify(format));
@@ -271,7 +271,7 @@ export async function callModel(env, model, prompt, options = {}) {
       };
       console.log("Using text model format:", input);
       
-      const aiModel = env.AI.run(model, input);
+      const aiModel = env.AI.run(model, input, { gateway: { id: env.GATEWAY_ID } });
       const response = await aiModel;
       
       console.log("Raw Cloudflare AI response:", JSON.stringify(response));
