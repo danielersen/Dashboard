@@ -7,18 +7,40 @@ const NAV_ITEMS = [
   { slug: "files", label: "Files", href: "/pages/files", icon: "database" },
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
- 
-const ICONS = {
-  home: '/assets/home.svg?v=2',
-  grid: '/assets/grid.svg?v=2',
-  sparkles: '/assets/sparkles.svg?v=2',
-  database: '/assets/database.svg?v=2',
-  wrench: '/assets/wrench.svg?v=2',
-  settings: '/assets/settings.svg?v=2',
-  refresh: '/assets/refresh.svg?v=2',
-  logout: '/assets/logout.svg?v=2',
-  more: '/assets/more.svg?v=2',
-};
+
+// Load SVG files and convert to data URLs at runtime
+async function loadIcons() {
+  const iconPaths = {
+    home: '/assets/home.svg',
+    grid: '/assets/grid.svg',
+    sparkles: '/assets/sparkles.svg',
+    database: '/assets/database.svg',
+    wrench: '/assets/wrench.svg',
+    settings: '/assets/settings.svg',
+    refresh: '/assets/refresh.svg',
+    logout: '/assets/logout.svg',
+    more: '/assets/more.svg',
+    notes: '/assets/notes.svg',
+    calendar: '/assets/calendar.svg',
+    homework: '/assets/homework.svg',
+    clock: '/assets/clock.svg',
+  };
+
+  const icons = {};
+  for (const [name, path] of Object.entries(iconPaths)) {
+    try {
+      const response = await fetch(path + '?nocache=' + Date.now());
+      const svg = await response.text();
+      icons[name] = `data:image/svg+xml;base64,${btoa(svg)}`;
+    } catch (error) {
+      console.error(`Failed to load icon ${name}:`, error);
+      icons[name] = path; // Fallback to path
+    }
+  }
+  return icons;
+}
+
+let ICONS = loadIcons();
 
 const NAVBAR_STYLE = `
   :host {
@@ -408,7 +430,8 @@ const NAVBAR_STYLE = `
 `;
 
 function iconFor(name) {
-  return `<img src="${ICONS[name] || ICONS.grid}" alt="" loading="lazy" />`;
+  // Return placeholder initially, will be replaced after icons load
+  return `<span class="icon-placeholder" data-icon="${name}">Loading...</span>`;
 }
 
 const NAVBAR_TEMPLATE = `
@@ -679,6 +702,18 @@ class SiteNavbar extends HTMLElement {
 if (!customElements.get("site-navbar")) {
   customElements.define("site-navbar", SiteNavbar);
 }
+
+// Load icons and replace placeholders
+loadIcons().then(loadedIcons => {
+  ICONS = loadedIcons;
+  const placeholders = document.querySelectorAll('.icon-placeholder');
+  placeholders.forEach(placeholder => {
+    const iconName = placeholder.dataset.icon;
+    if (ICONS[iconName]) {
+      placeholder.innerHTML = `<img src="${ICONS[iconName]}" alt="" loading="lazy" />`;
+    }
+  });
+});
 
 // Load icons via fetch and inject as data URLs
 async function loadNavbarIcons() {
