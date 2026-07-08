@@ -160,6 +160,8 @@ export async function callModel(env, model, prompt, options = {}) {
             const aiModel = env.AI.run(model, format);
             const response = await aiModel;
             
+            console.log("Response received for format:", JSON.stringify(format));
+            
             console.log("Raw Cloudflare AI response type:", typeof response);
             console.log("Response is ReadableStream:", response instanceof ReadableStream);
             
@@ -226,7 +228,8 @@ export async function callModel(env, model, prompt, options = {}) {
               return null;
             }
           } catch (err) {
-            console.log("Error with format:", format, "Error:", err.message);
+            console.log("Error with format:", JSON.stringify(format), "Error:", err.message);
+            console.log("Error stack:", err.stack);
             return null;
           }
         });
