@@ -146,11 +146,21 @@ export default {
     // 🌐 SITE (Cloudflare assets)
     // =========================
     
-    // Sitemap with correct XML content-type
+    // Sitemap with correct XML content-type - bypass cache
     if (url.pathname === "/sitemap.xml") {
-      const assetResponse = await env.ASSETS.fetch(request);
+      const assetUrl = new URL(request.url);
+      assetUrl.pathname = "/sitemap.xml";
+      const assetRequest = new Request(assetUrl, {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache",
+          "Pragma": "no-cache"
+        }
+      });
+      const assetResponse = await env.ASSETS.fetch(assetRequest);
       const newHeaders = new Headers(assetResponse.headers);
       newHeaders.set("Content-Type", "application/xml; charset=utf-8");
+      newHeaders.set("Cache-Control", "public, max-age=3600");
       return new Response(assetResponse.body, {
         status: assetResponse.status,
         headers: newHeaders
