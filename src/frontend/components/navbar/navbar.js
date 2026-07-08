@@ -8,22 +8,22 @@ const NAV_ITEMS = [
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
 
-// Load SVG files and convert to data URLs at runtime
+// Load SVG files from API endpoint and convert to data URLs at runtime
 async function loadIcons() {
   const iconPaths = {
-    home: '/assets/home.svg',
-    grid: '/assets/grid.svg',
-    sparkles: '/assets/sparkles.svg',
-    database: '/assets/database.svg',
-    wrench: '/assets/wrench.svg',
-    settings: '/assets/settings.svg',
-    refresh: '/assets/refresh.svg',
-    logout: '/assets/logout.svg',
-    more: '/assets/more.svg',
-    notes: '/assets/notes.svg',
-    calendar: '/assets/calendar.svg',
-    homework: '/assets/homework.svg',
-    clock: '/assets/clock.svg',
+    home: '/api/icons/home.svg',
+    grid: '/api/icons/grid.svg',
+    sparkles: '/api/icons/sparkles.svg',
+    database: '/api/icons/database.svg',
+    wrench: '/api/icons/wrench.svg',
+    settings: '/api/icons/settings.svg',
+    refresh: '/api/icons/refresh.svg',
+    logout: '/api/icons/logout.svg',
+    more: '/api/icons/more.svg',
+    notes: '/api/icons/notes.svg',
+    calendar: '/api/icons/calendar.svg',
+    homework: '/api/icons/homework.svg',
+    clock: '/api/icons/clock.svg',
   };
 
   const icons = {};
