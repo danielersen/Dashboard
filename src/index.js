@@ -145,6 +145,29 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
+    
+    // Sitemap with correct XML content-type
+    if (url.pathname === "/sitemap.xml") {
+      const assetResponse = await env.ASSETS.fetch(request);
+      const newHeaders = new Headers(assetResponse.headers);
+      newHeaders.set("Content-Type", "application/xml; charset=utf-8");
+      return new Response(assetResponse.body, {
+        status: assetResponse.status,
+        headers: newHeaders
+      });
+    }
+    
+    // Robots.txt with correct content-type
+    if (url.pathname === "/robots.txt") {
+      const assetResponse = await env.ASSETS.fetch(request);
+      const newHeaders = new Headers(assetResponse.headers);
+      newHeaders.set("Content-Type", "text/plain; charset=utf-8");
+      return new Response(assetResponse.body, {
+        status: assetResponse.status,
+        headers: newHeaders
+      });
+    }
+    
     // "/", "/pages" and "/pages/" all land on home. Supabase sends users to
     // "/pages/" after login; serving home there lets the client guard run and
     // bounce to the originally-requested page (post-auth redirect cookie).
