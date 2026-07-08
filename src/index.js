@@ -113,6 +113,26 @@ export default {
         });
       }
       try {
+        // Icons endpoint - serve SVG with cache bypass
+        if (url.pathname.startsWith("/api/icons/")) {
+          const iconName = url.pathname.split('/').pop();
+          const iconPath = `/assets/icons/${iconName}`;
+          const response = await env.ASSETS.fetch(new Request(request.url.replace(/\/api\/icons\//, '/assets/icons/'), request));
+          
+          if (response.ok) {
+            const svgContent = await response.text();
+            return new Response(svgContent, {
+              headers: {
+                "Content-Type": "image/svg+xml; charset=utf-8",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                ...corsHeaders
+              }
+            });
+          }
+          
+          return new Response("Icon not found", { status: 404, headers: corsHeaders });
+        }
+        
         // Ecole directe paths
         let resp;
         if (url.pathname.startsWith("/api/ed/")) {
@@ -121,8 +141,6 @@ export default {
           resp = await AIfunction(env, url.pathname.slice("/api/ai/".length), method, headers, body);
         } else if (url.pathname.startsWith("/api/pomodoro/")) {
           resp = await Pomodoro(env, url.pathname.slice("/api/pomodoro/".length), method, body);
-        } else if (url.pathname.startsWith("/api/cache/")) {
-          resp = await Cache(url.pathname.slice("/api/cache/".length), method, body)
         };
         // Return response
         return new Response(JSON.stringify({
@@ -145,26 +163,6 @@ export default {
     // =========================
     // 🌐 SITE (Cloudflare assets)
     // =========================
-    
-    // API endpoint to serve SVG icons with cache bypass
-    if (url.pathname.startsWith("/api/icons/")) {
-      const iconName = url.pathname.split('/').pop();
-      const iconPath = `/assets/${iconName}`;
-      const response = await env.ASSETS.fetch(new Request(request.url.replace(/\/api\/icons\//, '/assets/'), request));
-      
-      if (response.ok) {
-        const svgContent = await response.text();
-        return new Response(svgContent, {
-          headers: {
-            "Content-Type": "image/svg+xml; charset=utf-8",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Access-Control-Allow-Origin": "*"
-          }
-        });
-      }
-      
-      return new Response("Icon not found", { status: 404 });
-    }
     
     // Sitemap served from file
     if (url.pathname === "/sitemap.xml") {
