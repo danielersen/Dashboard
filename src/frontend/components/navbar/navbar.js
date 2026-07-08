@@ -9,16 +9,16 @@ const NAV_ITEMS = [
 ];
  
 const ICONS = {
-  home: '/assets/icons/home.svg',
-  grid: '/assets/icons/grid.svg',
-  sparkles: '/assets/icons/sparkles.svg',
-  database: '/assets/icons/database.svg',
-  wrench: '/assets/icons/wrench.svg',
-  settings: '/assets/icons/settings.svg',
-  refresh: '/assets/icons/refresh.svg',
-  logout: '/assets/icons/logout.svg',
-  more: '/assets/icons/more.svg',
-  chat: '/assets/icons/chat.svg',
+  home: '/frontend/assets/icons/home.svg',
+  grid: '/frontend/assets/icons/grid.svg',
+  sparkles: '/frontend/assets/icons/sparkles.svg',
+  database: '/frontend/assets/icons/database.svg',
+  wrench: '/frontend/assets/icons/wrench.svg',
+  settings: '/frontend/assets/icons/settings.svg',
+  refresh: '/frontend/assets/icons/refresh.svg',
+  logout: '/frontend/assets/icons/logout.svg',
+  more: '/frontend/assets/icons/more.svg',
+  chat: '/frontend/assets/icons/chat.svg',
 };
 
 const NAVBAR_STYLE = `
