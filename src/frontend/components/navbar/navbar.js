@@ -9,15 +9,15 @@ const NAV_ITEMS = [
 ];
  
 const ICONS = {
-  home: '/assets/icons/home.svg',
-  grid: '/assets/icons/grid.svg',
-  sparkles: '/assets/icons/sparkles.svg',
-  database: '/assets/icons/database.svg',
-  wrench: '/assets/icons/wrench.svg',
-  settings: '/assets/icons/settings.svg',
-  refresh: '/assets/icons/refresh.svg',
-  logout: '/assets/icons/logout.svg',
-  more: '/assets/icons/more.svg',
+  home: '/assets/home.svg',
+  grid: '/assets/grid.svg',
+  sparkles: '/assets/sparkles.svg',
+  database: '/assets/database.svg',
+  wrench: '/assets/wrench.svg',
+  settings: '/assets/settings.svg',
+  refresh: '/assets/refresh.svg',
+  logout: '/assets/logout.svg',
+  more: '/assets/more.svg',
 };
 
 const NAVBAR_STYLE = `
