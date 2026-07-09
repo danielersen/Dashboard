@@ -32,7 +32,7 @@ const MODEL_TYPES = {
   "summarization": ["basic", "search_web", "reasoning"],
 };
 
-// limits handled in src/backend/AI/limits.js
+// limits handled in src/backend/ai/limits.js
 
 // Function to extract brand from model ID
 function extractBrand(modelId) {

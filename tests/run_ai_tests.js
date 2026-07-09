@@ -1,5 +1,5 @@
-import { callModel } from "../src/backend/AI/core.js";
-import { AIfunction } from "../src/backend/AI/index.js";
+import { callModel } from "../src/backend/ai/core.js";
+import { AIfunction } from "../src/backend/ai/index.js";
 
 (async () => {
   const env = {
