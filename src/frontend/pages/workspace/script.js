@@ -26,6 +26,7 @@ const state = {
   pomoSubjectsOriginal: null,
   pomoDirty: false,
   pomoChecked: {},
+  pomoAllDays: {}, // Cache pour tous les jours
   pomoTimerCount: 0,
   pomoTimerRunning: false,
   pomoTimerInterval: null,
@@ -737,7 +738,7 @@ function pomoUpdateCounterDisplay() {
 function pomoChangeDay(offset) {
   state.pomoDayIndex = ((state.pomoDayIndex + offset) % 7 + 7) % 7;
   state.pomoDirty = false;
-  pomoLoadSubjects();
+  pomoLoadSubjects(true); // Silent load from cache first
 }
 
 function pomoUpdateDayLabel() {
@@ -749,21 +750,77 @@ function pomoUpdateDayLabel() {
 }
 
 /* --- Subjects --- */
-async function pomoLoadSubjects() {
-  pomoUpdateDayLabel();
-  const listEl = document.querySelector("[data-pomo-subjects]");
-  if (listEl) listEl.innerHTML = `<p class="state-msg">Loading subjects\u2026</p>`;
+async function pomoLoadAllDays() {
   try {
-    const result = await pomoPost("read-subjects", { day: POMO_DAYS[state.pomoDayIndex] });
+    const result = await pomoPost("read-all-days", {});
+    if (result?.allDays && typeof result.allDays === "object") {
+      state.pomoAllDays = result.allDays;
+    }
+  } catch (error) {
+    console.error("Failed to load all days:", error);
+    state.pomoAllDays = {};
+  }
+}
+
+async function pomoLoadSubjects(silent = false) {
+  pomoUpdateDayLabel();
+  const currentDay = POMO_DAYS[state.pomoDayIndex];
+  
+  // Essayer d'abord depuis le cache
+  if (state.pomoAllDays[currentDay]) {
+    state.pomoSubjects = state.pomoAllDays[currentDay].map(s => ({ ...s }));
+    state.pomoSubjectsOriginal = JSON.stringify(state.pomoAllDays[currentDay]);
+    state.pomoDirty = false;
+    pomoRenderSubjects();
+    
+    // Rechargement silencieux en arrière-plan
+    if (!silent) {
+      pomoSilentRefreshDay(currentDay);
+    }
+    return;
+  }
+  
+  const listEl = document.querySelector("[data-pomo-subjects]");
+  if (!silent && listEl) listEl.innerHTML = `<p class="state-msg">Loading subjects\u2026</p>`;
+  
+  try {
+    const result = await pomoPost("read-subjects", { day: currentDay });
     const subjects = Array.isArray(result?.subjects) ? result.subjects : [];
     state.pomoSubjects = subjects.map(s => ({ ...s }));
     state.pomoSubjectsOriginal = JSON.stringify(subjects);
     state.pomoDirty = false;
+    
+    // Mettre à jour le cache
+    state.pomoAllDays[currentDay] = subjects;
   } catch {
     state.pomoSubjects = [];
     state.pomoSubjectsOriginal = "[]";
+    state.pomoAllDays[currentDay] = [];
   }
   pomoRenderSubjects();
+}
+
+async function pomoSilentRefreshDay(day) {
+  try {
+    const result = await pomoPost("read-subjects", { day });
+    const subjects = Array.isArray(result?.subjects) ? result.subjects : [];
+    
+    // Mettre à jour le cache si le jour est affiché
+    if (day === POMO_DAYS[state.pomoDayIndex]) {
+      const originalChanged = JSON.stringify(subjects) !== state.pomoSubjectsOriginal;
+      if (originalChanged) {
+        state.pomoSubjects = subjects.map(s => ({ ...s }));
+        state.pomoSubjectsOriginal = JSON.stringify(subjects);
+        state.pomoDirty = false;
+        pomoRenderSubjects();
+      }
+    }
+    
+    // Toujours mettre à jour le cache
+    state.pomoAllDays[day] = subjects;
+  } catch (error) {
+    console.error(`Silent refresh failed for ${day}:`, error);
+  }
 }
 
 function pomoFlattenSubjects() {
@@ -912,21 +969,27 @@ async function pomoSave() {
     }
     state.pomoSubjectsOriginal = JSON.stringify(state.pomoSubjects);
     state.pomoDirty = false;
+    
+    // Mettre à jour le cache local
+    state.pomoAllDays[POMO_DAYS[state.pomoDayIndex]] = state.pomoSubjects;
+    
     if (saveBtn) saveBtn.textContent = "Saved!";
-    setTimeout(() => { if (saveBtn) saveBtn.textContent = "Save"; }, 1500);
+    setTimeout(() => { 
+      if (saveBtn) {
+        saveBtn.textContent = "Save";
+        saveBtn.disabled = false;
+      }
+    }, 1500);
   } catch (err) {
     if (saveBtn) saveBtn.textContent = "Error!";
-    setTimeout(() => { if (saveBtn) saveBtn.textContent = "Save"; }, 2000);
+    setTimeout(() => { 
+      if (saveBtn) {
+        saveBtn.textContent = "Save";
+        saveBtn.disabled = false;
+      }
+    }, 2000);
     console.error("Pomodoro save failed:", err);
   }
-
-  setTimeout(() => {
-    if (!saveBtn) return;
-    if (Date.now() >= state.pomoSaveCooldown) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = "Save";
-    }
-  }, 5000);
 }
 
 function pomoCloseMenuOnOutsideClick(e) {
@@ -973,6 +1036,9 @@ function initPomodoro() {
   if (addBtn) addBtn.addEventListener("click", pomoAddSubject);
   if (addInput) addInput.addEventListener("keydown", (e) => { if (e.key === "Enter") pomoAddSubject(); });
   if (saveBtn) saveBtn.addEventListener("click", pomoSave);
+
+  // Charger tous les jours au démarrage
+  pomoLoadAllDays();
 
   if (subjectsList) {
     subjectsList.addEventListener("change", async (e) => {
