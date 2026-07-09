@@ -6,8 +6,24 @@ const VALID_DAYS = [
 ];
 const STATE_FILE = "pomodoro/state.json";
 const STATE_CACHE_KEY = "pomodoro_state";
+const STORAGE_CACHE_KEY = "pomodoro_storage";
 const CACHE_PREFIX = "pomodoro_day_";
 const CACHE_TTL = 3600; // 1 heure
+
+// Fonction pour établir la connexion MEGA et la mettre en cache
+export async function loginMega(env) {
+  const { getClient } = await import("./mega.js");
+  const storage = await getClient(env);
+  
+  // Mettre la connexion en cache pendant 30 minutes
+  try {
+    await setCacheValue(STORAGE_CACHE_KEY, "connected", 1800);
+  } catch (e) {
+    console.error("Failed to cache storage connection:", e);
+  }
+  
+  return { connected: true };
+}
 
 // Fonction pour récupérer tous les jours en utilisant le cache
 export async function readAllDays(env) {
@@ -242,10 +258,18 @@ export async function Pomodoro(env, subpath, method, body) {
 
   // Timeout global pour éviter les dépassements de ressources
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 20000);
+    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 10000);
   });
 
   try {
+    if (subpath === "login") {
+      const result = await Promise.race([
+        loginMega(env),
+        timeoutPromise
+      ]);
+      return result;
+    }
+
     if (subpath === "read-subjects") {
       const result = await Promise.race([
         readDay(env, body?.day),

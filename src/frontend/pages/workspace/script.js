@@ -750,7 +750,19 @@ function pomoUpdateDayLabel() {
 }
 
 /* --- Subjects --- */
+async function pomoLoginMega() {
+  try {
+    await pomoPost("login", {});
+    console.log("MEGA login successful");
+  } catch (error) {
+    console.error("MEGA login failed:", error);
+  }
+}
+
 async function pomoLoadAllDays() {
+  // D'abord login à MEGA
+  await pomoLoginMega();
+  
   try {
     const result = await pomoPost("read-all-days", {});
     if (result?.allDays && typeof result.allDays === "object") {
@@ -758,7 +770,11 @@ async function pomoLoadAllDays() {
     }
   } catch (error) {
     console.error("Failed to load all days:", error);
+    // En cas d'erreur, initialiser avec des tableaux vides
     state.pomoAllDays = {};
+    for (const day of POMO_DAYS) {
+      state.pomoAllDays[day] = [];
+    }
   }
 }
 
