@@ -100,6 +100,11 @@ async function getOrCreateFolder(storage, folderPath) {
   const segments = normalized.split("/").filter(Boolean);
   let current = storage.root;
 
+  // Vérifier que storage.root existe
+  if (!current) {
+    throw new Error("Storage root not available");
+  }
+
   for (const segment of segments) {
     // Timeout pour éviter les blocages sur children
     const children = await withTimeout(
@@ -117,6 +122,11 @@ async function getOrCreateFolder(storage, folderPath) {
       );
     }
     current = folder;
+    
+    // Vérifier que current n'est pas null après l'itération
+    if (!current) {
+      throw new Error(`Failed to navigate to folder: ${segment}`);
+    }
   }
 
   return current;
@@ -129,6 +139,11 @@ async function getFolderIfExists(storage, folderPath) {
   const segments = normalized.split("/").filter(Boolean);
   let current = storage.root;
 
+  // Vérifier que storage.root existe
+  if (!current) {
+    throw new Error("Storage root not available");
+  }
+
   for (const segment of segments) {
     // Timeout pour éviter les blocages sur children
     const children = await withTimeout(
@@ -140,6 +155,11 @@ async function getFolderIfExists(storage, folderPath) {
     const folder = children.find(child => child.name === segment && child.directory);
     if (!folder) return null;
     current = folder;
+    
+    // Vérifier que current n'est pas null après l'itération
+    if (!current) {
+      return null;
+    }
   }
 
   return current;
