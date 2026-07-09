@@ -144,6 +144,26 @@ export default {
     // 🌐 SITE (Cloudflare assets)
     // =========================
     
+    // Add CORS headers for assets to allow browser loading
+    if (url.pathname.startsWith("/assets/")) {
+      const assetResponse = await env.ASSETS.fetch(request);
+      
+      if (assetResponse.ok) {
+        const content = await assetResponse.text();
+        return new Response(content, {
+          headers: {
+            "Content-Type": assetResponse.headers.get("Content-Type") || "application/octet-stream",
+            "Cache-Control": "public, max-age=3600",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+            "Access-Control-Allow-Headers": "*"
+          }
+        });
+      }
+      
+      return assetResponse;
+    }
+    
     // Sitemap served from file
     if (url.pathname === "/sitemap.xml") {
       const sitemapResponse = await env.ASSETS.fetch(new Request(request.url.replace('/sitemap.xml', '/sitemap.xml'), request));
