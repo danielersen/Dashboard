@@ -7,6 +7,17 @@ const state = {
   categorizedModels: {},
   currentSection: "ai",
   loading: false,
+  selectedCategory: "basic",
+  selectedCompany: null,
+  selectedModel: null,
+};
+
+// Mapping from frontend category names to backend category names
+const CATEGORY_ALIASES = {
+  "ai": "basic",
+  "search-web": "search_web",
+  "reasoning": "reasonning",
+  "pictures": "pictures",
 };
 
 /* ===================== API ===================== */
@@ -77,9 +88,11 @@ sidebarButtons.forEach((btn) => {
 async function loadModels() {
   try {
     const data = await aiGet("categories");
+    console.log("Loaded models data:", data);
     if (data && data.availableModels) {
       state.models = data.availableModels;
       state.categorizedModels = data.categorizedModels || {};
+      console.log("Categorized models:", state.categorizedModels);
       populateModelSelects();
     }
   } catch (error) {
@@ -89,56 +102,477 @@ async function loadModels() {
 }
 
 function populateModelSelects() {
-  const categories = ["ai", "search-web", "reasoning", "pictures"];
+  const categorySelect = document.getElementById("category-select");
+  const companySelect = document.getElementById("company-select");
+  const modelSelect = document.getElementById("model-select");
   
-  categories.forEach(category => {
-    const select = document.querySelector(`#${category} [data-model-select]`);
-    if (!select) return;
+  if (!categorySelect || !companySelect || !modelSelect) return;
+  
+  // Setup category dropdown
+  setupCategoryDropdown(categorySelect);
+  
+  // Setup company dropdown
+  setupCompanyDropdown(companySelect);
+  
+  // Setup model dropdown
+  setupModelDropdown(modelSelect);
+  
+  // Initial population
+  populateCompanies();
+}
+
+function setupCategoryDropdown(select) {
+  const trigger = select.querySelector(".custom-select-trigger");
+  const optionsContainer = select.querySelector(".custom-options");
+  
+  select.addEventListener("click", (e) => {
+    if (e.target.closest(".custom-option")) return;
     
-    select.innerHTML = "";
-    
-    // Get models for this specific category
-    const categoryModels = state.categorizedModels[category] || [];
-    
-    if (categoryModels.length === 0) {
-      const option = document.createElement("option");
-      option.value = "";
-      option.textContent = "No models available for this category";
-      select.appendChild(option);
-      return;
-    }
-    
-    categoryModels.forEach(model => {
-      const option = document.createElement("option");
-      option.value = model.id || model.model;
-      option.textContent = model.name || model.model;
-      option.dataset.consumption = model.consumption || "unknown";
-      option.dataset.description = model.description || "";
-      select.appendChild(option);
+    // Close all other dropdowns
+    document.querySelectorAll(".custom-select.open").forEach(openSelect => {
+      if (openSelect !== select) {
+        openSelect.classList.remove("open");
+      }
     });
+    
+    select.classList.toggle("open");
+  });
+  
+  optionsContainer.querySelectorAll(".custom-option").forEach(option => {
+    option.addEventListener("click", () => {
+      optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+      option.classList.add("selected");
+      trigger.textContent = option.textContent;
+      state.selectedCategory = option.dataset.value;
+      state.selectedModel = null; // Reset selected model when category changes
+      select.classList.remove("open");
+      populateCompanies();
+    });
+  });
+  
+  // Set default
+  const defaultOption = optionsContainer.querySelector('[data-value="basic"]');
+  if (defaultOption) {
+    defaultOption.classList.add("selected");
+  }
+}
 
-    // Set first model as default
-    if (categoryModels.length > 0) {
-      select.value = categoryModels[0].id || categoryModels[0].model;
-      // Force immediate update
-      setTimeout(() => updateConsumptionDisplay(select), 0);
+function setupCompanyDropdown(select) {
+  const trigger = select.querySelector(".custom-select-trigger");
+  const optionsContainer = select.querySelector(".custom-options");
+  
+  select.addEventListener("click", (e) => {
+    if (e.target.closest(".custom-option")) return;
+    
+    // Close all other dropdowns
+    document.querySelectorAll(".custom-select.open").forEach(openSelect => {
+      if (openSelect !== select) {
+        openSelect.classList.remove("open");
+      }
+    });
+    
+    select.classList.toggle("open");
+  });
+  
+  document.addEventListener("click", (e) => {
+    if (!select.contains(e.target)) {
+      select.classList.remove("open");
     }
-
-    // Add change listener
-    select.addEventListener("change", () => updateConsumptionDisplay(select));
   });
 }
 
-function updateConsumptionDisplay(select) {
-  const selectedOption = select.selectedOptions[0];
-  const consumptionDisplay = select.parentElement.querySelector("[data-consumption]");
-  if (selectedOption && consumptionDisplay) {
-    const consumption = selectedOption.dataset.consumption || "unknown";
-    const description = selectedOption.dataset.description || "";
-    const displayText = description 
-      ? `Consumption: ${consumption} • ${description}`
-      : `Consumption: ${consumption}`;
-    consumptionDisplay.textContent = displayText;
+function setupModelDropdown(select) {
+  const trigger = select.querySelector(".custom-select-trigger");
+  const optionsContainer = select.querySelector(".custom-options");
+  
+  select.addEventListener("click", (e) => {
+    if (e.target.closest(".custom-option")) return;
+    
+    // Close all other dropdowns
+    document.querySelectorAll(".custom-select.open").forEach(openSelect => {
+      if (openSelect !== select) {
+        openSelect.classList.remove("open");
+      }
+    });
+    
+    select.classList.toggle("open");
+  });
+  
+  document.addEventListener("click", (e) => {
+    if (!select.contains(e.target)) {
+      select.classList.remove("open");
+    }
+  });
+}
+
+function populateCompanies() {
+  const companySelect = document.getElementById("company-select");
+  if (!companySelect) return;
+  
+  const trigger = companySelect.querySelector(".custom-select-trigger");
+  const optionsContainer = companySelect.querySelector(".custom-options");
+  
+  optionsContainer.innerHTML = "";
+  
+  console.log("Populating companies for category:", state.selectedCategory);
+  const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+  console.log("Category models:", categoryModels);
+  
+  if (categoryModels.length === 0) {
+    trigger.textContent = "No models available";
+    return;
+  }
+  
+  const companies = [...new Set(categoryModels.map(model => model.brand || "Unknown"))].sort();
+  console.log("Available companies:", companies);
+  
+  companies.forEach(company => {
+    const option = document.createElement("div");
+    option.className = "custom-option";
+    option.textContent = company;
+    option.dataset.company = company;
+    optionsContainer.appendChild(option);
+    
+    option.addEventListener("click", () => {
+      optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+      option.classList.add("selected");
+      trigger.textContent = company;
+      state.selectedCompany = company;
+      state.selectedModel = null; // Reset selected model when company changes
+      companySelect.classList.remove("open");
+      populateModels();
+    });
+  });
+  
+  // Select first company by default
+  if (companies.length > 0) {
+    const firstOption = optionsContainer.querySelector(".custom-option");
+    if (firstOption) {
+      firstOption.classList.add("selected");
+      trigger.textContent = companies[0];
+      state.selectedCompany = companies[0];
+      state.selectedModel = null; // Reset selected model when category changes
+      populateModels();
+    }
+  }
+}
+
+function populateModels() {
+  const modelSelect = document.getElementById("model-select");
+  if (!modelSelect) return;
+  
+  const trigger = modelSelect.querySelector(".custom-select-trigger");
+  const optionsContainer = modelSelect.querySelector(".custom-options");
+  
+  optionsContainer.innerHTML = "";
+  
+  console.log("Populating models for category:", state.selectedCategory, "company:", state.selectedCompany);
+  const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+  console.log("Category models:", categoryModels);
+  const companyModels = categoryModels.filter(model => (model.brand || "Unknown") === state.selectedCompany);
+  console.log("Company models:", companyModels);
+  
+  if (companyModels.length === 0) {
+    trigger.textContent = "No models for this company";
+    return;
+  }
+  
+  const sortedModels = [...companyModels].sort((a, b) => {
+    const scoreA = parseInt(a.consumption) || 0;
+    const scoreB = parseInt(b.consumption) || 0;
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    const nameA = (a.name || "").toLowerCase();
+    const nameB = (b.name || "").toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+  
+  console.log("Sorted models:", sortedModels);
+  
+  sortedModels.forEach(model => {
+    const option = document.createElement("div");
+    option.className = "custom-option";
+    const consumptionScore = model.consumption || 0;
+    const percentage = Math.round((consumptionScore / 20) * 100);
+    
+    option.innerHTML = `
+      <span class="custom-option-name">${model.name || model.model}</span>
+      <span class="custom-option-right">
+        <span class="custom-option-score">${percentage}%</span>
+        <svg class="custom-option-icon" width="8" height="8" viewBox="0 0 24 24" fill="white">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </span>
+    `;
+    option.dataset.value = model.id || model.model;
+    option.dataset.consumption = consumptionScore;
+    option.dataset.description = model.description || "";
+    optionsContainer.appendChild(option);
+    
+    option.addEventListener("click", () => {
+      optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+      option.classList.add("selected");
+      trigger.textContent = model.name || model.model;
+      state.selectedModel = model.id || model.model;
+      modelSelect.classList.remove("open");
+      updateConsumptionDisplay(consumptionScore);
+    });
+  });
+  
+  // Select first model by default
+  if (sortedModels.length > 0) {
+    const firstOption = optionsContainer.querySelector(".custom-option");
+    if (firstOption) {
+      firstOption.classList.add("selected");
+      trigger.textContent = sortedModels[0].name || sortedModels[0].model;
+      state.selectedModel = sortedModels[0].id || sortedModels[0].model;
+      updateConsumptionDisplay(sortedModels[0].consumption || 0);
+    }
+  }
+}
+
+function updateConsumptionDisplay(consumptionScore) {
+  const consumptionDisplay = document.getElementById("consumption-display");
+  if (!consumptionDisplay) return;
+  
+  const barWidth = Math.min(100, (consumptionScore / 20) * 100);
+  const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
+  
+  consumptionDisplay.innerHTML = `
+    <div class="consumption-bar-container">
+      <div class="consumption-bar-fill" style="width: ${barWidth}%; background: ${barColor};"></div>
+    </div>
+  `;
+}
+
+function setupPromptBar() {
+  const promptInput = document.getElementById("prompt-input");
+  const submitButton = document.getElementById("prompt-submit");
+  
+  if (!promptInput || !submitButton) return;
+  
+  // Auto-resize textarea
+  promptInput.addEventListener("input", () => {
+    promptInput.style.height = "auto";
+    promptInput.style.height = Math.min(promptInput.scrollHeight, 200) + "px";
+  });
+  
+  // Handle keyboard shortcuts
+  promptInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl+Enter or Cmd+Enter to submit
+        e.preventDefault();
+        submitPrompt();
+      }
+      // Regular Enter just goes to new line (default behavior)
+    }
+  });
+  
+  // Submit on button click
+  submitButton.addEventListener("click", () => {
+    submitPrompt();
+  });
+}
+
+function submitPrompt() {
+  const promptInput = document.getElementById("prompt-input");
+  const prompt = promptInput.value.trim();
+  
+  if (!prompt) return;
+  
+  if (!state.selectedModel) {
+    console.error("No model selected");
+    return;
+  }
+  
+  console.log("Selected model:", state.selectedModel);
+  console.log("Selected category:", state.selectedCategory);
+  
+  // Hide selector bar
+  const selectorBar = document.getElementById("selector-bar");
+  if (selectorBar) {
+    selectorBar.style.display = "none";
+  }
+  
+  // Display user message
+  displayUserMessage(prompt);
+  
+  // Clear input
+  promptInput.value = "";
+  promptInput.style.height = "auto";
+  
+  // Send to API
+  sendToAPI(prompt);
+}
+
+function displayUserMessage(message) {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "chat-message user";
+  messageDiv.innerHTML = `
+    <div class="chat-bubble">${escapeHtml(message)}</div>
+  `;
+  chatContainer.appendChild(messageDiv);
+  
+  // Smooth scroll to bottom
+  requestAnimationFrame(() => {
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
+      behavior: "smooth"
+    });
+  });
+}
+
+function displayAIMessage(message, isImage = false) {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "chat-message ai";
+  
+  const bubble = document.createElement("div");
+  bubble.className = "chat-bubble markdown-content";
+  messageDiv.appendChild(bubble);
+  chatContainer.appendChild(messageDiv);
+  
+  // If this is an image response, display it as an image
+  if (isImage && message) {
+    // Check if message is already a data URI
+    const dataURI = message.startsWith('data:') ? message : `data:image/jpeg;charset=utf-8;base64,${message}`;
+    bubble.innerHTML = `<img src="${dataURI}" alt="Generated image" style="max-width: 100%; border-radius: 8px;" />`;
+    
+    // Scroll to bottom
+    requestAnimationFrame(() => {
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: "smooth"
+      });
+    });
+    return;
+  }
+  
+  // Otherwise, use typewriter effect for text
+  let index = 0;
+  const speed = 15; // 15ms per character - fast but visible
+  
+  function typeWriter() {
+    if (index < message.length) {
+      const currentText = message.substring(0, index + 1);
+      
+      // Parse markdown for current text
+      let parsedText = currentText;
+      if (typeof marked !== 'undefined') {
+        parsedText = marked.parse(currentText);
+      }
+      
+      bubble.innerHTML = parsedText;
+      index++;
+      
+      // Scroll to bottom as we type
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: "auto"
+      });
+      
+      setTimeout(typeWriter, speed);
+    }
+  }
+  
+  typeWriter();
+}
+
+function displayLoading() {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "chat-message ai loading";
+  messageDiv.id = "loading-message";
+  messageDiv.innerHTML = `
+    <div class="chat-bubble">
+      <div class="loading-dot"></div>
+    </div>
+  `;
+  chatContainer.appendChild(messageDiv);
+  
+  // Smooth scroll to bottom
+  requestAnimationFrame(() => {
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
+      behavior: "smooth"
+    });
+  });
+}
+
+function removeLoading() {
+  const loadingMessage = document.getElementById("loading-message");
+  if (loadingMessage) {
+    loadingMessage.remove();
+  }
+}
+
+async function sendToAPI(prompt) {
+  displayLoading();
+  
+  try {
+    const response = await authedFetch(`${AI_BASE}/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        model: state.selectedModel,
+        category: state.selectedCategory
+      })
+    });
+    
+    console.log("API response status:", response.status);
+    const data = await response.json();
+    console.log("API response data:", data);
+    removeLoading();
+    
+    let content = null;
+    let isImage = false;
+    
+    // Check if this is an image response from pictures category
+    if (data.resp?.result?.isImage) {
+      isImage = true;
+      content = data.resp.result.imageData || data.resp.result.response;
+    } else if (data.resp?.result?.response) {
+      const responseStr = data.resp.result.response;
+      // Check if response is a JSON string
+      try {
+        const parsedResponse = JSON.parse(responseStr);
+        if (parsedResponse.choices && parsedResponse.choices[0]?.message?.content) {
+          content = parsedResponse.choices[0].message.content;
+        } else {
+          content = responseStr;
+        }
+      } catch {
+        // Not a JSON string, use as-is
+        content = responseStr;
+      }
+    } else if (data.response) {
+      content = data.response;
+    } else if (data.error) {
+      displayAIMessage(`Error: ${data.error}`);
+      return;
+    } else if (data.result || data.output || data.text || data.message) {
+      content = data.result || data.output || data.text || data.message;
+    }
+    
+    if (content) {
+      displayAIMessage(content, isImage);
+    } else {
+      displayAIMessage("No response received. Data: " + JSON.stringify(data));
+    }
+  } catch (error) {
+    removeLoading();
+    console.error("API error:", error);
+    displayAIMessage(`Error: ${error.message}`);
   }
 }
 
@@ -219,12 +653,12 @@ function setupPromptHandlers() {
   categories.forEach(category => {
     const promptInput = document.querySelector(`#${category} [data-prompt]`);
     const submitButton = document.querySelector(`#${category} [data-submit]`);
-    const modelSelect = document.querySelector(`#${category} [data-model-select]`);
+    const modelSelect = document.querySelector(`#${category}-model-select`);
 
     if (promptInput && submitButton && modelSelect) {
       submitButton.addEventListener("click", () => {
         const prompt = promptInput.value;
-        const model = modelSelect.value;
+        const model = modelSelect.dataset.selectedValue || "";
         handlePrompt(category, prompt, model);
       });
 
@@ -232,7 +666,7 @@ function setupPromptHandlers() {
       promptInput.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.key === "Enter") {
           const prompt = promptInput.value;
-          const model = modelSelect.value;
+          const model = modelSelect.dataset.selectedValue || "";
           handlePrompt(category, prompt, model);
         }
       });
@@ -243,7 +677,7 @@ function setupPromptHandlers() {
 /* ===================== INITIALIZATION ===================== */
 async function init() {
   await loadModels();
-  setupPromptHandlers();
+  setupPromptBar();
 }
 
 // Start initialization when DOM is ready
