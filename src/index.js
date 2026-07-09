@@ -149,10 +149,13 @@ export default {
       const assetResponse = await env.ASSETS.fetch(request);
       
       if (assetResponse.ok) {
-        const content = await assetResponse.text();
-        return new Response(content, {
+        // For SVG files, serve with correct content-type
+        const isSvg = url.pathname.endsWith('.svg');
+        const contentType = isSvg ? 'image/svg+xml; charset=utf-8' : (assetResponse.headers.get("Content-Type") || "application/octet-stream");
+        
+        return new Response(assetResponse.body, {
           headers: {
-            "Content-Type": assetResponse.headers.get("Content-Type") || "application/octet-stream",
+            "Content-Type": contentType,
             "Cache-Control": "public, max-age=3600",
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET",
