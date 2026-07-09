@@ -2,8 +2,8 @@ import { Storage } from "megajs";
 
 // Cache des connexions pour éviter trop de logins
 const connectionCache = new Map();
-const CACHE_TTL = 2 * 60 * 1000; // 2 minutes (réduit pour économiser la mémoire)
-const MAX_CACHE_SIZE = 2; // Maximum 2 connexions simultanées
+const CACHE_TTL = 1 * 60 * 1000; // 1 minute (très réduit pour économiser la mémoire)
+const MAX_CACHE_SIZE = 1; // Maximum 1 connexion simultanée
 
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
@@ -24,7 +24,7 @@ function withTimeout(promise, ms, message) {
 }
 
 // Exponential backoff pour éviter les blocages
-async function retryOperation(operation, attempts = 3, baseTimeoutMs = 3000, baseDelayMs = 300) {
+async function retryOperation(operation, attempts = 2, baseTimeoutMs = 1500, baseDelayMs = 50) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -71,17 +71,18 @@ async function getClient(env) {
     connectionCache.delete(oldestKey);
   }
 
-  // Créer une nouvelle connexion avec optimisations de performance
+  // Créer une nouvelle connexion avec optimisations de performance maximales
   const storage = new Storage({ 
     email, 
     password,
     userAgent: "DashboardWorker/1.0", // UserAgent personnalisé pour éviter le blocage
     keepalive: false, // Désactivé pour économiser les ressources
     autoload: false, // Désactivé pour éviter de charger toute la structure
-    autologin: true // Garder le login automatique
+    autologin: true, // Garder le login automatique
+    // Autres optimisations potentielles selon la doc MEGA
   });
   
-  await withTimeout(storage.ready, 15000, "Mega login timed out"); // Timeout réduit
+  await withTimeout(storage.ready, 3000, "Mega login timed out"); // Timeout ultra-réduit
   
   // Mettre en cache
   connectionCache.set(cacheKey, {
@@ -145,15 +146,15 @@ export async function megaRead(env, path, storage = null) {
     try {
       const file = storageInstance.root.navigate(fullPath);
       if (file && !file.directory) {
-        // Optimisations de download selon la doc MEGA
+        // Optimisations de download ultra-rapides
         const buffer = await withTimeout(
           file.downloadBuffer({
-            maxConnections: 2, // Réduit pour économiser les ressources
-            initialChunkSize: 65536, // 64KB au lieu de 128KB
-            chunkSizeIncrement: 65536, // 64KB au lieu de 128KB
-            maxChunkSize: 524288, // 512KB au lieu de 1MB
+            maxConnections: 1, // 1 connexion unique pour minimiser la charge
+            initialChunkSize: 16384, // 16KB encore plus petit
+            chunkSizeIncrement: 16384, // 16KB incréments
+            maxChunkSize: 131072, // 128KB max
           }), 
-          10000, 
+          3000, 
           `Mega download timed out for ${fullPath}`
         );
         const text = Buffer.from(buffer).toString("utf8");
@@ -184,12 +185,12 @@ export async function megaRead(env, path, storage = null) {
 
     const buffer = await withTimeout(
       fileNode.downloadBuffer({
-        maxConnections: 2,
-        initialChunkSize: 65536,
-        chunkSizeIncrement: 65536,
-        maxChunkSize: 524288,
+        maxConnections: 1,
+        initialChunkSize: 16384,
+        chunkSizeIncrement: 16384,
+        maxChunkSize: 131072,
       }), 
-      10000, 
+      3000, 
       `Mega download timed out for ${fullPath}`
     );
     const text = Buffer.from(buffer).toString("utf8");
@@ -198,7 +199,7 @@ export async function megaRead(env, path, storage = null) {
     } catch {
       return text;
     }
-  }, 4, 10000, 500);
+  }, 2, 3000, 50);
 }
 
 export async function megaWrite(env, path, body, storage = null) {
@@ -221,28 +222,28 @@ export async function megaWrite(env, path, body, storage = null) {
     }
 
     const uploadPromise = new Promise((resolve, reject) => {
-      // Optimisations d'upload selon la doc MEGA
+      // Optimisations d'upload ultra-rapides
       folder.upload({ 
         name: fileName, 
         size: content.length,
-        maxConnections: 2, // Réduit pour économiser les ressources
-        initialChunkSize: 65536, // 64KB au lieu de 128KB
-        chunkSizeIncrement: 65536, // 64KB au lieu de 128KB
-        maxChunkSize: 524288, // 512KB au lieu de 1MB
+        maxConnections: 1, // 1 connexion unique
+        initialChunkSize: 16384, // 16KB très petit
+        chunkSizeIncrement: 16384, // 16KB incréments
+        maxChunkSize: 131072, // 128KB max
       }, content, (err, file) => {
         if (err) reject(err);
         else resolve(file);
       });
     });
 
-    const file = await withTimeout(uploadPromise, 15000, `Mega upload timed out for ${fullPath}`);
+    const file = await withTimeout(uploadPromise, 3000, `Mega upload timed out for ${fullPath}`);
     return {
       name: file.name,
       size: file.size,
       nodeId: file.nodeId,
       downloadId: file.downloadId
     };
-  }, 4, 15000, 500);
+  }, 2, 3000, 50);
 }
 
 export async function megaDelete(env, path) {
@@ -266,5 +267,5 @@ export async function megaDelete(env, path) {
     if (!existing) return { deleted: false };
     await existing.delete();
     return { deleted: true };
-  });
+  }, 2, 3000, 50);
 }

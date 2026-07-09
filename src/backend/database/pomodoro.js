@@ -224,7 +224,7 @@ export async function Pomodoro(env, subpath, method, body) {
 
   // Timeout global pour éviter les dépassements de ressources
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 10000);
+    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 5000);
   });
 
   try {
@@ -262,7 +262,7 @@ export async function Pomodoro(env, subpath, method, body) {
 
     if (subpath === "get-state") {
       const stateTimeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Pomodoro state operation timeout")), 5000);
+        setTimeout(() => reject(new Error("Pomodoro state operation timeout")), 3000);
       });
       const result = await Promise.race([
         readState(env),
