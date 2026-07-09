@@ -750,18 +750,31 @@ function pomoUpdateDayLabel() {
 }
 
 /* --- Subjects --- */
-async function pomoLoginMega() {
-  try {
-    await pomoPost("login", {});
-    console.log("MEGA login successful");
-  } catch (error) {
-    console.error("MEGA login failed:", error);
+async function pomoLoginMega(maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await pomoPost("login", {});
+      console.log("MEGA login successful");
+      return true;
+    } catch (error) {
+      console.error(`MEGA login attempt ${attempt} failed:`, error);
+      if (attempt < maxAttempts) {
+        // Attendre avant de réessayer (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
   }
+  console.error("MEGA login failed after all attempts");
+  return false;
 }
 
 async function pomoLoadAllDays() {
-  // D'abord login à MEGA
-  await pomoLoginMega();
+  // D'abord login à MEGA avec tentatives répétées
+  const loginSuccess = await pomoLoginMega(5);
+  
+  if (!loginSuccess) {
+    console.warn("MEGA login failed, loading from cache only");
+  }
   
   try {
     const result = await pomoPost("read-all-days", {});
