@@ -410,7 +410,7 @@ const NAVBAR_STYLE = `
 `;
 
 function iconFor(name) {
-  return `<object data="${ICONS[name] || ICONS.grid}" type="image/svg+xml" aria-hidden="true"></object>`;
+  return `<object data="${ICONS[name] || ICONS.grid}" type="image/svg+xml" aria-hidden="true" style="width:20px;height:20px"></object>`;
 }
 
 const NAVBAR_TEMPLATE = `
