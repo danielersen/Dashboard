@@ -1,38 +1,17 @@
-// Load icons via fetch and inject as data URLs
-const iconPaths = {
-  home: '/assets/icons/home.svg',
-  notes: '/assets/icons/notes.svg',
-  calendar: '/assets/icons/calendar.svg',
-  homework: '/assets/icons/homework.svg',
-  clock: '/assets/icons/clock.svg',
-  arrowLeft: '/assets/icons/arrow-left.svg',
-  arrowRight: '/assets/icons/arrow-right.svg',
-  dots: '/assets/icons/dots.svg',
-};
-
-// Function to convert SVG string to data URL
-function svgToDataUrl(svg) {
-  const encoded = encodeURIComponent(svg);
-  return `data:image/svg+xml,${encoded}`;
-}
-
-// Load icons and replace img src
+// Load icons via fetch and inject as inline SVG
 async function loadIcons() {
-  const iconImages = document.querySelectorAll('.ws-nav img');
+  const iconElements = document.querySelectorAll('[data-icon]');
   
-  for (const img of iconImages) {
-    const src = img.getAttribute('src');
-    const iconName = src.split('/').pop().replace('.svg', '');
-    const iconPath = iconPaths[iconName];
+  for (const element of iconElements) {
+    const iconUrl = element.dataset.icon;
+    if (!iconUrl) continue;
     
-    if (iconPath) {
-      try {
-        const response = await fetch(iconPath);
-        const svgContent = await response.text();
-        img.src = svgToDataUrl(svgContent);
-      } catch (error) {
-        console.error(`Failed to load icon ${iconName}:`, error);
-      }
+    try {
+      const response = await fetch(iconUrl);
+      const svgContent = await response.text();
+      element.innerHTML = svgContent;
+    } catch (error) {
+      console.error(`Failed to load icon ${iconUrl}:`, error);
     }
   }
 }
