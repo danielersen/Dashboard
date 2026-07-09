@@ -50,7 +50,7 @@ async function retryOperation(operation, attempts = 2, baseTimeoutMs = 1500, bas
   throw lastError;
 }
 
-async function getClient(env) {
+export async function getClient(env) {
   const email = env.MEGA_EMAIL;
   const password = env.MEGA_PASSWORD;
   if (!email || !password) {
