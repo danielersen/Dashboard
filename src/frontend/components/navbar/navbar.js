@@ -409,8 +409,16 @@ const NAVBAR_STYLE = `
   }
 `;
 
-function iconFor(name) {
-  return `<img src="${ICONS[name] || ICONS.grid}" alt="" loading="lazy" style="width:20px;height:20px" />`;
+async function iconFor(name) {
+  const url = ICONS[name] || ICONS.grid;
+  try {
+    const response = await fetch(url);
+    const svgContent = await response.text();
+    return svgContent;
+  } catch (error) {
+    console.error('Error loading icon:', error);
+    return '';
+  }
 }
 
 const NAVBAR_TEMPLATE = `
@@ -427,7 +435,7 @@ const NAVBAR_TEMPLATE = `
           <div class="feature-list">
             ${NAV_ITEMS.map((item) => `
               <a class="feature" data-route="${item.slug}" href="${item.href}">
-                <span class="feature-icon"><object data="${ICONS[item.icon] || ICONS.grid}" type="image/svg+xml" aria-hidden="true"></object></span>
+                <span class="feature-icon" data-icon="${ICONS[item.icon] || ICONS.grid}"></span>
                 <span class="feature-label">${item.label}</span>
               </a>
             `).join("")}
@@ -437,17 +445,17 @@ const NAVBAR_TEMPLATE = `
 
       <div class="right">
         <button class="quick" data-kind="refresh" type="button" aria-label="Rafraîchir la page">
-          <span class="action-icon"><img src="${ICONS.refresh}" alt="" loading="lazy" /></span>
+          <span class="action-icon" data-icon="${ICONS.refresh}"></span>
         </button>
 
         <a class="quick" data-kind="settings" href="/pages/settings" aria-label="Ouvrir les paramètres">
-          <span class="action-icon"><img src="${ICONS.settings}" alt="" loading="lazy" /></span>
+          <span class="action-icon" data-icon="${ICONS.settings}"></span>
         </a>
         <button class="quick" data-kind="logout" type="button" aria-label="Se déconnecter">
-          <span class="action-icon"><img src="${ICONS.logout}" alt="" loading="lazy" /></span>
+          <span class="action-icon" data-icon="${ICONS.logout}"></span>
         </button>
         <button class="quick more-toggle" data-kind="more" type="button" aria-label="Plus d'options" aria-expanded="false">
-          <span class="action-icon"><img src="${ICONS.more}" alt="" loading="lazy" /></span>
+          <span class="action-icon" data-icon="${ICONS.more}"></span>
         </button>
       </div>
     </div>
@@ -455,16 +463,16 @@ const NAVBAR_TEMPLATE = `
 
   <div class="more-menu" data-more-menu data-open="false" aria-hidden="true">
     <button class="more-item" data-kind="refresh" type="button">
-      <span class="action-icon"><img src="${ICONS.refresh}" alt="" loading="lazy" /></span>
+      <span class="action-icon" data-icon="${ICONS.refresh}"></span>
       <span class="more-item-label">Refresh</span>
     </button>
 
     <a class="more-item" data-kind="settings" href="/pages/settings">
-      <span class="action-icon"><img src="${ICONS.settings}" alt="" loading="lazy" /></span>
+      <span class="action-icon" data-icon="${ICONS.settings}"></span>
       <span class="more-item-label">Settings</span>
     </a>
     <button class="more-item" data-kind="logout" type="button">
-      <span class="action-icon"><img src="${ICONS.logout}" alt="" loading="lazy" /></span>
+      <span class="action-icon" data-icon="${ICONS.logout}"></span>
       <span class="more-item-label">Log out</span>
     </button>
   </div>
@@ -506,6 +514,9 @@ class SiteNavbar extends HTMLElement {
         item.addEventListener("click", this._boundAction);
       });
       document.addEventListener("click", this._boundDocClick);
+      
+      // Load icons
+      this._loadIcons();
     }
 
     this._syncActiveState();
@@ -584,6 +595,22 @@ class SiteNavbar extends HTMLElement {
     if (this._centerScrollCleanup) {
       this._centerScrollCleanup();
       this._centerScrollCleanup = null;
+    }
+  }
+
+  async _loadIcons() {
+    const iconElements = this.shadowRoot.querySelectorAll('[data-icon]');
+    for (const element of iconElements) {
+      const iconUrl = element.dataset.icon;
+      if (!iconUrl) continue;
+      
+      try {
+        const response = await fetch(iconUrl);
+        const svgContent = await response.text();
+        element.innerHTML = svgContent;
+      } catch (error) {
+        console.error('Error loading icon:', iconUrl, error);
+      }
     }
   }
 
