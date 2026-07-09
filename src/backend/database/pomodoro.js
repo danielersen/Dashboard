@@ -130,35 +130,71 @@ export async function Pomodoro(env, subpath, method, body) {
     throw new Error("Unsupported method for Pomodoro API");
   }
 
-  if (subpath === "read-subjects") {
-    return { subjects: await readDay(env, body?.day) };
-  }
+  // Timeout global pour éviter les dépassements de ressources
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 8000);
+  });
 
-  if (subpath === "save-subjects") {
-    return await saveDay(env, body?.day, body?.subjects);
-  }
-
-  if (subpath === "get-state") {
-    return await readState(env);
-  }
-
-  if (subpath === "increment-timer") {
-    const state = await readState(env);
-    state.timerCount = Number(state.timerCount || 0) + 1;
-    await saveState(env, state);
-    return { timerCount: state.timerCount };
-  }
-
-  if (subpath === "set-checked") {
-    const checked = body?.checked;
-    if (!checked || typeof checked !== "object" || Array.isArray(checked)) {
-      throw new Error("Invalid checked payload");
+  try {
+    if (subpath === "read-subjects") {
+      const result = await Promise.race([
+        readDay(env, body?.day),
+        timeoutPromise
+      ]);
+      return { subjects: result };
     }
-    const state = await readState(env);
-    state.checked = checked;
-    await saveState(env, state);
-    return { checked: state.checked };
-  }
 
-  throw new Error(`Unknown Pomodoro action: ${subpath}`);
+    if (subpath === "save-subjects") {
+      const result = await Promise.race([
+        saveDay(env, body?.day, body?.subjects),
+        timeoutPromise
+      ]);
+      return result;
+    }
+
+    if (subpath === "get-state") {
+      const result = await Promise.race([
+        readState(env),
+        timeoutPromise
+      ]);
+      return result;
+    }
+
+    if (subpath === "increment-timer") {
+      const result = await Promise.race([
+        (async () => {
+          const state = await readState(env);
+          state.timerCount = Number(state.timerCount || 0) + 1;
+          await saveState(env, state);
+          return { timerCount: state.timerCount };
+        })(),
+        timeoutPromise
+      ]);
+      return result;
+    }
+
+    if (subpath === "set-checked") {
+      const checked = body?.checked;
+      if (!checked || typeof checked !== "object" || Array.isArray(checked)) {
+        throw new Error("Invalid checked payload");
+      }
+      const result = await Promise.race([
+        (async () => {
+          const state = await readState(env);
+          state.checked = checked;
+          await saveState(env, state);
+          return { checked: state.checked };
+        })(),
+        timeoutPromise
+      ]);
+      return result;
+    }
+
+    throw new Error(`Unknown Pomodoro action: ${subpath}`);
+  } catch (error) {
+    if (error.message === "Pomodoro operation timeout") {
+      throw new Error("Operation timeout - please try again");
+    }
+    throw error;
+  }
 }
