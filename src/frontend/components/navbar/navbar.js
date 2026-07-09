@@ -680,18 +680,6 @@ if (!customElements.get("site-navbar")) {
   customElements.define("site-navbar", SiteNavbar);
 }
 
-// Load icons and replace placeholders
-loadIcons().then(loadedIcons => {
-  ICONS = loadedIcons;
-  const placeholders = document.querySelectorAll('.icon-placeholder');
-  placeholders.forEach(placeholder => {
-    const iconName = placeholder.dataset.icon;
-    if (ICONS[iconName]) {
-      placeholder.innerHTML = `<img src="${ICONS[iconName]}" alt="" loading="lazy" />`;
-    }
-  });
-});
-
 // Load icons via fetch and inject as data URLs
 async function loadNavbarIcons() {
   const placeholders = document.querySelectorAll('.icon-placeholder');
