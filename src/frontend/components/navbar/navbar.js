@@ -207,7 +207,9 @@ const NAVBAR_STYLE = `
   }
 
   .feature-icon img,
-  .action-icon img {
+  .action-icon img,
+  .feature-icon object,
+  .action-icon object {
     width: 20px;
     height: 20px;
   }
@@ -408,7 +410,7 @@ const NAVBAR_STYLE = `
 `;
 
 function iconFor(name) {
-  return `<img src="${ICONS[name] || ICONS.grid}" alt="" loading="lazy" />`;
+  return `<object data="${ICONS[name] || ICONS.grid}" type="image/svg+xml" aria-hidden="true"></object>`;
 }
 
 const NAVBAR_TEMPLATE = `
@@ -425,7 +427,7 @@ const NAVBAR_TEMPLATE = `
           <div class="feature-list">
             ${NAV_ITEMS.map((item) => `
               <a class="feature" data-route="${item.slug}" href="${item.href}">
-                <span class="feature-icon"><img src="${ICONS[item.icon] || ICONS.grid}" alt="" loading="lazy" /></span>
+                <span class="feature-icon"><object data="${ICONS[item.icon] || ICONS.grid}" type="image/svg+xml" aria-hidden="true"></object></span>
                 <span class="feature-label">${item.label}</span>
               </a>
             `).join("")}
