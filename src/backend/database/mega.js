@@ -1,5 +1,9 @@
 import { Storage } from "megajs";
 
+// Cache des connexions pour éviter trop de logins
+const connectionCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
   return normalized || "";
@@ -18,19 +22,26 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise.finally(() => clearTimeout(timer)), timeout]);
 }
 
-async function retryOperation(operation, attempts = 4, timeoutMs = 3000, delayMs = 200) {
+// Exponential backoff pour éviter les blocages
+async function retryOperation(operation, attempts = 4, baseTimeoutMs = 5000, baseDelayMs = 500) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
+      const timeoutMs = baseTimeoutMs * attempt; // Timeout progressif
       return await withTimeout(operation(), timeoutMs, `Mega operation timed out after ${timeoutMs}ms`);
     } catch (error) {
       lastError = error;
       const message = String(error?.message || "").toLowerCase();
       const isNotFound = message.includes("file not found") || message.includes("folder not found");
+      const isRateLimit = message.includes("rate limit") || message.includes("too many requests") || message.includes("bandwidth");
+      
       if (isNotFound || attempt === attempts) {
         throw error;
       }
+      
+      // Exponential backoff pour rate limits
+      const delayMs = isRateLimit ? baseDelayMs * Math.pow(2, attempt) : baseDelayMs * attempt;
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
@@ -45,8 +56,30 @@ async function getClient(env) {
     throw new Error("Missing MEGA_EMAIL or MEGA_PASSWORD");
   }
 
-  const storage = new Storage({ email, password });
-  await withTimeout(storage.login(), 20000, "Mega login timed out");
+  const cacheKey = email;
+  const cached = connectionCache.get(cacheKey);
+  
+  // Vérifier si la connexion est encore valide
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.storage;
+  }
+
+  // Créer une nouvelle connexion avec userAgent personnalisé
+  const storage = new Storage({ 
+    email, 
+    password,
+    userAgent: "DashboardWorker/1.0", // UserAgent personnalisé pour éviter le blocage
+    keepalive: true // Garder la connexion active
+  });
+  
+  await withTimeout(storage.ready, 30000, "Mega login timed out");
+  
+  // Mettre en cache
+  connectionCache.set(cacheKey, {
+    storage,
+    timestamp: Date.now()
+  });
+  
   return storage;
 }
 
@@ -103,7 +136,7 @@ export async function megaRead(env, path) {
     try {
       const file = storage.root.navigate(fullPath);
       if (file && !file.directory) {
-        const buffer = await withTimeout(file.downloadBuffer(), 3000, `Mega download timed out for ${fullPath}`);
+        const buffer = await withTimeout(file.downloadBuffer(), 10000, `Mega download timed out for ${fullPath}`);
         const text = Buffer.from(buffer).toString("utf8");
         try {
           return JSON.parse(text);
@@ -130,14 +163,14 @@ export async function megaRead(env, path) {
       throw new Error(`File not found: ${path}`);
     }
 
-    const buffer = await withTimeout(fileNode.downloadBuffer(), 3000, `Mega download timed out for ${fullPath}`);
+    const buffer = await withTimeout(fileNode.downloadBuffer(), 10000, `Mega download timed out for ${fullPath}`);
     const text = Buffer.from(buffer).toString("utf8");
     try {
       return JSON.parse(text);
     } catch {
       return text;
     }
-  });
+  }, 4, 10000, 500);
 }
 
 export async function megaWrite(env, path, body) {
@@ -166,14 +199,14 @@ export async function megaWrite(env, path, body) {
       });
     });
 
-    const file = await uploadPromise;
+    const file = await withTimeout(uploadPromise, 15000, `Mega upload timed out for ${fullPath}`);
     return {
       name: file.name,
       size: file.size,
       nodeId: file.nodeId,
       downloadId: file.downloadId
     };
-  }, 4, 3000, 200);
+  }, 4, 15000, 500);
 }
 
 export async function megaDelete(env, path) {
