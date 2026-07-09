@@ -614,12 +614,16 @@ const POMO_BASE = "/api/pomodoro";
 
 function withTimeout(promise, ms, message) {
   let timer;
-  return Promise.race([
-    promise.finally(() => clearTimeout(timer)),
-    new Promise((_, reject) => {
-      timer = setTimeout(() => reject(new Error(message)), ms);
-    }),
-  ]);
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      clearTimeout(timer);
+      reject(new Error(message));
+    }, ms);
+  });
+  
+  return Promise.race([promise, timeout]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 async function pomoPost(sub, body) {
@@ -736,9 +740,24 @@ function pomoUpdateCounterDisplay() {
 
 /* --- Day navigation --- */
 function pomoChangeDay(offset) {
+  const previousDayIndex = state.pomoDayIndex;
   state.pomoDayIndex = ((state.pomoDayIndex + offset) % 7 + 7) % 7;
   state.pomoDirty = false;
-  pomoLoadSubjects(true); // Silent load from cache first
+  
+  // Charger le nouveau jour depuis le cache (instantané)
+  pomoLoadSubjects(true);
+  
+  // Recharger discrètement en arrière-plan le jour précédent et le nouveau jour
+  const previousDay = POMO_DAYS[previousDayIndex];
+  const currentDay = POMO_DAYS[state.pomoDayIndex];
+  
+  // Recharger le jour précédent en arrière-plan
+  pomoSilentRefreshDay(previousDay);
+  
+  // Recharger le nouveau jour en arrière-plan (s'il n'est pas le même que le précédent)
+  if (previousDay !== currentDay) {
+    pomoSilentRefreshDay(currentDay);
+  }
 }
 
 function pomoUpdateDayLabel() {
@@ -788,6 +807,15 @@ async function pomoLoadAllDays() {
     for (const day of POMO_DAYS) {
       state.pomoAllDays[day] = [];
     }
+  }
+  
+  // Charger le jour actuel depuis le cache
+  const currentDay = POMO_DAYS[state.pomoDayIndex];
+  if (state.pomoAllDays[currentDay]) {
+    state.pomoSubjects = state.pomoAllDays[currentDay].map(s => ({ ...s }));
+    state.pomoSubjectsOriginal = JSON.stringify(state.pomoAllDays[currentDay]);
+    state.pomoDirty = false;
+    pomoRenderSubjects();
   }
 }
 
@@ -1066,9 +1094,6 @@ function initPomodoro() {
   if (addInput) addInput.addEventListener("keydown", (e) => { if (e.key === "Enter") pomoAddSubject(); });
   if (saveBtn) saveBtn.addEventListener("click", pomoSave);
 
-  // Charger tous les jours au démarrage
-  pomoLoadAllDays();
-
   if (subjectsList) {
     subjectsList.addEventListener("change", async (e) => {
       const cb = e.target;
@@ -1093,10 +1118,11 @@ function initPomodoro() {
 }
 
 async function loadPomodoro() {
-  const [stateResult] = await Promise.all([
-    pomoPost("get-state", {}).catch(() => null),
-    pomoLoadSubjects(),
-  ]);
+  // Charger tous les jours d'abord (avec le jour actuel inclus)
+  await pomoLoadAllDays();
+  
+  // Charger l'état uniquement (pas besoin de recharger le jour actuel)
+  const stateResult = await pomoPost("get-state", {}).catch(() => null);
   if (stateResult) {
     state.pomoTimerCount = stateResult.timerCount || 0;
     const raw = stateResult.checked;
@@ -1108,6 +1134,11 @@ async function loadPomodoro() {
     pomoUpdateCounterDisplay();
     pomoRenderSubjects();
   }
+  
+  // Le jour actuel est déjà chargé depuis pomoLoadAllDays
+  // Recharger discrètement en arrière-plan pour s'assurer que les données sont à jour
+  const currentDay = POMO_DAYS[state.pomoDayIndex];
+  pomoSilentRefreshDay(currentDay);
 }
 
 /* ===================== BOOT ===================== */
