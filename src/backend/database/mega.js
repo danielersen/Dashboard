@@ -2,7 +2,8 @@ import { Storage } from "megajs";
 
 // Cache des connexions pour éviter trop de logins
 const connectionCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes (réduit pour économiser la mémoire)
+const MAX_CACHE_SIZE = 2; // Maximum 2 connexions simultanées
 
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
@@ -23,12 +24,12 @@ function withTimeout(promise, ms, message) {
 }
 
 // Exponential backoff pour éviter les blocages
-async function retryOperation(operation, attempts = 4, baseTimeoutMs = 5000, baseDelayMs = 500) {
+async function retryOperation(operation, attempts = 3, baseTimeoutMs = 3000, baseDelayMs = 300) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const timeoutMs = baseTimeoutMs * attempt; // Timeout progressif
+      const timeoutMs = baseTimeoutMs; // Timeout fixe pour éviter les dépassements
       return await withTimeout(operation(), timeoutMs, `Mega operation timed out after ${timeoutMs}ms`);
     } catch (error) {
       lastError = error;
@@ -64,15 +65,21 @@ async function getClient(env) {
     return cached.storage;
   }
 
+  // Nettoyer le cache si trop d'entrées
+  if (connectionCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = connectionCache.keys().next().value;
+    connectionCache.delete(oldestKey);
+  }
+
   // Créer une nouvelle connexion avec userAgent personnalisé
   const storage = new Storage({ 
     email, 
     password,
     userAgent: "DashboardWorker/1.0", // UserAgent personnalisé pour éviter le blocage
-    keepalive: true // Garder la connexion active
+    keepalive: false // Désactivé pour économiser les ressources
   });
   
-  await withTimeout(storage.ready, 30000, "Mega login timed out");
+  await withTimeout(storage.ready, 15000, "Mega login timed out"); // Timeout réduit
   
   // Mettre en cache
   connectionCache.set(cacheKey, {
