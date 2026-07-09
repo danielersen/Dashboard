@@ -1,4 +1,4 @@
-import { megaRead, megaWrite } from "./mega.js";
+import { megaRead, megaWrite, getClient } from "./mega.js";
 import { getCacheValue, setCacheValue } from "../cache/index.js";
 
 const VALID_DAYS = [
@@ -12,7 +12,6 @@ const CACHE_TTL = 3600; // 1 heure
 
 // Fonction pour établir la connexion MEGA et la mettre en cache
 export async function loginMega(env) {
-  const { getClient } = await import("./mega.js");
   const storage = await getClient(env);
   
   // Mettre la connexion en cache pendant 30 minutes
@@ -28,20 +27,54 @@ export async function loginMega(env) {
 // Fonction pour récupérer tous les jours en utilisant le cache
 export async function readAllDays(env) {
   const allDays = {};
+  const { getClient } = await import("./mega.js");
+  let storage = null;
   
-  // Essayer d'abord depuis le cache uniquement pour éviter les timeouts
+  // Essayer d'abord depuis le cache
   for (const day of VALID_DAYS) {
     const cacheKey = `${CACHE_PREFIX}${day}`;
     try {
       const cached = await getCacheValue(cacheKey);
       if (cached !== null) {
         allDays[day] = cached;
-      } else {
-        allDays[day] = [];
       }
     } catch (e) {
       console.error(`Cache read failed for ${day}:`, e);
-      allDays[day] = [];
+    }
+  }
+  
+  // Charger les jours manquants depuis MEGA avec une seule connexion
+  const missingDays = VALID_DAYS.filter(day => allDays[day] === undefined);
+  
+  if (missingDays.length > 0) {
+    try {
+      storage = await getClient(env);
+      
+      for (const day of missingDays) {
+        try {
+          const subjects = await readDay(env, day, storage);
+          allDays[day] = subjects;
+          
+          // Mettre en cache
+          const cacheKey = `${CACHE_PREFIX}${day}`;
+          try {
+            await setCacheValue(cacheKey, subjects, CACHE_TTL);
+          } catch (e) {
+            console.error(`Cache write failed for ${day}:`, e);
+          }
+        } catch (e) {
+          console.error(`Failed to read ${day} from MEGA:`, e);
+          allDays[day] = [];
+        }
+      }
+    } catch (e) {
+      console.error("MEGA connection failed:", e);
+      // En cas d'erreur, retourner ce qu'on a du cache
+      for (const day of missingDays) {
+        if (allDays[day] === undefined) {
+          allDays[day] = [];
+        }
+      }
     }
   }
   
