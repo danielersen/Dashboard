@@ -5,6 +5,26 @@ const VALID_DAYS = [
 ];
 const STATE_FILE = "pomodoro/state.json";
 
+// Fonction pour récupérer tous les jours en une seule connexion MEGA
+export async function readAllDays(env) {
+  const { getClient } = await import("./mega.js");
+  const storage = await getClient(env);
+  
+  const allDays = {};
+  
+  for (const day of VALID_DAYS) {
+    try {
+      const subjects = await readDay(env, day, storage);
+      allDays[day] = subjects;
+    } catch (e) {
+      console.error(`Failed to read ${day}:`, e);
+      allDays[day] = [];
+    }
+  }
+  
+  return allDays;
+}
+
 function validateDay(day) {
   const normalized = String(day || "").toLowerCase().trim();
   if (!VALID_DAYS.includes(normalized)) {
@@ -47,7 +67,7 @@ async function saveState(env, state) {
   return await megaWrite(env, STATE_FILE, safeState);
 }
 
-export async function readDay(env, day) {
+export async function readDay(env, day, storage = null) {
   const normalized = validateDay(day);
 
   try {
@@ -132,7 +152,7 @@ export async function Pomodoro(env, subpath, method, body) {
 
   // Timeout global pour éviter les dépassements de ressources
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 8000);
+    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 12000);
   });
 
   try {
@@ -142,6 +162,14 @@ export async function Pomodoro(env, subpath, method, body) {
         timeoutPromise
       ]);
       return { subjects: result };
+    }
+
+    if (subpath === "read-all-days") {
+      const result = await Promise.race([
+        readAllDays(env),
+        timeoutPromise
+      ]);
+      return { allDays: result };
     }
 
     if (subpath === "save-subjects") {

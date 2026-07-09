@@ -134,14 +134,14 @@ async function ensureParentFolder(storage, path) {
   return await getOrCreateFolder(storage, folderPath);
 }
 
-export async function megaRead(env, path) {
+export async function megaRead(env, path, storage = null) {
   const fullPath = `dashboard/${normalizePath(path)}`;
 
   return await retryOperation(async () => {
-    const storage = await getClient(env);
+    const storageInstance = storage || await getClient(env);
 
     try {
-      const file = storage.root.navigate(fullPath);
+      const file = storageInstance.root.navigate(fullPath);
       if (file && !file.directory) {
         const buffer = await withTimeout(file.downloadBuffer(), 10000, `Mega download timed out for ${fullPath}`);
         const text = Buffer.from(buffer).toString("utf8");
@@ -159,7 +159,7 @@ export async function megaRead(env, path) {
     const fileName = segments.at(-1);
     const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
-    const folder = folderPath ? await getFolderIfExists(storage, folderPath) : storage.root;
+    const folder = folderPath ? await getFolderIfExists(storageInstance, folderPath) : storageInstance.root;
     if (!folder) {
       throw new Error(`File not found: ${path}`);
     }
@@ -180,18 +180,18 @@ export async function megaRead(env, path) {
   }, 4, 10000, 500);
 }
 
-export async function megaWrite(env, path, body) {
+export async function megaWrite(env, path, body, storage = null) {
   const fullPath = `dashboard/${normalizePath(path)}`;
   const content = Buffer.from(toText(body), "utf8");
 
   return await retryOperation(async () => {
-    const storage = await getClient(env);
+    const storageInstance = storage || await getClient(env);
 
     const segments = fullPath.split("/").filter(Boolean);
     const fileName = segments.at(-1);
     const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
-    const folder = folderPath ? await getOrCreateFolder(storage, folderPath) : storage.root;
+    const folder = folderPath ? await getOrCreateFolder(storageInstance, folderPath) : storageInstance.root;
     const children = await folder.children;
     const existing = children.find(child => child.name === fileName && !child.directory);
 
