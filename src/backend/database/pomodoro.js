@@ -5,6 +5,7 @@ const VALID_DAYS = [
   "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
 ];
 const STATE_FILE = "pomodoro/state.json";
+const STATE_CACHE_KEY = "pomodoro_state";
 const CACHE_PREFIX = "pomodoro_day_";
 const CACHE_TTL = 3600; // 1 heure
 
@@ -78,15 +79,34 @@ function filePath(day) {
 }
 
 async function readState(env) {
+  // Essayer d'abord depuis le cache
+  try {
+    const cached = await getCacheValue(STATE_CACHE_KEY);
+    if (cached !== null && typeof cached === "object") {
+      return cached;
+    }
+  } catch (e) {
+    console.error("State cache read failed:", e);
+  }
+
   try {
     const state = await megaRead(env, STATE_FILE);
     if (state && typeof state === "object" && !Array.isArray(state)) {
-      return {
+      const result = {
         timerCount: Number(state.timerCount) || 0,
         checked: state.checked && typeof state.checked === "object" && !Array.isArray(state.checked)
           ? state.checked
           : {},
       };
+      
+      // Mettre en cache
+      try {
+        await setCacheValue(STATE_CACHE_KEY, result, CACHE_TTL);
+      } catch (e) {
+        console.error("State cache write failed:", e);
+      }
+      
+      return result;
     }
     return { timerCount: 0, checked: {} };
   } catch (e) {
@@ -104,7 +124,16 @@ async function saveState(env, state) {
       ? state.checked
       : {},
   };
-  return await megaWrite(env, STATE_FILE, safeState);
+  const result = await megaWrite(env, STATE_FILE, safeState);
+  
+  // Mettre à jour le cache
+  try {
+    await setCacheValue(STATE_CACHE_KEY, safeState, CACHE_TTL);
+  } catch (e) {
+    console.error("State cache write failed:", e);
+  }
+  
+  return result;
 }
 
 export async function readDay(env, day, storage = null) {
@@ -213,7 +242,7 @@ export async function Pomodoro(env, subpath, method, body) {
 
   // Timeout global pour éviter les dépassements de ressources
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 15000);
+    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 20000);
   });
 
   try {
@@ -242,9 +271,12 @@ export async function Pomodoro(env, subpath, method, body) {
     }
 
     if (subpath === "get-state") {
+      const stateTimeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Pomodoro state operation timeout")), 20000);
+      });
       const result = await Promise.race([
         readState(env),
-        timeoutPromise
+        stateTimeoutPromise
       ]);
       return result;
     }
