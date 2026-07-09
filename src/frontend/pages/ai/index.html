@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en" data-auth-pending>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08100f">
+    <title>AI - Dashboard</title>
+    <meta name="description" content="AI Assistant - Chat with multiple AI models, search the web, perform complex reasoning tasks and generate pictures. Advanced AI tools powered by Cloudflare Workers AI.">
+    <link rel="canonical" href="https://dashboard.danielersen.workers.dev/pages/AI">
+    <link rel="icon" href="/assets/logo/square.png">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dashboard.danielersen.workers.dev/pages/AI">
+    <meta property="og:title" content="AI - Dashboard">
+    <meta property="og:description" content="AI Assistant - Chat with multiple AI models, search the web, perform complex reasoning tasks and generate pictures. Advanced AI tools powered by Cloudflare Workers AI.">
+    <meta property="og:image" content="https://dashboard.danielersen.workers.dev/assets/logo/main.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://dashboard.danielersen.workers.dev/pages/AI">
+    <meta property="twitter:title" content="AI - Dashboard">
+    <meta property="twitter:description" content="AI Assistant - Chat with multiple AI models, search the web, perform complex reasoning tasks and generate pictures. Advanced AI tools powered by Cloudflare Workers AI.">
+    <meta property="twitter:image" content="https://dashboard.danielersen.workers.dev/assets/logo/main.png">
+    
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "AI",
+      "url": "https://dashboard.danielersen.workers.dev/pages/AI",
+      "description": "AI Assistant - Chat with multiple AI models, search the web, perform complex reasoning tasks and generate pictures. Advanced AI tools powered by Cloudflare Workers AI.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Dashboard",
+        "url": "https://dashboard.danielersen.workers.dev/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://dashboard.danielersen.workers.dev/pages/home"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "AI",
+            "item": "https://dashboard.danielersen.workers.dev/pages/AI"
+          }
+        ]
+      }
+    }
+    </script>
+    
+    <style>html[data-auth-pending] body { visibility: hidden; }</style>
+    <script type="module">
+      import { guardPage } from "/lib/auth.js";
+      guardPage().then((ok) => {
+        if (ok) document.documentElement.removeAttribute("data-auth-pending");
+      });
+    </script>
+    <link rel="stylesheet" href="/pages/AI/style.css">
+    <script type="module" src="/components/navbar/navbar.js"></script>
+    <script type="module" src="/pages/AI/icons.js"></script>
+    <script type="module" src="/pages/AI/script.js"></script>
+  </head>
+  <body>
+    <site-navbar current="AI"></site-navbar>
+
+    <div class="ai-shell">
+      <aside class="ai-sidebar" aria-label="AI sections">
+        <button class="ai-nav" type="button" data-target="ai" aria-label="AI" data-active="true">
+          <span class="ai-icon" data-icon="/assets/icons/ai.svg"></span>
+        </button>
+        <button class="ai-nav" type="button" data-target="chat" aria-label="Chat">
+          <span class="ai-icon" data-icon="/assets/icons/chat.svg"></span>
+        </button>
+        <button class="ai-nav" type="button" data-target="chat-settings" aria-label="Chat with settings">
+          <span class="ai-icon" data-icon="/assets/icons/chat-settings.svg"></span>
+        </button>
+        <button class="ai-nav" type="button" data-target="statistics" aria-label="Statistics">
+          <span class="ai-icon" data-icon="/assets/icons/statistics.svg"></span>
+        </button>
+      </aside>
+
+      <main class="ai-main">
+        <div class="ai-selector-bar" id="selector-bar">
+          <!-- Selector Items (Label + Dropdown grouped) -->
+          <div class="selector-items">
+            <div class="selector-item">
+              <span class="selector-label">Feature</span>
+              <div class="custom-select-wrapper">
+                <div class="custom-select" id="category-select" data-category-select>
+                  <span class="custom-select-trigger">Basic</span>
+                  <div class="custom-options">
+                    <div class="custom-option" data-value="basic">Basic</div>
+                    <div class="custom-option" data-value="search_web">Search Web</div>
+                    <div class="custom-option" data-value="reasonning">Reasoning</div>
+                    <div class="custom-option" data-value="pictures">Pictures</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="selector-item">
+              <span class="selector-label">Company</span>
+              <div class="custom-select-wrapper">
+                <div class="custom-select" id="company-select" data-company-select>
+                  <span class="custom-select-trigger">Loading...</span>
+                  <div class="custom-options">
+                    <!-- Companies will be populated by JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="selector-item">
+              <span class="selector-label">Model</span>
+              <div class="custom-select-wrapper">
+                <div class="custom-select" id="model-select" data-model-select>
+                  <span class="custom-select-trigger">Select company first</span>
+                  <div class="custom-options">
+                    <!-- Models will be populated by JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="selector-item">
+              <span class="selector-label">Consumption</span>
+              <div class="consumption-display" id="consumption-display">
+                <!-- Consumption bar will be populated by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="ai-chat-container" id="chat-container">
+          <!-- Chat messages will appear here -->
+        </div>
+        
+        <div class="ai-prompt-bar">
+          <textarea id="prompt-input" placeholder="Type your message..." rows="1"></textarea>
+          <button id="prompt-submit" type="button" aria-label="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+          </button>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
