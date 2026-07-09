@@ -3,7 +3,7 @@ import { CheckGradesWorkflow } from "./workflows/check_grades";
 
 // API features
 import { EDfunction } from "./backend/ecole_directe/index.js";
-import { AIfunction } from "./backend/AI/index.js";
+import { AIfunction } from "./backend/ai/index.js";
 import { Cache } from "./backend/cache/index.js";
 import { Auth, verifySessionToken } from "./backend/auth/index.js";
 import { Pomodoro } from "./backend/database/pomodoro.js";
