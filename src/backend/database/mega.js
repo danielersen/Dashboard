@@ -77,12 +77,19 @@ export async function getClient(env) {
     password,
     userAgent: "DashboardWorker/1.0", // UserAgent personnalisé pour éviter le blocage
     keepalive: false, // Désactivé pour économiser les ressources
-    autoload: false, // Désactivé pour éviter de charger toute la structure
-    autologin: true, // Garder le login automatique
-    // Autres optimisations potentielles selon la doc MEGA
+    autoload: true, // Réactivé pour s'assurer que root est disponible
+    autologin: true // Garder le login automatique
   });
   
-  await withTimeout(storage.ready, 3000, "Mega login timed out"); // Timeout ultra-réduit
+  await withTimeout(storage.ready, 5000, "Mega login timed out"); // Timeout réduit pour plus de stabilité
+  
+  // Attendre un peu plus que root soit chargé si autoload est activé
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Vérifier que root est disponible
+  if (!storage.root) {
+    throw new Error("Storage root not available after login");
+  }
   
   // Mettre en cache
   connectionCache.set(cacheKey, {
