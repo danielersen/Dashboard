@@ -101,10 +101,20 @@ async function getOrCreateFolder(storage, folderPath) {
   let current = storage.root;
 
   for (const segment of segments) {
-    const children = await current.children;
+    // Timeout pour éviter les blocages sur children
+    const children = await withTimeout(
+      current.children, 
+      2000, 
+      `Children loading timeout for ${segment}`
+    );
+    
     let folder = children.find(child => child.name === segment && child.directory);
     if (!folder) {
-      folder = await current.mkdir(segment);
+      folder = await withTimeout(
+        current.mkdir(segment), 
+        2000, 
+        `Mkdir timeout for ${segment}`
+      );
     }
     current = folder;
   }
@@ -120,7 +130,13 @@ async function getFolderIfExists(storage, folderPath) {
   let current = storage.root;
 
   for (const segment of segments) {
-    const children = await current.children;
+    // Timeout pour éviter les blocages sur children
+    const children = await withTimeout(
+      current.children, 
+      2000, 
+      `Children loading timeout for ${segment}`
+    );
+    
     const folder = children.find(child => child.name === segment && child.directory);
     if (!folder) return null;
     current = folder;
@@ -177,7 +193,13 @@ export async function megaRead(env, path, storage = null) {
       throw new Error(`File not found: ${path}`);
     }
 
-    const children = await folder.children;
+    // Timeout pour éviter les blocages sur children
+    const children = await withTimeout(
+      folder.children, 
+      2000, 
+      `Children loading timeout for ${fullPath}`
+    );
+    
     const fileNode = children.find(child => child.name === fileName && !child.directory);
     if (!fileNode) {
       throw new Error(`File not found: ${path}`);
@@ -214,7 +236,14 @@ export async function megaWrite(env, path, body, storage = null) {
     const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
     const folder = folderPath ? await getOrCreateFolder(storageInstance, folderPath) : storageInstance.root;
-    const children = await folder.children;
+    
+    // Timeout pour éviter les blocages sur children
+    const children = await withTimeout(
+      folder.children, 
+      2000, 
+      `Children loading timeout for ${fullPath}`
+    );
+    
     const existing = children.find(child => child.name === fileName && !child.directory);
 
     if (existing) {
@@ -262,7 +291,13 @@ export async function megaDelete(env, path) {
       return { deleted: false };
     }
 
-    const children = await folder.children;
+    // Timeout pour éviter les blocages sur children
+    const children = await withTimeout(
+      folder.children, 
+      2000, 
+      `Children loading timeout for ${fullPath}`
+    );
+    
     const existing = children.find(child => child.name === fileName && !child.directory);
     if (!existing) return { deleted: false };
     await existing.delete();
