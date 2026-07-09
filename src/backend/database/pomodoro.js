@@ -1,24 +1,64 @@
 import { megaRead, megaWrite } from "./mega.js";
+import { getCacheValue, setCacheValue } from "../cache/index.js";
 
 const VALID_DAYS = [
   "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"
 ];
 const STATE_FILE = "pomodoro/state.json";
+const CACHE_PREFIX = "pomodoro_day_";
+const CACHE_TTL = 3600; // 1 heure
 
-// Fonction pour récupérer tous les jours en une seule connexion MEGA
+// Fonction pour récupérer tous les jours en utilisant le cache
 export async function readAllDays(env) {
-  const { getClient } = await import("./mega.js");
-  const storage = await getClient(env);
-  
   const allDays = {};
+  const { getClient } = await import("./mega.js");
+  let storage = null;
   
+  // Essayer d'abord depuis le cache
   for (const day of VALID_DAYS) {
+    const cacheKey = `${CACHE_PREFIX}${day}`;
     try {
-      const subjects = await readDay(env, day, storage);
-      allDays[day] = subjects;
+      const cached = await getCacheValue(cacheKey);
+      if (cached !== null) {
+        allDays[day] = cached;
+      }
     } catch (e) {
-      console.error(`Failed to read ${day}:`, e);
-      allDays[day] = [];
+      console.error(`Cache read failed for ${day}:`, e);
+    }
+  }
+  
+  // Charger les jours manquants depuis MEGA avec une seule connexion
+  const missingDays = VALID_DAYS.filter(day => allDays[day] === undefined);
+  
+  if (missingDays.length > 0) {
+    try {
+      storage = await getClient(env);
+      
+      for (const day of missingDays) {
+        try {
+          const subjects = await readDay(env, day, storage);
+          allDays[day] = subjects;
+          
+          // Mettre en cache
+          const cacheKey = `${CACHE_PREFIX}${day}`;
+          try {
+            await setCacheValue(cacheKey, subjects, CACHE_TTL);
+          } catch (e) {
+            console.error(`Cache write failed for ${day}:`, e);
+          }
+        } catch (e) {
+          console.error(`Failed to read ${day} from MEGA:`, e);
+          allDays[day] = [];
+        }
+      }
+    } catch (e) {
+      console.error("MEGA connection failed:", e);
+      // En cas d'erreur, retourner ce qu'on a du cache
+      for (const day of missingDays) {
+        if (allDays[day] === undefined) {
+          allDays[day] = [];
+        }
+      }
     }
   }
   
@@ -69,9 +109,20 @@ async function saveState(env, state) {
 
 export async function readDay(env, day, storage = null) {
   const normalized = validateDay(day);
+  const cacheKey = `${CACHE_PREFIX}${normalized}`;
+  
+  // Essayer d'abord depuis le cache
+  try {
+    const cached = await getCacheValue(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+  } catch (e) {
+    console.error(`Cache read failed for ${day}:`, e);
+  }
 
   try {
-    const result = await megaRead(env, filePath(normalized));
+    const result = await megaRead(env, filePath(normalized), storage);
     if (Array.isArray(result)) return result;
     if (typeof result === "string" && result.trim()) {
       try {
@@ -95,7 +146,17 @@ export async function saveDay(env, day, subjects) {
     throw new Error("Invalid subjects");
   }
 
-  return await megaWrite(env, filePath(normalized), subjects);
+  const result = await megaWrite(env, filePath(normalized), subjects);
+  
+  // Mettre à jour le cache
+  const cacheKey = `${CACHE_PREFIX}${normalized}`;
+  try {
+    await setCacheValue(cacheKey, subjects, CACHE_TTL);
+  } catch (e) {
+    console.error(`Cache write failed for ${day}:`, e);
+  }
+  
+  return result;
 }
 
 export async function addSubject(env, day, subject) {
@@ -152,7 +213,7 @@ export async function Pomodoro(env, subpath, method, body) {
 
   // Timeout global pour éviter les dépassements de ressources
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 12000);
+    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 15000);
   });
 
   try {
