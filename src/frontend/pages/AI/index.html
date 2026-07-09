@@ -65,6 +65,7 @@
     </script>
     <link rel="stylesheet" href="/pages/AI/style.css">
     <script type="module" src="/components/navbar/navbar.js"></script>
+    <script type="module" src="/pages/AI/icons.js"></script>
     <script type="module" src="/pages/AI/script.js"></script>
   </head>
   <body>
@@ -73,29 +74,16 @@
     <div class="ai-shell">
       <aside class="ai-sidebar" aria-label="AI sections">
         <button class="ai-nav" type="button" data-target="ai" aria-label="AI" data-active="true">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+          <span class="ai-icon" data-icon="/assets/icons/ai.svg"></span>
         </button>
         <button class="ai-nav" type="button" data-target="chat" aria-label="Chat">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
+          <span class="ai-icon" data-icon="/assets/icons/chat.svg"></span>
         </button>
         <button class="ai-nav" type="button" data-target="chat-settings" aria-label="Chat with settings">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            <circle cx="18" cy="18" r="3" fill="currentColor" stroke="none"></circle>
-            <path d="M18 16v1.5M18 18.5v1.5" stroke="white" stroke-width="1.5"></path>
-          </svg>
+          <span class="ai-icon" data-icon="/assets/icons/chat-settings.svg"></span>
         </button>
         <button class="ai-nav" type="button" data-target="statistics" aria-label="Statistics">
-          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="20" x2="18" y2="10"></line>
-            <line x1="12" y1="20" x2="12" y2="4"></line>
-            <line x1="6" y1="20" x2="6" y2="14"></line>
-          </svg>
+          <span class="ai-icon" data-icon="/assets/icons/statistics.svg"></span>
         </button>
       </aside>
 
