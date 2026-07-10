@@ -835,3 +835,79 @@ a {
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.3);
 }
+
+/* Conversation Items */
+.conversation-item {
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.conversation-item:hover {
+  background: rgba(82, 214, 168, 0.15);
+}
+
+.conversation-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.conversation-date {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+/* Limits Info */
+.limits-info {
+  margin: 16px 0;
+}
+
+.limit-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.limit-item:last-child {
+  border-bottom: none;
+}
+
+.limit-label {
+  color: var(--muted);
+}
+
+.limit-value {
+  font-weight: 600;
+}
+
+/* Models Info */
+.models-info {
+  margin: 16px 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.model-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.model-item:last-child {
+  border-bottom: none;
+}
+
+.model-name {
+  color: var(--text);
+}
+
+.model-consumption {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Toggle Button State */
+.ai-nav[data-active="false"] {
+  opacity: 0.5;
+}

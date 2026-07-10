@@ -1,15 +1,28 @@
 import { callModel, addMessagePair } from "./core.js";
+import { getGatewayMetadata } from "./gateway.js";
 
 export async function notes_remarks(env, model, body = {}) {
 	const category = "notes_remarks";
 	const prompt = body?.prompt || (`Notes and remarks task: ${body?.query || body?.text || ""}`);
-	const result = await callModel(env, model, prompt, body?.options || {});
+	
+	// Get gateway metadata
+	const gatewayMetadata = await getGatewayMetadata(env, {
+		conversationId: body?.conversationId,
+		conversationName: body?.conversationName,
+		prompt: prompt,
+		categorizedModels: body?.categorizedModels || {}
+	});
+	
+	const result = await callModel(env, model, prompt, body?.options || {}, gatewayMetadata);
 	const assistantContent = result?.response ?? String(result);
 	const discussion = await addMessagePair(env, category, {
-		discussionId: body?.discussionId || null,
+		discussionId: gatewayMetadata.gateway?.metadata?.conversationId,
 		userContent: prompt,
 		assistantContent,
-		metadata: { model }
+		metadata: { 
+			model,
+			gateway: gatewayMetadata.gateway
+		}
 	});
 	return { result, discussion };
 }

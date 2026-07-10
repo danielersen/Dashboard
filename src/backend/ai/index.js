@@ -3,7 +3,8 @@ import { pictures } from "./pictures.js";
 import { reasonning } from "./reasonning.js";
 import { search_web } from "./search_web.js";
 import { notes_remarks } from "./notes_remarks.js";
-import { readIndex } from "./core.js";
+import { readIndex, readDiscussion } from "./core.js";
+import { fetchCloudflareLimits } from "./limits.js";
 
 const CATEGORIES = {
   basic,
@@ -380,6 +381,57 @@ export async function AIfunction(env, subpath, method, headers, body) {
   if (action === "discussions" && method === "GET") {
     const list = await readIndex(env, mappedCategory);
     return { discussions: list };
+  }
+
+  if (parts[0] === "conversations" && method === "GET") {
+    // Get all conversations from all categories, sorted by lastPromptDate, max 30
+    const allConversations = [];
+    
+    for (const category of Object.keys(CATEGORIES)) {
+      const index = await readIndex(env, category);
+      for (const discussion of index) {
+        // Read full discussion to get messages
+        const fullDiscussion = await readDiscussion(env, category, discussion.id);
+        if (fullDiscussion) {
+          allConversations.push({
+            ...fullDiscussion,
+            category: category
+          });
+        }
+      }
+    }
+    
+    // Sort by lastPromptDate (most recent first)
+    allConversations.sort((a, b) => {
+      const dateA = new Date(a.lastPromptDate || a.updatedAt || 0);
+      const dateB = new Date(b.lastPromptDate || b.updatedAt || 0);
+      return dateB - dateA;
+    });
+    
+    // Return max 30 conversations
+    const limitedConversations = allConversations.slice(0, 30);
+    
+    return { conversations: limitedConversations };
+  }
+
+  if (parts[0] === "limits" && method === "GET") {
+    // Fetch limits from Cloudflare
+    const limits = await fetchCloudflareLimits(env);
+    
+    // Also include model consumption info
+    const cloudflareModels = await fetchCloudflareModels(env);
+    const modelsWithConsumption = cloudflareModels.map(model => ({
+      id: model.id,
+      name: model.name,
+      brand: model.brand,
+      consumption: estimateConsumption(model),
+      consumptionPercentage: Math.min(100, Math.round((estimateConsumption(model) / 20) * 100))
+    }));
+    
+    return {
+      ...limits,
+      models: modelsWithConsumption
+    };
   }
 
   return { error: "unsupported ai action" };

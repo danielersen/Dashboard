@@ -1,9 +1,32 @@
-import { callModel } from "./core.js";
+import { callModel, addMessagePair } from "./core.js";
+import { getGatewayMetadata } from "./gateway.js";
 
 export async function pictures(env, model, body = {}) {
 	const category = "pictures";
 	const prompt = body?.prompt || (`Generate or describe an image for: ${body?.query || body?.text || ""}`);
-	const result = await callModel(env, model, prompt, { ...body?.options, isImageModel: true });
-	return { result };
+	
+	// Get gateway metadata
+	const gatewayMetadata = await getGatewayMetadata(env, {
+		conversationId: body?.conversationId,
+		conversationName: body?.conversationName,
+		prompt: prompt,
+		categorizedModels: body?.categorizedModels || {}
+	});
+	
+	const result = await callModel(env, model, prompt, { ...body?.options, isImageModel: true }, gatewayMetadata);
+	
+	// Store conversation with gateway metadata
+	const assistantContent = result?.response ?? String(result);
+	const discussion = await addMessagePair(env, category, {
+		discussionId: gatewayMetadata.gateway?.metadata?.conversationId,
+		userContent: prompt,
+		assistantContent,
+		metadata: { 
+			model,
+			gateway: gatewayMetadata.gateway
+		}
+	});
+	
+	return { result, discussion };
 }
 
