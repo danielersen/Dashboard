@@ -8,20 +8,33 @@ const STATE_FILE = "pomodoro/state.json";
 const STATE_CACHE_KEY = "pomodoro_state";
 const STORAGE_CACHE_KEY = "pomodoro_storage";
 const CACHE_PREFIX = "pomodoro_day_";
+const DAY_CHECKED_PREFIX = "pomodoro_day_checked_";
+const DAY_TIMER_PREFIX = "pomodoro_day_timer_";
 const CACHE_TTL = 3600; // 1 heure
 
 // Fonction pour établir la connexion MEGA et la mettre en cache
 export async function loginMega(env) {
-  const storage = await getClient(env);
-  
-  // Mettre la connexion en cache pendant 30 minutes
   try {
-    await setCacheValue(STORAGE_CACHE_KEY, "connected", 1800);
+    const storage = await getClient(env);
+    
+    // Mettre la connexion en cache pendant 30 minutes
+    try {
+      await setCacheValue(STORAGE_CACHE_KEY, "connected", 1800);
+    } catch (e) {
+      console.error("Failed to cache storage connection:", e);
+    }
+    
+    return { connected: true };
   } catch (e) {
+    const errorMessage = String(e?.message || "").toLowerCase();
+    // Détecter les erreurs de compte bloqué ou de login
+    if (errorMessage.includes("locked") || errorMessage.includes("blocked") || errorMessage.includes("suspended")) {
+      console.error("MEGA account appears to be locked:", e);
+      return { connected: false, error: "Account locked or blocked" };
+    }
     console.error("Failed to cache storage connection:", e);
+    return { connected: false, error: String(e.message) };
   }
-  
-  return { connected: true };
 }
 
 // Fonction pour récupérer tous les jours en utilisant le cache
@@ -151,6 +164,54 @@ async function saveState(env, state) {
   return result;
 }
 
+// Fonction pour récupérer les cases cochées pour un jour spécifique depuis le cache
+async function getDayChecked(day) {
+  const cacheKey = `${DAY_CHECKED_PREFIX}${day}`;
+  try {
+    const cached = await getCacheValue(cacheKey);
+    if (cached !== null && typeof cached === "object" && !Array.isArray(cached)) {
+      return cached;
+    }
+  } catch (e) {
+    console.error(`Day checked cache read failed for ${day}:`, e);
+  }
+  return {};
+}
+
+// Fonction pour sauvegarder les cases cochées pour un jour spécifique dans le cache
+async function saveDayChecked(day, checked) {
+  const cacheKey = `${DAY_CHECKED_PREFIX}${day}`;
+  try {
+    await setCacheValue(cacheKey, checked, CACHE_TTL);
+  } catch (e) {
+    console.error(`Day checked cache write failed for ${day}:`, e);
+  }
+}
+
+// Fonction pour récupérer le nombre de pomodoros pour un jour spécifique depuis le cache
+async function getDayTimerCount(day) {
+  const cacheKey = `${DAY_TIMER_PREFIX}${day}`;
+  try {
+    const cached = await getCacheValue(cacheKey);
+    if (cached !== null && typeof cached === "number") {
+      return cached;
+    }
+  } catch (e) {
+    console.error(`Day timer cache read failed for ${day}:`, e);
+  }
+  return 0;
+}
+
+// Fonction pour sauvegarder le nombre de pomodoros pour un jour spécifique dans le cache
+async function saveDayTimerCount(day, count) {
+  const cacheKey = `${DAY_TIMER_PREFIX}${day}`;
+  try {
+    await setCacheValue(cacheKey, count, CACHE_TTL);
+  } catch (e) {
+    console.error(`Day timer cache write failed for ${day}:`, e);
+  }
+}
+
 export async function readDay(env, day, storage = null) {
   const normalized = validateDay(day);
   const cacheKey = `${CACHE_PREFIX}${normalized}`;
@@ -257,7 +318,7 @@ export async function Pomodoro(env, subpath, method, body) {
 
   // Timeout global pour éviter les dépassements de ressources
   const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 5000);
+    setTimeout(() => reject(new Error("Pomodoro operation timeout")), 15000);
   });
 
   try {
@@ -293,45 +354,40 @@ export async function Pomodoro(env, subpath, method, body) {
       return result;
     }
 
-    if (subpath === "get-state") {
-      const stateTimeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Pomodoro state operation timeout")), 3000);
-      });
-      const result = await Promise.race([
-        readState(env),
-        stateTimeoutPromise
-      ]);
-      return result;
+    if (subpath === "get-day-checked") {
+      const day = validateDay(body?.day);
+      const checked = await getDayChecked(day);
+      return { checked };
     }
 
-    if (subpath === "increment-timer") {
-      const result = await Promise.race([
-        (async () => {
-          const state = await readState(env);
-          state.timerCount = Number(state.timerCount || 0) + 1;
-          await saveState(env, state);
-          return { timerCount: state.timerCount };
-        })(),
-        timeoutPromise
-      ]);
-      return result;
+    if (subpath === "save-day-checked") {
+      const day = validateDay(body?.day);
+      const checked = body?.checked && typeof body.checked === "object" && !Array.isArray(body.checked)
+        ? body.checked
+        : {};
+      await saveDayChecked(day, checked);
+      return { success: true };
     }
 
-    if (subpath === "set-checked") {
-      const checked = body?.checked;
-      if (!checked || typeof checked !== "object" || Array.isArray(checked)) {
-        throw new Error("Invalid checked payload");
-      }
-      const result = await Promise.race([
-        (async () => {
-          const state = await readState(env);
-          state.checked = checked;
-          await saveState(env, state);
-          return { checked: state.checked };
-        })(),
-        timeoutPromise
-      ]);
-      return result;
+    if (subpath === "get-day-timer") {
+      const day = validateDay(body?.day);
+      const count = await getDayTimerCount(day);
+      return { count };
+    }
+
+    if (subpath === "save-day-timer") {
+      const day = validateDay(body?.day);
+      const count = Number(body?.count) || 0;
+      await saveDayTimerCount(day, count);
+      return { success: true };
+    }
+
+    if (subpath === "increment-day-timer") {
+      const day = validateDay(body?.day);
+      const currentCount = await getDayTimerCount(day);
+      const newCount = currentCount + 1;
+      await saveDayTimerCount(day, newCount);
+      return { count: newCount };
     }
 
     throw new Error(`Unknown Pomodoro action: ${subpath}`);
