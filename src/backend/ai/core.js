@@ -83,13 +83,35 @@ export async function callModel(env, model, prompt, options = {}) {
   // Use Cloudflare Workers AI binding
   if (env.AI) {
     try {
-      const aiModel = env.AI.run(model, {
-        messages: [{ role: "user", content: message }],
-        max_tokens: options.maxTokens || 512,
-      });
+      // Check if this is an image generation model (text-to-image)
+      // Image models require 'prompt' parameter instead of 'messages' format
+      const modelId = (model || "").toLowerCase();
+      const isImageModel = modelId.includes("stable-diffusion") || 
+                          modelId.includes("flux") || 
+                          modelId.includes("text-to-image") ||
+                          options.isImageModel === true;
+      
+      let aiModel;
+      if (isImageModel) {
+        // Image generation format
+        aiModel = env.AI.run(model, {
+          prompt: message,
+        });
+      } else {
+        // Text generation format
+        aiModel = env.AI.run(model, {
+          messages: [{ role: "user", content: message }],
+          max_tokens: options.maxTokens || 512,
+        });
+      }
       
       const response = await aiModel;
-      const content = response?.response || response?.output || JSON.stringify(response);
+      const content = response?.response || response?.output || response?.image || JSON.stringify(response);
+      
+      // For image models, mark the response as image
+      if (isImageModel) {
+        return { ok: true, model: model, response: content, raw: response, isImage: true };
+      }
       
       return { ok: true, model: model, response: content, raw: response };
     } catch (error) {
