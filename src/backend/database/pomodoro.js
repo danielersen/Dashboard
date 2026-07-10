@@ -48,9 +48,17 @@ export async function readAllDays(env) {
     const cacheKey = `${CACHE_PREFIX}${day}`;
     try {
       const cached = await getCacheValue(cacheKey);
+      console.log(`Cache check for ${day}:`, cached, `Length: ${Array.isArray(cached) ? cached.length : 'N/A'}`);
+      
       if (cached !== null) {
-        allDays[day] = cached;
-        console.log(`Cache hit for ${day}:`, cached);
+        // Si le cache contient un tableau vide, considérer comme manquant pour forcer la relecture MEGA
+        if (Array.isArray(cached) && cached.length === 0) {
+          console.log(`Cache contains empty array for ${day}, will force MEGA read`);
+          // Ne pas définir allDays[day] pour forcer la lecture MEGA
+        } else {
+          allDays[day] = cached;
+          console.log(`Cache hit for ${day}:`, cached);
+        }
       } else {
         console.log(`Cache miss for ${day} (null value)`);
       }
@@ -61,6 +69,7 @@ export async function readAllDays(env) {
   
   // Charger les jours manquants depuis MEGA avec une seule connexion
   const missingDays = VALID_DAYS.filter(day => allDays[day] === undefined);
+  console.log(`Missing days to load from MEGA:`, missingDays);
   
   if (missingDays.length > 0) {
     try {
