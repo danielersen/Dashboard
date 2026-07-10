@@ -51,6 +51,8 @@ export async function readAllDays(env) {
       if (cached !== null) {
         allDays[day] = cached;
         console.log(`Cache hit for ${day}:`, cached);
+      } else {
+        console.log(`Cache miss for ${day} (null value)`);
       }
     } catch (e) {
       console.error(`Cache read failed for ${day}:`, e);
@@ -66,8 +68,10 @@ export async function readAllDays(env) {
       
       for (const day of missingDays) {
         try {
+          console.log(`Attempting to read ${day} from MEGA...`);
           const subjects = await readDay(env, day, storage);
           allDays[day] = subjects;
+          console.log(`Read ${day} from MEGA:`, subjects);
           
           // Mettre en cache
           const cacheKey = `${CACHE_PREFIX}${day}`;
@@ -279,11 +283,16 @@ async function saveDayTimerCount(day, count) {
 export async function readDay(env, day, storage = null) {
   const normalized = validateDay(day);
   const cacheKey = `${CACHE_PREFIX}${normalized}`;
+  const fullPath = filePath(normalized);
+  
+  console.log(`readDay called for ${day}, normalized: ${normalized}, fullPath: ${fullPath}`);
   
   // Essayer d'abord depuis le cache
   try {
     const cached = await getCacheValue(cacheKey);
+    console.log(`Cache value for ${day}:`, cached);
     if (cached !== null) {
+      console.log(`Returning cached value for ${day}:`, cached);
       return cached;
     }
   } catch (e) {
@@ -291,18 +300,30 @@ export async function readDay(env, day, storage = null) {
   }
 
   try {
-    const result = await megaRead(env, filePath(normalized), storage);
-    if (Array.isArray(result)) return result;
+    console.log(`Reading from MEGA: ${fullPath}`);
+    const result = await megaRead(env, fullPath, storage);
+    console.log(`MEGA result for ${day}:`, result);
+    
+    if (Array.isArray(result)) {
+      console.log(`Returning array for ${day}:`, result);
+      return result;
+    }
     if (typeof result === "string" && result.trim()) {
       try {
-        return JSON.parse(result);
+        const parsed = JSON.parse(result);
+        console.log(`Parsed JSON for ${day}:`, parsed);
+        return parsed;
       } catch {
+        console.log(`Failed to parse JSON for ${day}, returning []`);
         return [];
       }
     }
+    console.log(`MEGA result is not array or string for ${day}, returning []`);
     return [];
   } catch (e) {
+    console.error(`Error reading ${day} from MEGA:`, e);
     if (e.message.includes("File not found") || e.message.includes("Folder not found")) {
+      console.log(`File not found for ${day}, returning []`);
       return [];
     }
     throw e;

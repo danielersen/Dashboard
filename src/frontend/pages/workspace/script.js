@@ -812,9 +812,14 @@ async function pomoLoadAllDays() {
   }
   
   try {
+    console.log("Loading all days from API...");
     const result = await pomoPost("read-all-days", {});
+    console.log("API response for all days:", result);
     if (result?.allDays && typeof result.allDays === "object") {
       state.pomoAllDays = result.allDays;
+      console.log("state.pomoAllDays set to:", state.pomoAllDays);
+    } else {
+      console.error("Invalid allDays in response:", result);
     }
   } catch (error) {
     console.error("Failed to load all days:", error);
@@ -827,6 +832,8 @@ async function pomoLoadAllDays() {
   
   // Charger le jour actuel depuis le cache
   const currentDay = POMO_DAYS[state.pomoDayIndex];
+  console.log("Current day:", currentDay);
+  console.log("Subjects for current day:", state.pomoAllDays[currentDay]);
   if (state.pomoAllDays[currentDay]) {
     state.pomoSubjects = state.pomoAllDays[currentDay].map(s => ({ ...s }));
     state.pomoSubjectsOriginal = JSON.stringify(state.pomoAllDays[currentDay]);
@@ -836,10 +843,13 @@ async function pomoLoadAllDays() {
   
   // Charger les cases cochées et compteurs pour tous les jours en 1 requête unique
   try {
+    console.log("Loading all pomodoro data (checked/timer)...");
     const result = await pomoPost("read-all-pomodoro-data", {}).catch(() => null);
+    console.log("API response for pomodoro data:", result);
     
     if (result?.allChecked && typeof result.allChecked === "object") {
       state.pomoDayChecked = result.allChecked;
+      console.log("state.pomoDayChecked set to:", state.pomoDayChecked);
     } else {
       state.pomoDayChecked = {};
       for (const day of POMO_DAYS) {
@@ -849,6 +859,7 @@ async function pomoLoadAllDays() {
     
     if (result?.allTimerCount && typeof result.allTimerCount === "object") {
       state.pomoDayTimerCount = result.allTimerCount;
+      console.log("state.pomoDayTimerCount set to:", state.pomoDayTimerCount);
     } else {
       state.pomoDayTimerCount = {};
       for (const day of POMO_DAYS) {
@@ -859,6 +870,7 @@ async function pomoLoadAllDays() {
     // Initialiser pomoChecked avec les cases du jour actuel uniquement
     const currentDay = POMO_DAYS[state.pomoDayIndex];
     state.pomoChecked = state.pomoDayChecked[currentDay] || {};
+    console.log("state.pomoChecked for current day:", state.pomoChecked);
   } catch (error) {
     console.error("Failed to load all pomodoro data:", error);
     state.pomoDayChecked = {};
