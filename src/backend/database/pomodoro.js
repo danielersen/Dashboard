@@ -37,72 +37,31 @@ export async function loginMega(env) {
   }
 }
 
-// Fonction pour récupérer tous les jours en utilisant le cache
+// Fonction pour récupérer tous les jours sans cache (lecture directe depuis MEGA)
 export async function readAllDays(env) {
   const allDays = {};
   const { getClient } = await import("./mega.js");
   let storage = null;
   
-  // Essayer d'abord depuis le cache
-  for (const day of VALID_DAYS) {
-    const cacheKey = `${CACHE_PREFIX}${day}`;
-    try {
-      const cached = await getCacheValue(cacheKey);
-      console.log(`Cache check for ${day}:`, cached, `Length: ${Array.isArray(cached) ? cached.length : 'N/A'}`);
-      
-      if (cached !== null) {
-        // Si le cache contient un tableau vide, considérer comme manquant pour forcer la relecture MEGA
-        if (Array.isArray(cached) && cached.length === 0) {
-          console.log(`Cache contains empty array for ${day}, will force MEGA read`);
-          // Ne pas définir allDays[day] pour forcer la lecture MEGA
-        } else {
-          allDays[day] = cached;
-          console.log(`Cache hit for ${day}:`, cached);
-        }
-      } else {
-        console.log(`Cache miss for ${day} (null value)`);
+  try {
+    storage = await getClient(env);
+    
+    for (const day of VALID_DAYS) {
+      try {
+        console.log(`Reading ${day} from MEGA...`);
+        const subjects = await readDay(env, day, storage);
+        allDays[day] = subjects;
+        console.log(`Read ${day} from MEGA:`, subjects);
+      } catch (e) {
+        console.error(`Failed to read ${day} from MEGA:`, e);
+        allDays[day] = [];
       }
-    } catch (e) {
-      console.error(`Cache read failed for ${day}:`, e);
     }
-  }
-  
-  // Charger les jours manquants depuis MEGA avec une seule connexion
-  const missingDays = VALID_DAYS.filter(day => allDays[day] === undefined);
-  console.log(`Missing days to load from MEGA:`, missingDays);
-  
-  if (missingDays.length > 0) {
-    try {
-      storage = await getClient(env);
-      
-      for (const day of missingDays) {
-        try {
-          console.log(`Attempting to read ${day} from MEGA...`);
-          const subjects = await readDay(env, day, storage);
-          allDays[day] = subjects;
-          console.log(`Read ${day} from MEGA:`, subjects);
-          
-          // Mettre en cache
-          const cacheKey = `${CACHE_PREFIX}${day}`;
-          try {
-            await setCacheValue(cacheKey, subjects, CACHE_TTL);
-            console.log(`Cache updated for ${day} from MEGA:`, subjects);
-          } catch (e) {
-            console.error(`Cache write failed for ${day}:`, e);
-          }
-        } catch (e) {
-          console.error(`Failed to read ${day} from MEGA:`, e);
-          allDays[day] = [];
-        }
-      }
-    } catch (e) {
-      console.error("MEGA connection failed:", e);
-      // En cas d'erreur, retourner ce qu'on a du cache
-      for (const day of missingDays) {
-        if (allDays[day] === undefined) {
-          allDays[day] = [];
-        }
-      }
+  } catch (e) {
+    console.error("MEGA connection failed:", e);
+    // En cas d'erreur, retourner des tableaux vides
+    for (const day of VALID_DAYS) {
+      allDays[day] = [];
     }
   }
   
@@ -291,25 +250,9 @@ async function saveDayTimerCount(day, count) {
 
 export async function readDay(env, day, storage = null) {
   const normalized = validateDay(day);
-  const cacheKey = `${CACHE_PREFIX}${normalized}`;
   const fullPath = filePath(normalized);
   
   console.log(`readDay called for ${day}, normalized: ${normalized}, fullPath: ${fullPath}`);
-  console.log(`Cache key: ${cacheKey}`);
-  
-  // Essayer d'abord depuis le cache
-  try {
-    const cached = await getCacheValue(cacheKey);
-    console.log(`Cache value for ${day}:`, cached, `Type: ${typeof cached}`);
-    if (cached !== null) {
-      console.log(`Returning cached value for ${day}:`, cached);
-      return cached;
-    } else {
-      console.log(`Cache returned null for ${day}, will try MEGA`);
-    }
-  } catch (e) {
-    console.error(`Cache read failed for ${day}:`, e);
-  }
 
   try {
     console.log(`Reading from MEGA: ${fullPath}`);
