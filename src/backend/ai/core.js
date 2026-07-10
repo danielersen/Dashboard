@@ -21,6 +21,18 @@ export async function readIndex(env, category) {
   }
 }
 
+export async function readDiscussion(env, category, discussionId) {
+  try {
+    const discussion = await megaRead(env, discussionFilePath(category, `${discussionId}.json`));
+    return discussion;
+  } catch (e) {
+    if (String(e?.message || "").toLowerCase().includes("file not found") || String(e?.message || "").toLowerCase().includes("folder not found")) {
+      return null;
+    }
+    throw e;
+  }
+}
+
 export async function writeIndex(env, category, index) {
   return await megaWrite(env, indexPath(category), index || []);
 }
@@ -40,8 +52,6 @@ function trimDiscussionMessages(discussion, maxPairs = 10) {
 export async function addMessagePair(env, category, { discussionId = null, userContent, assistantContent, metadata = {} } = {}) {
   if (!userContent) throw new Error("Missing user content");
   
-  // Skip storage for now to reduce subrequests - just return the discussion object
-  // Storage can be added later with proper optimization
   const discussion = {
     id: discussionId || (String(Date.now()) + Math.random().toString(36).slice(2,8)),
     createdAt: nowTS(),
@@ -69,15 +79,42 @@ export async function addMessagePair(env, category, { discussionId = null, userC
     discussion.title = title.charAt(0).toUpperCase() + title.slice(1);
   }
 
-  // Skip AI title generation to reduce subrequests
-  // Skip file storage to reduce subrequests
-  // Skip index management to reduce subrequests
+  // Save discussion to file
+  try {
+    await megaWrite(env, discussionFilePath(category, `${discussion.id}.json`), discussion);
+    
+    // Update index
+    const index = await readIndex(env, category);
+    const existingIndex = index.findIndex(d => d.id === discussion.id);
+    if (existingIndex >= 0) {
+      index[existingIndex] = {
+        id: discussion.id,
+        title: discussion.title,
+        updatedAt: discussion.updatedAt,
+        lastPromptDate: discussion.lastPromptDate,
+        metadata: discussion.metadata
+      };
+    } else {
+      index.push({
+        id: discussion.id,
+        title: discussion.title,
+        createdAt: discussion.createdAt,
+        updatedAt: discussion.updatedAt,
+        lastPromptDate: discussion.lastPromptDate,
+        metadata: discussion.metadata
+      });
+    }
+    await writeIndex(env, category, index);
+  } catch (error) {
+    console.error("Failed to save discussion:", error);
+    // Continue without failing the request
+  }
 
   return discussion;
 }
 
 // Simple model caller using Cloudflare Workers AI
-export async function callModel(env, model, prompt, options = {}) {
+export async function callModel(env, model, prompt, options = {}, gatewayMetadata = null) {
   const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
   
   // Use Cloudflare Workers AI binding
@@ -108,18 +145,39 @@ export async function callModel(env, model, prompt, options = {}) {
       const response = await aiModel;
       const content = response?.response || response?.output || response?.image || JSON.stringify(response);
       
+      // Build result object
+      const result = {
+        ok: true,
+        model: model,
+        response: content,
+        raw: response,
+      };
+      
       // For image models, mark the response as image
       if (isImageModel) {
-        return { ok: true, model: model, response: content, raw: response, isImage: true };
+        result.isImage = true;
       }
       
-      return { ok: true, model: model, response: content, raw: response };
+      // Add gateway metadata if provided
+      if (gatewayMetadata) {
+        result.gateway = gatewayMetadata;
+      }
+      
+      return result;
     } catch (error) {
       console.error("Cloudflare AI error:", error);
-      return { ok: false, error: error.message || "Failed to call AI model" };
+      const errorResult = { ok: false, error: error.message || "Failed to call AI model" };
+      if (gatewayMetadata) {
+        errorResult.gateway = gatewayMetadata;
+      }
+      return errorResult;
     }
   }
 
   // Fallback: mocked response
-  return { ok: true, model: model, response: `Mock response for model=${model} prompt=${message}` };
+  const fallbackResult = { ok: true, model: model, response: `Mock response for model=${model} prompt=${message}` };
+  if (gatewayMetadata) {
+    fallbackResult.gateway = gatewayMetadata;
+  }
+  return fallbackResult;
 }

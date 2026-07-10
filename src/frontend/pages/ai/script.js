@@ -10,6 +10,10 @@ const state = {
   selectedCategory: "basic",
   selectedCompany: null,
   selectedModel: null,
+  conversationId: null,
+  conversationName: null,
+  isNewConversation: true,
+  selectorVisible: true,
 };
 
 // Mapping from frontend category names to backend category names
@@ -344,6 +348,50 @@ function updateConsumptionDisplay(consumptionScore) {
   `;
 }
 
+function updateSelectorVisibility() {
+  const selectorBar = document.getElementById("selector-bar");
+  if (!selectorBar) return;
+  
+  selectorBar.style.display = state.selectorVisible ? "flex" : "none";
+}
+
+function startNewConversation() {
+  state.conversationId = null;
+  state.conversationName = null;
+  state.isNewConversation = true;
+  state.selectorVisible = true;
+  
+  // Clear chat
+  const chatContainer = document.getElementById("chat-container");
+  if (chatContainer) {
+    chatContainer.innerHTML = "";
+  }
+  
+  updateSelectorVisibility();
+}
+
+async function loadConversations() {
+  try {
+    const data = await aiGet("conversations");
+    console.log("Loaded conversations:", data);
+    return data.conversations || [];
+  } catch (error) {
+    console.error("Failed to load conversations:", error);
+    return [];
+  }
+}
+
+async function loadLimits() {
+  try {
+    const data = await aiGet("limits");
+    console.log("Loaded limits:", data);
+    return data;
+  } catch (error) {
+    console.error("Failed to load limits:", error);
+    return null;
+  }
+}
+
 function setupPromptBar() {
   const promptInput = document.getElementById("prompt-input");
   const submitButton = document.getElementById("prompt-submit");
@@ -525,7 +573,10 @@ async function sendToAPI(prompt) {
       body: JSON.stringify({
         prompt: prompt,
         model: state.selectedModel,
-        category: state.selectedCategory
+        category: state.selectedCategory,
+        conversationId: state.conversationId,
+        conversationName: state.conversationName,
+        categorizedModels: state.categorizedModels
       })
     });
     
@@ -533,6 +584,20 @@ async function sendToAPI(prompt) {
     const data = await response.json();
     console.log("API response data:", data);
     removeLoading();
+    
+    // Update conversation info from gateway metadata
+    if (data.resp?.result?.gateway?.metadata) {
+      const gatewayMetadata = data.resp.result.gateway.metadata;
+      state.conversationId = gatewayMetadata.conversationId;
+      state.conversationName = gatewayMetadata.conversationName;
+      state.isNewConversation = gatewayMetadata.isNewConversation || false;
+      
+      // If new conversation, hide selector
+      if (state.isNewConversation) {
+        state.selectorVisible = false;
+        updateSelectorVisibility();
+      }
+    }
     
     let content = null;
     let isImage = false;
@@ -674,10 +739,177 @@ function setupPromptHandlers() {
   });
 }
 
+/* ===================== SIDEBAR BUTTONS ===================== */
+function setupSidebarButtons() {
+  const newConversationBtn = document.getElementById("new-conversation-btn");
+  const conversationsBtn = document.getElementById("conversations-btn");
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  const limitsBtn = document.getElementById("limits-btn");
+  
+  if (newConversationBtn) {
+    newConversationBtn.addEventListener("click", startNewConversation);
+  }
+  
+  if (conversationsBtn) {
+    conversationsBtn.addEventListener("click", showConversationsList);
+  }
+  
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.addEventListener("click", toggleSelector);
+  }
+  
+  if (limitsBtn) {
+    limitsBtn.addEventListener("click", showLimits);
+  }
+}
+
+function toggleSelector() {
+  state.selectorVisible = !state.selectorVisible;
+  updateSelectorVisibility();
+  
+  // Update button state
+  const toggleBtn = document.getElementById("toggle-selector-btn");
+  if (toggleBtn) {
+    toggleBtn.dataset.active = String(state.selectorVisible);
+  }
+}
+
+async function showConversationsList() {
+  const conversations = await loadConversations();
+  
+  // Create a modal or dropdown to show conversations
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  // Clear current chat
+  chatContainer.innerHTML = "";
+  
+  if (conversations.length === 0) {
+    chatContainer.innerHTML = `
+      <div class="chat-message ai">
+        <div class="chat-bubble">No conversations yet. Start a new one!</div>
+      </div>
+    `;
+    return;
+  }
+  
+  // Display conversations list
+  conversations.forEach(conv => {
+    const convDiv = document.createElement("div");
+    convDiv.className = "chat-message ai";
+    convDiv.innerHTML = `
+      <div class="chat-bubble conversation-item" data-conversation-id="${conv.id}" data-conversation-name="${conv.title}">
+        <div class="conversation-title">${escapeHtml(conv.title || "Untitled")}</div>
+        <div class="conversation-date">${new Date(conv.lastPromptDate || conv.updatedAt).toLocaleDateString()}</div>
+      </div>
+    `;
+    chatContainer.appendChild(convDiv);
+    
+    // Add click handler to load conversation
+    const convItem = convDiv.querySelector(".conversation-item");
+    if (convItem) {
+      convItem.addEventListener("click", () => loadConversation(conv));
+    }
+  });
+}
+
+async function loadConversation(conversation) {
+  state.conversationId = conversation.id;
+  state.conversationName = conversation.title;
+  state.isNewConversation = false;
+  state.selectorVisible = false;
+  
+  // Set model from conversation metadata if available
+  if (conversation.metadata && conversation.metadata.model) {
+    state.selectedModel = conversation.metadata.model;
+    // Update UI to show selected model
+    const modelSelect = document.getElementById("model-select");
+    if (modelSelect) {
+      const trigger = modelSelect.querySelector(".custom-select-trigger");
+      if (trigger) {
+        trigger.textContent = conversation.metadata.model;
+      }
+    }
+  }
+  
+  // Clear chat and load messages
+  const chatContainer = document.getElementById("chat-container");
+  if (chatContainer) {
+    chatContainer.innerHTML = "";
+    
+    // Display messages in order
+    if (conversation.messages && Array.isArray(conversation.messages)) {
+      conversation.messages.forEach(msg => {
+        if (msg.role === "user") {
+          displayUserMessage(msg.content);
+        } else if (msg.role === "assistant") {
+          displayAIMessage(msg.content);
+        }
+      });
+    }
+  }
+  
+  updateSelectorVisibility();
+}
+
+async function showLimits() {
+  const limits = await loadLimits();
+  
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+  
+  // Clear current chat
+  chatContainer.innerHTML = "";
+  
+  if (!limits) {
+    chatContainer.innerHTML = `
+      <div class="chat-message ai">
+        <div class="chat-bubble">Failed to load limits information.</div>
+      </div>
+    `;
+    return;
+  }
+  
+  // Display limits
+  const limitsHtml = `
+    <div class="chat-message ai">
+      <div class="chat-bubble">
+        <h3>Daily Usage</h3>
+        <div class="limits-info">
+          <div class="limit-item">
+            <span class="limit-label">Used:</span>
+            <span class="limit-value">${limits.daily?.used || 0}</span>
+          </div>
+          <div class="limit-item">
+            <span class="limit-label">Limit:</span>
+            <span class="limit-value">${limits.daily?.limit || 10000}</span>
+          </div>
+          <div class="limit-item">
+            <span class="limit-label">Percentage:</span>
+            <span class="limit-value">${limits.daily?.percentage || 0}%</span>
+          </div>
+        </div>
+        <h3>Model Consumption</h3>
+        <div class="models-info">
+          ${(limits.models || []).map(model => `
+            <div class="model-item">
+              <span class="model-name">${escapeHtml(model.name)}</span>
+              <span class="model-consumption">${model.consumptionPercentage}%</span>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  chatContainer.innerHTML = limitsHtml;
+}
+
 /* ===================== INITIALIZATION ===================== */
 async function init() {
   await loadModels();
   setupPromptBar();
+  setupSidebarButtons();
 }
 
 // Start initialization when DOM is ready
