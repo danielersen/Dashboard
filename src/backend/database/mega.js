@@ -2,7 +2,7 @@ import { Storage } from "megajs";
 
 // Cache des connexions pour éviter trop de logins
 const connectionCache = new Map();
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes pour éviter trop de reconnexions et blocages MEGA
+const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 heures pour éviter les blocages MEGA (credential stuffing)
 const MAX_CACHE_SIZE = 1; // Maximum 1 connexion simultanée
 
 function normalizePath(path) {
@@ -84,7 +84,12 @@ export async function getClient(env) {
     userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", // UserAgent navigateur standard pour éviter suspicion
     keepalive: true, // Activé pour éviter les reconnexions fréquentes
     autoload: true, // Activé pour s'assurer que root est disponible
-    autologin: true // Garder le login automatique
+    autologin: true, // Garder le login automatique
+    // Options supplémentaires pour éviter la détection de credential stuffing
+    autofetch: true, // Activer le fetch automatique
+    protocol: "https", // Utiliser HTTPS sécurisé
+    host: "g.api.mega.co.nz", // Serveur MEGA standard
+    port: 443, // Port HTTPS standard
   });
   
   await withTimeout(storage.ready, 15000, "Mega login timed out"); // Timeout augmenté pour éviter les échecs de connexion
