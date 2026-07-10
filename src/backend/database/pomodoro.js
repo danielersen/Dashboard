@@ -50,6 +50,7 @@ export async function readAllDays(env) {
       const cached = await getCacheValue(cacheKey);
       if (cached !== null) {
         allDays[day] = cached;
+        console.log(`Cache hit for ${day}:`, cached);
       }
     } catch (e) {
       console.error(`Cache read failed for ${day}:`, e);
@@ -72,6 +73,7 @@ export async function readAllDays(env) {
           const cacheKey = `${CACHE_PREFIX}${day}`;
           try {
             await setCacheValue(cacheKey, subjects, CACHE_TTL);
+            console.log(`Cache updated for ${day} from MEGA:`, subjects);
           } catch (e) {
             console.error(`Cache write failed for ${day}:`, e);
           }
@@ -91,6 +93,7 @@ export async function readAllDays(env) {
     }
   }
   
+  console.log("Final allDays:", allDays);
   return allDays;
 }
 
@@ -314,10 +317,11 @@ export async function saveDay(env, day, subjects) {
 
   const result = await megaWrite(env, filePath(normalized), subjects);
   
-  // Mettre à jour le cache
+  // Mettre à jour le cache avec un TTL plus long pour s'assurer que les données sont disponibles
   const cacheKey = `${CACHE_PREFIX}${normalized}`;
   try {
     await setCacheValue(cacheKey, subjects, CACHE_TTL);
+    console.log(`Cache updated for ${day}:`, subjects);
   } catch (e) {
     console.error(`Cache write failed for ${day}:`, e);
   }
