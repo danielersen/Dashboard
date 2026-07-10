@@ -25,9 +25,8 @@ const state = {
   pomoSubjects: [],
   pomoSubjectsOriginal: null,
   pomoDirty: false,
-  pomoChecked: {},
-  pomoAllDays: {}, // Cache pour tous les jours
-  pomoDayChecked: {}, // Cache pour les cases cochées par jour
+  pomoChecked: {}, // Cases cochées pour le jour actuel uniquement
+  pomoAllDays: {}, // Cache pour tous les jours (matières)
   pomoDayTimerCount: {}, // Cache pour les compteurs de pomodoros par jour
   pomoTimerCount: 0,
   pomoTimerRunning: false,
@@ -752,12 +751,18 @@ function pomoChangeDay(offset) {
   state.pomoDayIndex = ((state.pomoDayIndex + offset) % 7 + 7) % 7;
   state.pomoDirty = false;
   
+  // Mettre à jour pomoChecked pour le nouveau jour
+  const currentDay = POMO_DAYS[state.pomoDayIndex];
+  state.pomoChecked = state.pomoDayChecked[currentDay] || {};
+  
+  // Mettre à jour le compteur de timer pour le nouveau jour
+  state.pomoTimerCount = state.pomoDayTimerCount[currentDay] || 0;
+  
   // Charger le nouveau jour depuis le cache (instantané)
   pomoLoadSubjects(true);
   
   // Recharger discrètement en arrière-plan le jour précédent et le nouveau jour
   const previousDay = POMO_DAYS[previousDayIndex];
-  const currentDay = POMO_DAYS[state.pomoDayIndex];
   
   // Recharger le jour précédent en arrière-plan
   pomoSilentRefreshDay(previousDay);
@@ -766,6 +771,9 @@ function pomoChangeDay(offset) {
   if (previousDay !== currentDay) {
     pomoSilentRefreshDay(currentDay);
   }
+  
+  // Mettre à jour l'affichage du compteur
+  pomoUpdateCounterDisplay();
 }
 
 function pomoUpdateDayLabel() {
@@ -826,29 +834,37 @@ async function pomoLoadAllDays() {
     pomoRenderSubjects();
   }
   
-  // Charger les cases cochées pour chaque jour depuis le cache
-  state.pomoDayChecked = {};
-  state.pomoDayTimerCount = {};
-  for (const day of POMO_DAYS) {
-    try {
-      const [checkedResult, timerResult] = await Promise.all([
-        pomoPost("get-day-checked", { day }).catch(() => null),
-        pomoPost("get-day-timer", { day }).catch(() => null)
-      ]);
-      
-      if (checkedResult?.checked && typeof checkedResult.checked === "object") {
-        state.pomoDayChecked[day] = checkedResult.checked;
-      } else {
+  // Charger les cases cochées et compteurs pour tous les jours en 1 requête unique
+  try {
+    const result = await pomoPost("read-all-pomodoro-data", {}).catch(() => null);
+    
+    if (result?.allChecked && typeof result.allChecked === "object") {
+      state.pomoDayChecked = result.allChecked;
+    } else {
+      state.pomoDayChecked = {};
+      for (const day of POMO_DAYS) {
         state.pomoDayChecked[day] = {};
       }
-      
-      if (timerResult?.count && typeof timerResult.count === "number") {
-        state.pomoDayTimerCount[day] = timerResult.count;
-      } else {
+    }
+    
+    if (result?.allTimerCount && typeof result.allTimerCount === "object") {
+      state.pomoDayTimerCount = result.allTimerCount;
+    } else {
+      state.pomoDayTimerCount = {};
+      for (const day of POMO_DAYS) {
         state.pomoDayTimerCount[day] = 0;
       }
-    } catch (error) {
-      console.error(`Failed to load day data for ${day}:`, error);
+    }
+    
+    // Initialiser pomoChecked avec les cases du jour actuel uniquement
+    const currentDay = POMO_DAYS[state.pomoDayIndex];
+    state.pomoChecked = state.pomoDayChecked[currentDay] || {};
+  } catch (error) {
+    console.error("Failed to load all pomodoro data:", error);
+    state.pomoDayChecked = {};
+    state.pomoDayTimerCount = {};
+    state.pomoChecked = {};
+    for (const day of POMO_DAYS) {
       state.pomoDayChecked[day] = {};
       state.pomoDayTimerCount[day] = 0;
     }
@@ -933,14 +949,14 @@ function pomoRenderSubjects() {
   const listEl = document.querySelector("[data-pomo-subjects]");
   if (!listEl) return;
   const isToday = pomoIsToday();
-  const currentDay = POMO_DAYS[state.pomoDayIndex];
   const flat = pomoFlattenSubjects();
   if (flat.length === 0) {
     listEl.innerHTML = `<p class="state-msg">No subjects for this day.</p>`;
     return;
   }
   
-  // Utiliser les cases cochées spécifiques au jour
+  // Utiliser les cases cochées du jour actuel uniquement
+  const currentDay = POMO_DAYS[state.pomoDayIndex];
   const dayChecked = state.pomoDayChecked?.[currentDay] || {};
   
   listEl.innerHTML = flat
@@ -1155,6 +1171,9 @@ function initPomodoro() {
         if (cur <= 0) { delete state.pomoDayChecked[currentDay][name]; } else { state.pomoDayChecked[currentDay][name] = cur; }
       }
       
+      // Mettre à jour pomoChecked pour compatibilité
+      state.pomoChecked = state.pomoDayChecked[currentDay];
+      
       // Sauvegarder dans le cache pour le jour actuel
       await pomoPost("save-day-checked", { day: currentDay, checked: state.pomoDayChecked[currentDay] });
     });
@@ -1227,7 +1246,13 @@ function boot() {
 }
 
 document.addEventListener("DOMContentLoaded", boot);
-window.addEventListener("site-navbar:refresh", (event) => {
+window.addEventListener("site-navbar:refresh", async (event) => {
+  // Refresh toutes les données pomodoro
+  await pomoLoadAllDays();
+  pomoUpdateCounterDisplay();
+  pomoRenderSubjects();
+  
+  // Refresh toutes les données ÉcoleDirecte
   const done = loadAll();
   event.detail?.waitUntil?.(done);
 });

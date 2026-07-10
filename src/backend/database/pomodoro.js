@@ -94,6 +94,67 @@ export async function readAllDays(env) {
   return allDays;
 }
 
+// Fonction unique pour récupérer toutes les données pomodoro (matières, cases, compteurs)
+export async function readAllPomodoroData(env) {
+  const [allDays, allChecked, allTimerCount] = await Promise.all([
+    readAllDays(env),
+    readAllDaysChecked(env),
+    readAllDaysTimerCount(env)
+  ]);
+  
+  return {
+    allDays,
+    allChecked,
+    allTimerCount
+  };
+}
+
+// Fonction pour récupérer toutes les cases cochées pour tous les jours
+export async function readAllDaysChecked(env) {
+  const allChecked = {};
+  
+  // Essayer d'abord depuis le cache pour tous les jours
+  for (const day of VALID_DAYS) {
+    const cacheKey = `${DAY_CHECKED_PREFIX}${day}`;
+    try {
+      const cached = await getCacheValue(cacheKey);
+      if (cached !== null && typeof cached === "object" && !Array.isArray(cached)) {
+        allChecked[day] = cached;
+      } else {
+        allChecked[day] = {};
+      }
+    } catch (e) {
+      console.error(`Day checked cache read failed for ${day}:`, e);
+      allChecked[day] = {};
+    }
+  }
+  
+  return allChecked;
+}
+
+// Fonction pour récupérer tous les compteurs de pomodoros pour tous les jours
+export async function readAllDaysTimerCount(env) {
+  const allTimerCount = {};
+  
+  // Essayer d'abord depuis le cache pour tous les jours
+  for (const day of VALID_DAYS) {
+    const cacheKey = `${DAY_TIMER_PREFIX}${day}`;
+    try {
+      const cached = await getCacheValue(cacheKey);
+      if (cached !== null && typeof cached === "number") {
+        allTimerCount[day] = cached;
+      } else {
+        allTimerCount[day] = 0;
+      }
+    } catch (e) {
+      console.error(`Day timer cache read failed for ${day}:`, e);
+      allTimerCount[day] = 0;
+    }
+  }
+  
+  return allTimerCount;
+}
+
 function validateDay(day) {
   const normalized = String(day || "").toLowerCase().trim();
   if (!VALID_DAYS.includes(normalized)) {
@@ -344,6 +405,14 @@ export async function Pomodoro(env, subpath, method, body) {
         timeoutPromise
       ]);
       return { allDays: result };
+    }
+
+    if (subpath === "read-all-pomodoro-data") {
+      const result = await Promise.race([
+        readAllPomodoroData(env),
+        timeoutPromise
+      ]);
+      return result;
     }
 
     if (subpath === "save-subjects") {
