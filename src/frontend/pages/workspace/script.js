@@ -967,12 +967,20 @@ function pomoRenderSubjects() {
       );
       const quantity = subject ? Number(subject.nb_fois) || 1 : 1;
       const isChecked = isToday && item.instance < checkedCount;
-      return `
-        <label class="pomo-subject">
-          <input type="checkbox" ${isChecked ? "checked" : ""} ${isToday ? "" : "disabled"}
-            data-pomo-check="${i}" data-pomo-subj-name="${escapeHtml(item.name)}" />
-          <span class="pomo-subject-name">${escapeHtml(item.name)}${quantity > 1 ? ` <span class="pomo-subject-count">×${quantity}</span>` : ""}</span>
-        </label>`;
+      
+      if (isToday) {
+        return `
+          <label class="pomo-subject">
+            <input type="checkbox" ${isChecked ? "checked" : ""}
+              data-pomo-check="${i}" data-pomo-subj-name="${escapeHtml(item.name)}" />
+            <span class="pomo-subject-name">${escapeHtml(item.name)}${quantity > 1 ? ` <span class="pomo-subject-count">×${quantity}</span>` : ""}</span>
+          </label>`;
+      } else {
+        return `
+          <label class="pomo-subject">
+            <span class="pomo-subject-name">${escapeHtml(item.name)}${quantity > 1 ? ` <span class="pomo-subject-count">×${quantity}</span>` : ""}</span>
+          </label>`;
+      }
     })
     .join("");
 }
