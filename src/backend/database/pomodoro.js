@@ -286,14 +286,17 @@ export async function readDay(env, day, storage = null) {
   const fullPath = filePath(normalized);
   
   console.log(`readDay called for ${day}, normalized: ${normalized}, fullPath: ${fullPath}`);
+  console.log(`Cache key: ${cacheKey}`);
   
   // Essayer d'abord depuis le cache
   try {
     const cached = await getCacheValue(cacheKey);
-    console.log(`Cache value for ${day}:`, cached);
+    console.log(`Cache value for ${day}:`, cached, `Type: ${typeof cached}`);
     if (cached !== null) {
       console.log(`Returning cached value for ${day}:`, cached);
       return cached;
+    } else {
+      console.log(`Cache returned null for ${day}, will try MEGA`);
     }
   } catch (e) {
     console.error(`Cache read failed for ${day}:`, e);
@@ -302,7 +305,7 @@ export async function readDay(env, day, storage = null) {
   try {
     console.log(`Reading from MEGA: ${fullPath}`);
     const result = await megaRead(env, fullPath, storage);
-    console.log(`MEGA result for ${day}:`, result);
+    console.log(`MEGA result for ${day}:`, result, `Type: ${typeof result}`);
     
     if (Array.isArray(result)) {
       console.log(`Returning array for ${day}:`, result);
