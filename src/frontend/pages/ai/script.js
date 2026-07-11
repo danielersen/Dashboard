@@ -343,10 +343,11 @@ function startNewConversation() {
   state.isNewConversation = true;
   state.selectorVisible = true;
   
-  // Show toggle-selector button
+  // Show toggle-selector button and activate it
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
     toggleSelectorBtn.style.display = "";
+    toggleSelectorBtn.classList.add("active");
   }
   
   // Clear chat
@@ -920,18 +921,18 @@ async function showLimits() {
   const limitsHtml = `
     <div class="chat-message ai">
       <div class="chat-bubble">
-        <div class="limits-info">
-          <article class="bento-block limit-item">
+        <div class="bento-grid">
+          <article class="bento-block limit-item" style="grid-column: span 4;">
             <p class="block-eyebrow">Daily Usage</p>
             <strong class="card-value">${limits.daily?.used || 0}</strong>
             <p class="card-desc">Requests used today</p>
           </article>
-          <article class="bento-block limit-item">
+          <article class="bento-block limit-item" style="grid-column: span 4;">
             <p class="block-eyebrow">Limit</p>
             <strong class="card-value">${limits.daily?.limit || 10000}</strong>
             <p class="card-desc">Daily request limit</p>
           </article>
-          <article class="bento-block limit-item">
+          <article class="bento-block limit-item" style="grid-column: span 4;">
             <p class="block-eyebrow">Percentage</p>
             <strong class="card-value" data-tone="accent">${limits.daily?.percentage || 0}%</strong>
             <p class="card-desc">Usage percentage</p>

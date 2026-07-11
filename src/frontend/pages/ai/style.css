@@ -857,6 +857,12 @@ a {
 }
 
 /* Limits Info */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .limits-info {
   margin: 12px 0;
   display: flex;
