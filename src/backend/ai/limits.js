@@ -44,6 +44,7 @@ export async function fetchCloudflareLimits(env) {
   const apiToken = env.CLOUDFLARE_API_TOKEN;
   
   if (!accountId || !apiToken) {
+    console.log("Cloudflare credentials not configured, returning mock data");
     // Return mock data if credentials not configured
     return {
       daily: {
@@ -56,17 +57,43 @@ export async function fetchCloudflareLimits(env) {
   }
   
   try {
-    // Fetch usage from Cloudflare Analytics API
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/analytics/usage`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${apiToken}`,
-        "Content-Type": "application/json"
-      }
-    });
+    // Try multiple possible API endpoints
+    const endpoints = [
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/analytics/usage`,
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics/ai/usage`,
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/ai/usage`
+    ];
     
-    if (!response.ok) {
-      console.error("Cloudflare API error:", response.status);
+    let data = null;
+    let lastError = null;
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Trying Cloudflare API endpoint: ${endpoint}`);
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${apiToken}`,
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (response.ok) {
+          data = await response.json();
+          console.log("Cloudflare API response:", JSON.stringify(data));
+          break;
+        } else {
+          console.log(`Endpoint ${endpoint} returned status: ${response.status}`);
+          lastError = response.status;
+        }
+      } catch (e) {
+        console.log(`Endpoint ${endpoint} failed:`, e.message);
+        lastError = e.message;
+      }
+    }
+    
+    if (!data) {
+      console.error("All Cloudflare API endpoints failed, last error:", lastError);
       return {
         daily: {
           used: 0,
@@ -77,25 +104,43 @@ export async function fetchCloudflareLimits(env) {
       };
     }
     
-    const data = await response.json();
-    
     // Parse the response - Cloudflare may return different formats
     let dailyUsed = 0;
     let dailyLimit = 10000;
     let modelUsage = [];
     
+    console.log("Parsing Cloudflare response data:", JSON.stringify(data));
+    
     if (data.success && data.result) {
-      // Try to extract usage data
+      // Try to extract usage data from different possible structures
       if (data.result.usage) {
-        dailyUsed = data.result.usage.requests || 0;
+        dailyUsed = data.result.usage.requests || data.result.usage.count || data.result.usage.total || 0;
+      } else if (data.result.requests) {
+        dailyUsed = data.result.requests;
+      } else if (data.result.count) {
+        dailyUsed = data.result.count;
+      } else if (data.result.total) {
+        dailyUsed = data.result.total;
       }
+      
       if (data.result.limit) {
-        dailyLimit = data.result.limit.requests || 10000;
+        dailyLimit = data.result.limit.requests || data.result.limit.count || data.result.limit.total || 10000;
+      } else if (data.result.max) {
+        dailyLimit = data.result.max;
       }
+      
       if (data.result.models) {
         modelUsage = data.result.models;
+      } else if (data.result.model_usage) {
+        modelUsage = data.result.model_usage;
       }
+    } else if (data.result) {
+      // Try direct result access
+      dailyUsed = data.result.requests || data.result.count || data.result.total || 0;
+      dailyLimit = data.result.limit || data.result.max || 10000;
     }
+    
+    console.log(`Parsed usage: ${dailyUsed}/${dailyLimit}`);
     
     const percentage = dailyLimit > 0 ? Math.round((dailyUsed / dailyLimit) * 100) : 0;
     

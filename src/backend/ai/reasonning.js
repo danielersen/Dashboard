@@ -15,10 +15,11 @@ export async function reasonning(env, model, body = {}) {
 	
 	const result = await callModel(env, model, prompt, body?.options || {}, gatewayMetadata);
 	
-	// Store conversation with gateway metadata
+	// Store conversation with gateway metadata - use the conversationId from gateway metadata
+	const conversationId = gatewayMetadata.gateway?.metadata?.conversationId || body?.conversationId;
 	const assistantContent = result?.response ?? String(result);
 	const discussion = await addMessagePair(env, category, {
-		discussionId: gatewayMetadata.gateway?.metadata?.conversationId,
+		discussionId: conversationId,
 		userContent: prompt,
 		assistantContent,
 		metadata: { 
