@@ -115,6 +115,12 @@ a {
   transform: translateY(1px);
 }
 
+.ai-nav.active {
+  color: #f4fbf8;
+  background: var(--accent-soft);
+  border-color: rgba(82, 214, 168, 0.28);
+}
+
 /* ===================== MAIN ===================== */
 .ai-main {
   min-width: 0;
@@ -855,29 +861,43 @@ a {
   margin: 12px 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
 }
 
 .limit-item {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(10, 18, 17, 0.32);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  padding: 26px 28px;
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid var(--line);
+  gap: 12px;
   flex: 1;
-  min-width: 120px;
+  min-width: 140px;
 }
 
 .limit-label {
   color: var(--muted);
-  font-size: 0.8em;
-  margin-bottom: 2px;
+  font-size: 0.86rem;
+  line-height: 1.35;
 }
 
 .limit-value {
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
   font-weight: 600;
-  font-size: 1em;
+}
+
+.limit-value[data-tone="accent"] {
+  color: var(--accent);
 }
 
 /* Models Info */
@@ -887,7 +907,7 @@ a {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .models-info:empty::before {
@@ -899,27 +919,34 @@ a {
 }
 
 .model-item {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+    rgba(10, 18, 17, 0.32);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
-  border: 1px solid var(--line);
+  gap: 12px;
 }
 
 .model-name {
   color: var(--text);
-  font-size: 0.85em;
+  font-size: 0.88rem;
   word-break: break-word;
   flex: 1;
-  margin-right: 8px;
 }
 
 .model-consumption {
   color: var(--accent);
   font-weight: 600;
-  font-size: 0.8em;
+  font-size: 0.88rem;
   white-space: nowrap;
 }
 
