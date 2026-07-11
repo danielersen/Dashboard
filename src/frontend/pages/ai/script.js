@@ -960,6 +960,9 @@ async function init() {
   setupPromptBar();
   setupSidebarButtons();
   setupNavbarRefreshListener();
+  
+  // Automatically activate the + button when page opens
+  startNewConversation();
 }
 
 function setupNavbarRefreshListener() {
