@@ -534,10 +534,16 @@ function setupSidebarButtons() {
 function toggleSelector() {
   state.selectorVisible = !state.selectorVisible;
 
-  // Show toggle-selector button
+  // Show toggle-selector button and sync active state
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
     toggleSelectorBtn.style.display = "flex";
+    // Sync active state with visibility
+    if (state.selectorVisible) {
+      toggleSelectorBtn.classList.add("active");
+    } else {
+      toggleSelectorBtn.classList.remove("active");
+    }
   }
 
   updateSelectorVisibility();
@@ -564,36 +570,27 @@ function startNewConversation() {
 
   chatContainer.innerHTML = "";
 
-  // Hide selector when starting new conversation
-  state.selectorVisible = false;
+  // Show selector when starting new conversation
+  state.selectorVisible = true;
   updateSelectorVisibility();
 
-  // Deactivate toggle-selector button
+  // Show and activate toggle-selector button
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
-    toggleSelectorBtn.classList.remove("active");
-    toggleSelectorBtn.style.display = "none";
+    toggleSelectorBtn.style.display = "flex";
+    toggleSelectorBtn.classList.add("active");
   }
-
-  // Show welcome message
-  const welcomeHtml = `
-    <div class="chat-message ai">
-      <div class="chat-bubble">New conversation started. Type your message below!</div>
-    </div>
-  `;
-  chatContainer.innerHTML = welcomeHtml;
 }
 
 async function showConversations() {
-  // Hide selector when showing conversations
-  state.selectorVisible = false;
+  // Show selector when showing conversations
+  state.selectorVisible = true;
   updateSelectorVisibility();
 
-  // Deactivate toggle-selector button
+  // Show toggle-selector button
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
-    toggleSelectorBtn.classList.remove("active");
-    toggleSelectorBtn.style.display = "none";
+    toggleSelectorBtn.style.display = "flex";
   }
 
   const chatContainer = document.getElementById("chat-container");
@@ -766,11 +763,8 @@ async function init() {
   setupSidebarButtons();
   setupNavbarRefreshListener();
 
-  // Automatically activate the + button when page opens
-  const newConversationBtn = document.getElementById("new-conversation-btn");
-  if (newConversationBtn) {
-    newConversationBtn.classList.add("active");
-  }
+  // Automatically start new conversation when page opens
+  startNewConversation();
 }
 
 function setupNavbarRefreshListener() {
