@@ -97,9 +97,7 @@ a {
 .ai-icon {
   width: 24px;
   height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 }
 
 .ai-icon svg {
@@ -107,8 +105,6 @@ a {
   height: 24px;
   fill: currentColor;
   display: block;
-  max-width: 24px;
-  max-height: 24px;
 }
 
 .ai-nav:hover {
