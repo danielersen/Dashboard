@@ -82,7 +82,7 @@ export async function fetchCloudflareLimits(env) {
     // Parse the response - Cloudflare may return different formats
     let dailyUsed = 0;
     let dailyLimit = 10000;
-    const modelUsage = [];
+    let modelUsage = [];
     
     if (data.success && data.result) {
       // Try to extract usage data
