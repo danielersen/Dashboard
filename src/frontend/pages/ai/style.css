@@ -92,16 +92,10 @@ a {
   width: 24px;
   height: 24px;
   fill: currentColor;
-  display: block;
-  margin: auto;
 }
 
-.ai-icon svg {
-  width: 24px;
-  height: 24px;
-  fill: currentColor;
-  display: block;
-  margin: auto;
+.ai-icon {
+  display: contents;
 }
 
 .ai-nav:hover {
