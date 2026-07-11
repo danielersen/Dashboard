@@ -70,24 +70,6 @@ async function aiPost(sub, body) {
   }
 }
 
-/* ===================== SECTION NAV ===================== */
-const sidebarButtons = document.querySelectorAll(".ai-nav");
-const sections = document.querySelectorAll(".ai-section");
-
-function showSection(target) {
-  sections.forEach((section) => {
-    section.hidden = section.id !== target;
-  });
-  sidebarButtons.forEach((btn) => {
-    btn.dataset.active = String(btn.dataset.target === target);
-  });
-  state.currentSection = target;
-}
-
-sidebarButtons.forEach((btn) => {
-  btn.addEventListener("click", () => showSection(btn.dataset.target));
-});
-
 /* ===================== MODELS ===================== */
 async function loadModels() {
   try {
