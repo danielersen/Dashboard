@@ -57,7 +57,7 @@ export async function fetchCloudflareLimits(env) {
   }
   
   try {
-    // Try multiple possible API endpoints
+    // Try multiple possible API endpoints for usage data
     const endpoints = [
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/analytics/usage`,
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics/ai/usage`,
@@ -133,6 +133,8 @@ export async function fetchCloudflareLimits(env) {
         modelUsage = data.result.models;
       } else if (data.result.model_usage) {
         modelUsage = data.result.model_usage;
+      } else if (data.result.by_model) {
+        modelUsage = data.result.by_model;
       }
     } else if (data.result) {
       // Try direct result access
@@ -141,6 +143,49 @@ export async function fetchCloudflareLimits(env) {
     }
     
     console.log(`Parsed usage: ${dailyUsed}/${dailyLimit}`);
+    
+    // If we don't have model usage data, try to fetch it separately
+    if (modelUsage.length === 0) {
+      try {
+        console.log("Trying to fetch model-specific usage data");
+        const modelEndpoints = [
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/analytics/usage?group_by=model`,
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics/ai/usage?group_by=model`
+        ];
+        
+        for (const endpoint of modelEndpoints) {
+          try {
+            const response = await fetch(endpoint, {
+              method: "GET",
+              headers: {
+                "Authorization": `Bearer ${apiToken}`,
+                "Content-Type": "application/json"
+              }
+            });
+            
+            if (response.ok) {
+              const modelData = await response.json();
+              console.log("Model usage API response:", JSON.stringify(modelData));
+              
+              if (modelData.success && modelData.result) {
+                if (modelData.result.data) {
+                  modelUsage = modelData.result.data;
+                } else if (modelData.result.models) {
+                  modelUsage = modelData.result.models;
+                } else if (Array.isArray(modelData.result)) {
+                  modelUsage = modelData.result;
+                }
+                break;
+              }
+            }
+          } catch (e) {
+            console.log(`Model endpoint ${endpoint} failed:`, e.message);
+          }
+        }
+      } catch (e) {
+        console.log("Failed to fetch model-specific usage:", e.message);
+      }
+    }
     
     const percentage = dailyLimit > 0 ? Math.round((dailyUsed / dailyLimit) * 100) : 0;
     

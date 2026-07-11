@@ -858,47 +858,57 @@ a {
 
 /* Limits Info */
 .limits-info {
-  margin: 16px 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  margin: 12px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .limit-item {
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 10px;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
   border: 1px solid var(--line);
+  flex: 1;
+  min-width: 120px;
 }
 
 .limit-label {
   color: var(--muted);
-  font-size: 0.85em;
-  margin-bottom: 4px;
+  font-size: 0.8em;
+  margin-bottom: 2px;
 }
 
 .limit-value {
   font-weight: 600;
-  font-size: 1.1em;
+  font-size: 1em;
 }
 
 /* Models Info */
 .models-info {
-  margin: 16px 0;
+  margin: 12px 0;
   max-height: 400px;
   overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.models-info:empty::before {
+  content: "No models used today";
+  color: var(--muted);
+  font-style: italic;
+  padding: 12px;
+  text-align: center;
 }
 
 .model-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: 6px;
   border: 1px solid var(--line);
@@ -906,24 +916,26 @@ a {
 
 .model-name {
   color: var(--text);
-  font-size: 0.9em;
+  font-size: 0.85em;
   word-break: break-word;
+  flex: 1;
+  margin-right: 8px;
 }
 
 .model-consumption {
   color: var(--accent);
   font-weight: 600;
-  font-size: 0.85em;
+  font-size: 0.8em;
   white-space: nowrap;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .limits-info {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
   
-  .models-info {
-    grid-template-columns: 1fr;
+  .limit-item {
+    min-width: auto;
   }
 }

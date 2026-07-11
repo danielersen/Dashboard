@@ -747,19 +747,31 @@ function setupSidebarButtons() {
   const limitsBtn = document.getElementById("limits-btn");
   
   if (newConversationBtn) {
-    newConversationBtn.addEventListener("click", startNewConversation);
+    newConversationBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      startNewConversation();
+    });
   }
   
   if (conversationsBtn) {
-    conversationsBtn.addEventListener("click", showConversationsList);
+    conversationsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showConversationsList();
+    });
   }
   
   if (toggleSelectorBtn) {
-    toggleSelectorBtn.addEventListener("click", toggleSelector);
+    toggleSelectorBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleSelector();
+    });
   }
   
   if (limitsBtn) {
-    limitsBtn.addEventListener("click", showLimits);
+    limitsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showLimits();
+    });
   }
 }
 
