@@ -583,14 +583,15 @@ function startNewConversation() {
 }
 
 async function showConversations() {
-  // Show selector when showing conversations
-  state.selectorVisible = true;
+  // Hide selector when showing conversations
+  state.selectorVisible = false;
   updateSelectorVisibility();
 
   // Show toggle-selector button
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
     toggleSelectorBtn.style.display = "flex";
+    toggleSelectorBtn.classList.remove("active");
   }
 
   const chatContainer = document.getElementById("chat-container");
@@ -611,9 +612,7 @@ async function showConversations() {
 
   if (!conversations || conversations.length === 0) {
     chatContainer.innerHTML = `
-      <div class="chat-message ai">
-        <div class="chat-bubble">No conversations found.</div>
-      </div>
+      <p class="state-msg">No conversations found.</p>
     `;
     return;
   }
