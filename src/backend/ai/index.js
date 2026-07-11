@@ -235,7 +235,7 @@ function categorizeModel(model) {
 }
 
 // Function to estimate consumption based on model pricing (returns score 0-20, 20 = heaviest)
-function estimateConsumption(model) {
+export function estimateConsumption(model) {
   const pricing = model.pricing || {};
   const modelId = (model.id || model.name || "").toLowerCase();
   const modelType = (model.type || "").toLowerCase();
