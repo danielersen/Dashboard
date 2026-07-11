@@ -134,6 +134,20 @@ function categorizeModel(model) {
   
   console.log("Categorizing model:", modelId, "type:", modelType, "task:", modelTask, "description:", modelDescription);
   
+  // Exclude deprecated models
+  if (modelDescription.includes("deprecated") || modelDescription.includes("no longer available") ||
+      modelDescription.includes("please use an alternative") || modelDescription.includes("removed")) {
+    console.log("Excluding deprecated model:", modelId);
+    return [];
+  }
+  
+  // Exclude LoRA/adapter models (they require base models)
+  if (modelId.includes("lora") || modelId.includes("adapter") || modelId.includes("it-lora") ||
+      modelId.includes("lora-") || modelId.includes("-lora")) {
+    console.log("Excluding LoRA/adapter model:", modelId);
+    return [];
+  }
+  
   // Exclude translation models from all categories
   if (modelTask.includes("translation") || modelType.includes("translation") || 
       modelId.includes("translation") || modelId.includes("nllb") || 
