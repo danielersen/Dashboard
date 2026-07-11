@@ -117,26 +117,47 @@ export async function addMessagePair(env, category, { discussionId = null, userC
 export async function callModel(env, model, prompt, options = {}, gatewayMetadata = null) {
   const message = typeof prompt === "string" ? prompt : JSON.stringify(prompt);
   
+  // Convert model name to Cloudflare format if needed
+  // If model doesn't start with @cf/, try to convert from display name to ID
+  let actualModel = model;
+  if (!model.startsWith("@cf/")) {
+    // Try to find the matching model ID from categorized models if available
+    if (gatewayMetadata?.categorizedModels) {
+      for (const category of Object.values(gatewayMetadata.categorizedModels)) {
+        const foundModel = category.find(m => 
+          m.name === model || m.name === model.replace(/\s+/g, " ") || 
+          m.name.toLowerCase() === model.toLowerCase()
+        );
+        if (foundModel) {
+          actualModel = foundModel.id;
+          console.log("Converted model name from display name to ID:", model, "->", actualModel);
+          break;
+        }
+      }
+    }
+  }
+  
   // Use Cloudflare Workers AI binding
   if (env.AI) {
     try {
       // Check if this is an image generation model (text-to-image)
       // Image models require 'prompt' parameter instead of 'messages' format
-      const modelId = (model || "").toLowerCase();
+      const modelId = (actualModel || "").toLowerCase();
       const isImageModel = modelId.includes("stable-diffusion") || 
                           modelId.includes("flux") || 
                           modelId.includes("text-to-image") ||
+                          modelId.includes("llava") ||
                           options.isImageModel === true;
       
       let aiModel;
       if (isImageModel) {
         // Image generation format
-        aiModel = env.AI.run(model, {
+        aiModel = env.AI.run(actualModel, {
           prompt: message,
         });
       } else {
         // Text generation format
-        aiModel = env.AI.run(model, {
+        aiModel = env.AI.run(actualModel, {
           messages: [{ role: "user", content: message }],
           max_tokens: options.maxTokens || 512,
         });
@@ -148,7 +169,7 @@ export async function callModel(env, model, prompt, options = {}, gatewayMetadat
       // Build result object
       const result = {
         ok: true,
-        model: model,
+        model: actualModel,
         response: content,
         raw: response,
       };
@@ -175,7 +196,7 @@ export async function callModel(env, model, prompt, options = {}, gatewayMetadat
   }
 
   // Fallback: mocked response
-  const fallbackResult = { ok: true, model: model, response: `Mock response for model=${model} prompt=${message}` };
+  const fallbackResult = { ok: true, model: actualModel, response: `Mock response for model=${actualModel} prompt=${message}` };
   if (gatewayMetadata) {
     fallbackResult.gateway = gatewayMetadata;
   }

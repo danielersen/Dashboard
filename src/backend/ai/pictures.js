@@ -5,7 +5,7 @@ export async function pictures(env, model, body = {}) {
 	const category = "pictures";
 	const prompt = body?.prompt || (`Generate or describe an image for: ${body?.query || body?.text || ""}`);
 	
-	// Get gateway metadata
+	// Get gateway metadata with categorizedModels
 	const gatewayMetadata = await getGatewayMetadata(env, {
 		conversationId: body?.conversationId,
 		conversationName: body?.conversationName,
@@ -13,7 +13,10 @@ export async function pictures(env, model, body = {}) {
 		categorizedModels: body?.categorizedModels || {}
 	});
 	
-	const result = await callModel(env, model, prompt, { ...body?.options, isImageModel: true }, gatewayMetadata);
+	// Pass categorizedModels to callModel for model name conversion
+	const callOptions = { ...body?.options, isImageModel: true, categorizedModels: body?.categorizedModels || {} };
+	
+	const result = await callModel(env, model, prompt, callOptions, gatewayMetadata);
 	
 	// Store conversation with gateway metadata - use the conversationId from gateway metadata
 	const conversationId = gatewayMetadata.gateway?.metadata?.conversationId || body?.conversationId;
