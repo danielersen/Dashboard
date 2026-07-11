@@ -63,3 +63,23 @@
   color: #d7f7ea;
   font-variant-numeric: tabular-nums;
 }
+
+/* Card description */
+.card-desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+/* Card value */
+.card-value {
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+.card-value[data-tone="accent"] {
+  color: var(--accent);
+}
