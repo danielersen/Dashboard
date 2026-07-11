@@ -115,12 +115,6 @@ a {
   transform: translateY(1px);
 }
 
-.ai-nav[data-active="true"] {
-  color: #f4fbf8;
-  background: var(--accent-soft);
-  border-color: rgba(82, 214, 168, 0.28);
-}
-
 /* ===================== MAIN ===================== */
 .ai-main {
   min-width: 0;
