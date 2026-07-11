@@ -263,102 +263,56 @@ function populateModels() {
     return;
   }
   
-  const sortedModels = [...companyModels].sort((a, b) => {
-    const scoreA = parseInt(a.consumption) || 0;
-    const scoreB = parseInt(b.consumption) || 0;
-    if (scoreA !== scoreB) return scoreA - scoreB;
-    const nameA = (a.name || "").toLowerCase();
-    const nameB = (b.name || "").toLowerCase();
-    return nameA.localeCompare(nameB);
-  });
-  
-  console.log("Sorted models:", sortedModels);
-  
-  sortedModels.forEach(model => {
+  companyModels.forEach(model => {
     const option = document.createElement("div");
     option.className = "custom-option";
-    const consumptionScore = model.consumption || 0;
-    const percentage = Math.round((consumptionScore / 20) * 100);
-    
-    option.innerHTML = `
-      <span class="custom-option-name">${model.name || model.model}</span>
-      <span class="custom-option-right">
-        <span class="custom-option-score">${percentage}%</span>
-        <svg class="custom-option-icon" width="8" height="8" viewBox="0 0 24 24" fill="white">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-      </span>
-    `;
-    option.dataset.value = model.id || model.model;
-    option.dataset.consumption = consumptionScore;
-    option.dataset.description = model.description || "";
+    option.textContent = model.name;
+    option.dataset.model = model.name;
     optionsContainer.appendChild(option);
     
     option.addEventListener("click", () => {
       optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
       option.classList.add("selected");
-      trigger.textContent = model.name || model.model;
-      state.selectedModel = model.id || model.model;
+      trigger.textContent = model.name;
+      state.selectedModel = model.name;
       modelSelect.classList.remove("open");
-      updateConsumptionDisplay(consumptionScore);
+      updateConsumptionDisplay();
     });
   });
   
   // Select first model by default
-  if (sortedModels.length > 0) {
+  if (companyModels.length > 0) {
     const firstOption = optionsContainer.querySelector(".custom-option");
     if (firstOption) {
       firstOption.classList.add("selected");
-      trigger.textContent = sortedModels[0].name || sortedModels[0].model;
-      state.selectedModel = sortedModels[0].id || sortedModels[0].model;
-      updateConsumptionDisplay(sortedModels[0].consumption || 0);
+      trigger.textContent = companyModels[0].name;
+      state.selectedModel = companyModels[0].name;
+      updateConsumptionDisplay();
     }
   }
 }
 
-function updateConsumptionDisplay(consumptionScore) {
+function updateConsumptionDisplay() {
   const consumptionDisplay = document.getElementById("consumption-display");
   if (!consumptionDisplay) return;
   
-  const barWidth = Math.min(100, (consumptionScore / 20) * 100);
-  const barColor = consumptionScore <= 5 ? '#52d6a8' : consumptionScore <= 10 ? '#77b7ff' : consumptionScore <= 15 ? '#ffb347' : '#ff6b6b';
+  const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+  const model = categoryModels.find(m => m.name === state.selectedModel);
   
-  consumptionDisplay.innerHTML = `
-    <div class="consumption-bar-container">
-      <div class="consumption-bar-fill" style="width: ${barWidth}%; background: ${barColor};"></div>
-    </div>
-  `;
-}
-
-function updateSelectorVisibility() {
-  const selectorBar = document.getElementById("selector-bar");
-  if (!selectorBar) return;
-  
-  selectorBar.style.display = state.selectorVisible ? "flex" : "none";
-}
-
-function startNewConversation() {
-  state.conversationId = null;
-  state.conversationName = null;
-  state.isNewConversation = true;
-  state.selectorVisible = true;
-  
-  // Show toggle-selector button and activate it
-  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
-  if (toggleSelectorBtn) {
-    toggleSelectorBtn.style.display = "";
-    toggleSelectorBtn.classList.add("active");
+  if (model) {
+    const percentage = model.consumptionPercentage || 0;
+    const barColor = percentage > 80 ? '#ff6b6b' : percentage > 50 ? '#ffd93d' : '#52d6a8';
+    
+    consumptionDisplay.innerHTML = `
+      <div class="consumption-bar-container">
+        <div class="consumption-bar-fill" style="width: ${percentage}%; background: ${barColor};"></div>
+      </div>
+      <span style="margin-left: 8px; font-size: 0.85rem; color: var(--muted);">${percentage}%</span>
+    `;
   }
-  
-  // Clear chat
-  const chatContainer = document.getElementById("chat-container");
-  if (chatContainer) {
-    chatContainer.innerHTML = "";
-  }
-  
-  updateSelectorVisibility();
 }
 
+/* ===================== CONVERSATIONS ===================== */
 async function loadConversations() {
   try {
     const data = await aiGet("conversations");
@@ -384,314 +338,118 @@ async function loadLimits() {
 function setupPromptBar() {
   const promptInput = document.getElementById("prompt-input");
   const submitButton = document.getElementById("prompt-submit");
-  
+
   if (!promptInput || !submitButton) return;
-  
+
   // Auto-resize textarea
   promptInput.addEventListener("input", () => {
     promptInput.style.height = "auto";
     promptInput.style.height = Math.min(promptInput.scrollHeight, 200) + "px";
   });
-  
-  // Handle keyboard shortcuts
+
+  // Submit on Enter (but Shift+Enter for new line)
   promptInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      if (e.ctrlKey || e.metaKey) {
-        // Ctrl+Enter or Cmd+Enter to submit
-        e.preventDefault();
-        submitPrompt();
-      }
-      // Regular Enter just goes to new line (default behavior)
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitButton.click();
     }
   });
-  
-  // Submit on button click
+
   submitButton.addEventListener("click", () => {
-    submitPrompt();
+    const message = promptInput.value.trim();
+    if (!message) return;
+
+    promptInput.value = "";
+    promptInput.style.height = "auto";
+
+    sendMessage(message);
   });
 }
 
-function submitPrompt() {
-  const promptInput = document.getElementById("prompt-input");
-  const prompt = promptInput.value.trim();
-  
-  if (!prompt) return;
-  
-  if (!state.selectedModel) {
-    console.error("No model selected");
-    return;
-  }
-  
-  console.log("Selected model:", state.selectedModel);
-  console.log("Selected category:", state.selectedCategory);
-  
-  // Hide selector bar
-  const selectorBar = document.getElementById("selector-bar");
-  if (selectorBar) {
-    selectorBar.style.display = "none";
-  }
-  
-  // Display user message
-  displayUserMessage(prompt);
-  
-  // Clear input
-  promptInput.value = "";
-  promptInput.style.height = "auto";
-  
-  // Send to API
-  sendToAPI(prompt);
-}
-
-function displayUserMessage(message) {
+async function sendMessage(message) {
   const chatContainer = document.getElementById("chat-container");
   if (!chatContainer) return;
-  
-  const messageDiv = document.createElement("div");
-  messageDiv.className = "chat-message user";
-  messageDiv.innerHTML = `
-    <div class="chat-bubble">${escapeHtml(message)}</div>
-  `;
-  chatContainer.appendChild(messageDiv);
-  
-  // Smooth scroll to bottom
-  requestAnimationFrame(() => {
-    chatContainer.scrollTo({
-      top: chatContainer.scrollHeight,
-      behavior: "smooth"
-    });
-  });
-}
 
-function displayAIMessage(message, isImage = false) {
-  const chatContainer = document.getElementById("chat-container");
-  if (!chatContainer) return;
-  
-  const messageDiv = document.createElement("div");
-  messageDiv.className = "chat-message ai";
-  
-  const bubble = document.createElement("div");
-  bubble.className = "chat-bubble markdown-content";
-  messageDiv.appendChild(bubble);
-  chatContainer.appendChild(messageDiv);
-  
-  // If this is an image response, display it as an image
-  if (isImage && message) {
-    // Check if message is already a data URI
-    const dataURI = message.startsWith('data:') ? message : `data:image/jpeg;charset=utf-8;base64,${message}`;
-    bubble.innerHTML = `<img src="${dataURI}" alt="Generated image" style="max-width: 100%; border-radius: 8px;" />`;
-    
-    // Scroll to bottom
-    requestAnimationFrame(() => {
-      chatContainer.scrollTo({
-        top: chatContainer.scrollHeight,
-        behavior: "smooth"
-      });
-    });
-    return;
-  }
-  
-  // Otherwise, use typewriter effect for text
-  let index = 0;
-  const speed = 15; // 15ms per character - fast but visible
-  
-  function typeWriter() {
-    if (index < message.length) {
-      const currentText = message.substring(0, index + 1);
-      
-      // Parse markdown for current text
-      let parsedText = currentText;
-      if (typeof marked !== 'undefined') {
-        parsedText = marked.parse(currentText);
-      }
-      
-      bubble.innerHTML = parsedText;
-      index++;
-      
-      // Scroll to bottom as we type
-      chatContainer.scrollTo({
-        top: chatContainer.scrollHeight,
-        behavior: "auto"
-      });
-      
-      setTimeout(typeWriter, speed);
-    }
-  }
-  
-  typeWriter();
-}
-
-function displayLoading() {
-  const chatContainer = document.getElementById("chat-container");
-  if (!chatContainer) return;
-  
-  const messageDiv = document.createElement("div");
-  messageDiv.className = "chat-message ai loading";
-  messageDiv.id = "loading-message";
-  messageDiv.innerHTML = `
-    <div class="chat-bubble">
-      <div class="loading-dot"></div>
+  // Add user message
+  const userMessageHtml = `
+    <div class="chat-message user">
+      <div class="chat-bubble">${escapeHtml(message)}</div>
     </div>
   `;
-  chatContainer.appendChild(messageDiv);
-  
-  // Smooth scroll to bottom
-  requestAnimationFrame(() => {
-    chatContainer.scrollTo({
-      top: chatContainer.scrollHeight,
-      behavior: "smooth"
-    });
-  });
-}
+  chatContainer.insertAdjacentHTML("beforeend", userMessageHtml);
 
-function removeLoading() {
-  const loadingMessage = document.getElementById("loading-message");
-  if (loadingMessage) {
-    loadingMessage.remove();
-  }
-}
+  // Add loading message
+  const loadingHtml = `
+    <div class="chat-message ai loading">
+      <div class="chat-bubble">
+        <div class="loading-dot"></div>
+        <div class="loading-dot" style="animation-delay: 0.2s;"></div>
+        <div class="loading-dot" style="animation-delay: 0.4s;"></div>
+      </div>
+    </div>
+  `;
+  chatContainer.insertAdjacentHTML("beforeend", loadingHtml);
 
-async function sendToAPI(prompt) {
-  displayLoading();
-  
+  // Scroll to bottom
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
   try {
-    const response = await authedFetch(`${AI_BASE}/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: prompt,
-        model: state.selectedModel,
-        category: state.selectedCategory,
-        conversationId: state.conversationId,
-        conversationName: state.conversationName,
-        categorizedModels: state.categorizedModels
-      })
+    const category = CATEGORY_ALIASES[state.selectedCategory] || state.selectedCategory;
+    const response = await aiPost("chat", {
+      message,
+      model: state.selectedModel,
+      category,
+      conversationId: state.conversationId,
     });
-    
-    console.log("API response status:", response.status);
-    const data = await response.json();
-    console.log("API response data:", data);
-    removeLoading();
-    
-    // Update conversation info from gateway metadata
-    if (data.resp?.result?.gateway?.metadata) {
-      const gatewayMetadata = data.resp.result.gateway.metadata;
-      state.conversationId = gatewayMetadata.conversationId;
-      state.conversationName = gatewayMetadata.conversationName;
-      state.isNewConversation = gatewayMetadata.isNewConversation || false;
+
+    // Remove loading message
+    const loadingMessage = chatContainer.querySelector(".chat-message.loading");
+    if (loadingMessage) {
+      loadingMessage.remove();
+    }
+
+    if (response && response.response) {
+      displayAIMessage(response.response);
       
-      // If new conversation, hide selector
-      if (state.isNewConversation) {
-        state.selectorVisible = false;
-        updateSelectorVisibility();
+      // Update conversation ID if provided
+      if (response.conversationId) {
+        state.conversationId = response.conversationId;
       }
-    }
-    
-    let content = null;
-    let isImage = false;
-    
-    // Check if this is an image response from pictures category
-    if (data.resp?.result?.isImage) {
-      isImage = true;
-      content = data.resp.result.imageData || data.resp.result.response;
-    } else if (data.resp?.result?.response) {
-      const responseStr = data.resp.result.response;
-      // Check if response is a JSON string
-      try {
-        const parsedResponse = JSON.parse(responseStr);
-        if (parsedResponse.choices && parsedResponse.choices[0]?.message?.content) {
-          content = parsedResponse.choices[0].message.content;
-        } else {
-          content = responseStr;
-        }
-      } catch {
-        // Not a JSON string, use as-is
-        content = responseStr;
-      }
-    } else if (data.response) {
-      content = data.response;
-    } else if (data.error) {
-      displayAIMessage(`Error: ${data.error}`);
-      return;
-    } else if (data.result || data.output || data.text || data.message) {
-      content = data.result || data.output || data.text || data.message;
-    }
-    
-    if (content) {
-      displayAIMessage(content, isImage);
     } else {
-      displayAIMessage("No response received. Data: " + JSON.stringify(data));
+      showError("Failed to get response from AI");
     }
   } catch (error) {
-    removeLoading();
-    console.error("API error:", error);
-    displayAIMessage(`Error: ${error.message}`);
-  }
-}
-
-/* ===================== PROMPT HANDLING ===================== */
-async function handlePrompt(category, prompt, model) {
-  if (!prompt.trim()) {
-    showError("Please enter a prompt");
-    return;
-  }
-
-  if (!model) {
-    showError("Please select a model");
-    return;
-  }
-
-  const responseContainer = document.querySelector(`#${category} [data-response]`);
-  const submitButton = document.querySelector(`#${category} [data-submit]`);
-  
-  // Show loading state
-  state.loading = true;
-  submitButton.disabled = true;
-  responseContainer.innerHTML = '<div class="ai-loading">Processing your request...</div>';
-
-  try {
-    const response = await aiPost(`${category}/ask`, {
-      prompt: prompt,
-      model: model,
-    });
-
-    if (response && response.result) {
-      displayResponse(responseContainer, response.result.response || response.result);
-    } else if (response && response.error) {
-      showError(response.error, responseContainer);
-    } else if (response && response.response) {
-      // Handle direct response format
-      displayResponse(responseContainer, response.response);
-    } else {
-      showError("Unexpected response format", responseContainer);
+    console.error("Failed to send message:", error);
+    
+    // Remove loading message
+    const loadingMessage = chatContainer.querySelector(".chat-message.loading");
+    if (loadingMessage) {
+      loadingMessage.remove();
     }
-  } catch (error) {
-    console.error("API error:", error);
-    showError(error.message || "Failed to process your request", responseContainer);
-  } finally {
-    state.loading = false;
-    submitButton.disabled = false;
+    
+    showError("Failed to send message");
   }
 }
 
-function displayResponse(container, content) {
-  let formattedContent;
-  if (typeof content === "object") {
-    formattedContent = `<pre><code>${JSON.stringify(content, null, 2)}</code></pre>`;
-  } else {
-    formattedContent = `<div class="ai-response-content"><p>${escapeHtml(content)}</p></div>`;
-  }
-  container.innerHTML = formattedContent;
+function displayAIMessage(content) {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+
+  const aiMessageHtml = `
+    <div class="chat-message ai">
+      <div class="chat-bubble">${formatMessage(content)}</div>
+    </div>
+  `;
+  chatContainer.insertAdjacentHTML("beforeend", aiMessageHtml);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-function showError(message, container = null) {
-  const errorHtml = `<div class="ai-error">${escapeHtml(message)}</div>`;
-  if (container) {
-    container.innerHTML = errorHtml;
-  } else {
-    console.error(message);
-  }
+function formatMessage(content) {
+  // Basic formatting - you can extend this
+  return escapeHtml(content)
+    .replace(/\n/g, "<br>")
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
 }
 
 function escapeHtml(text) {
@@ -700,32 +458,17 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-/* ===================== EVENT LISTENERS ===================== */
-function setupPromptHandlers() {
-  const categories = ["ai", "search-web", "reasoning", "pictures"];
-  
-  categories.forEach(category => {
-    const promptInput = document.querySelector(`#${category} [data-prompt]`);
-    const submitButton = document.querySelector(`#${category} [data-submit]`);
-    const modelSelect = document.querySelector(`#${category}-model-select`);
+function showError(message) {
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
 
-    if (promptInput && submitButton && modelSelect) {
-      submitButton.addEventListener("click", () => {
-        const prompt = promptInput.value;
-        const model = modelSelect.dataset.selectedValue || "";
-        handlePrompt(category, prompt, model);
-      });
-
-      // Allow Ctrl+Enter to submit
-      promptInput.addEventListener("keydown", (e) => {
-        if (e.ctrlKey && e.key === "Enter") {
-          const prompt = promptInput.value;
-          const model = modelSelect.dataset.selectedValue || "";
-          handlePrompt(category, prompt, model);
-        }
-      });
-    }
-  });
+  const errorHtml = `
+    <div class="chat-message ai">
+      <div class="chat-bubble" style="color: #ff6b6b;">${escapeHtml(message)}</div>
+    </div>
+  `;
+  chatContainer.insertAdjacentHTML("beforeend", errorHtml);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 /* ===================== SIDEBAR BUTTONS ===================== */
@@ -734,21 +477,27 @@ function setupSidebarButtons() {
   const conversationsBtn = document.getElementById("conversations-btn");
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   const limitsBtn = document.getElementById("limits-btn");
-  
+
   const allButtons = document.querySelectorAll(".ai-nav");
-  
+
   function setActiveButton(activeBtn) {
     // Don't deactivate other buttons when toggle-selector is clicked (it's independent)
     if (activeBtn === toggleSelectorBtn) {
       if (activeBtn) activeBtn.classList.toggle("active");
       return;
     }
-    
-    // For other buttons, deactivate all and activate the clicked one
-    allButtons.forEach(btn => btn.classList.remove("active"));
-    if (activeBtn) activeBtn.classList.add("active");
+
+    allButtons.forEach(btn => {
+      if (btn !== activeBtn && btn !== toggleSelectorBtn) {
+        btn.classList.remove("active");
+      }
+    });
+
+    if (activeBtn) {
+      activeBtn.classList.add("active");
+    }
   }
-  
+
   if (newConversationBtn) {
     newConversationBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -756,15 +505,15 @@ function setupSidebarButtons() {
       startNewConversation();
     });
   }
-  
+
   if (conversationsBtn) {
     conversationsBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       setActiveButton(conversationsBtn);
-      showConversationsList();
+      showConversations();
     });
   }
-  
+
   if (toggleSelectorBtn) {
     toggleSelectorBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -772,7 +521,7 @@ function setupSidebarButtons() {
       toggleSelector();
     });
   }
-  
+
   if (limitsBtn) {
     limitsBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -784,130 +533,190 @@ function setupSidebarButtons() {
 
 function toggleSelector() {
   state.selectorVisible = !state.selectorVisible;
-  
+
   // Show toggle-selector button
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
-    toggleSelectorBtn.style.display = "";
+    toggleSelectorBtn.style.display = "flex";
   }
-  
+
   updateSelectorVisibility();
 }
 
-async function showConversationsList() {
-  const conversations = await loadConversations();
-  
-  // Show toggle-selector button
-  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
-  if (toggleSelectorBtn) {
-    toggleSelectorBtn.style.display = "";
+function updateSelectorVisibility() {
+  const selectorBar = document.getElementById("selector-bar");
+  if (!selectorBar) return;
+
+  if (state.selectorVisible) {
+    selectorBar.style.display = "flex";
+  } else {
+    selectorBar.style.display = "none";
   }
-  
-  // If no conversations, don't change the screen
-  if (conversations.length === 0) {
-    return;
-  }
-  
-  // Create a modal or dropdown to show conversations
+}
+
+function startNewConversation() {
+  state.conversationId = null;
+  state.conversationName = null;
+  state.isNewConversation = true;
+
   const chatContainer = document.getElementById("chat-container");
   if (!chatContainer) return;
-  
-  // Clear current chat
+
   chatContainer.innerHTML = "";
-  
-  // Display conversations list
-  conversations.forEach(conv => {
-    const convDiv = document.createElement("div");
-    convDiv.className = "chat-message ai";
-    convDiv.innerHTML = `
-      <div class="chat-bubble conversation-item" data-conversation-id="${conv.id}" data-conversation-name="${conv.title}">
-        <div class="conversation-title">${escapeHtml(conv.title || "Untitled")}</div>
-        <div class="conversation-date">${new Date(conv.lastPromptDate || conv.updatedAt).toLocaleDateString()}</div>
-      </div>
-    `;
-    chatContainer.appendChild(convDiv);
-    
-    // Add click handler to load conversation
-    const convItem = convDiv.querySelector(".conversation-item");
-    if (convItem) {
-      convItem.addEventListener("click", () => loadConversation(conv));
-    }
-  });
-}
 
-async function loadConversation(conversation) {
-  state.conversationId = conversation.id;
-  state.conversationName = conversation.title;
-  state.isNewConversation = false;
-  state.selectorVisible = false;
-  
-  // Show toggle-selector button
-  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
-  if (toggleSelectorBtn) {
-    toggleSelectorBtn.style.display = "";
-  }
-  
-  // Set model from conversation metadata if available
-  if (conversation.metadata && conversation.metadata.model) {
-    state.selectedModel = conversation.metadata.model;
-    // Update UI to show selected model
-    const modelSelect = document.getElementById("model-select");
-    if (modelSelect) {
-      const trigger = modelSelect.querySelector(".custom-select-trigger");
-      if (trigger) {
-        trigger.textContent = conversation.metadata.model;
-      }
-    }
-  }
-  
-  // Clear chat and load messages
-  const chatContainer = document.getElementById("chat-container");
-  if (chatContainer) {
-    chatContainer.innerHTML = "";
-    
-    // Display messages in order
-    if (conversation.messages && Array.isArray(conversation.messages)) {
-      conversation.messages.forEach(msg => {
-        if (msg.role === "user") {
-          displayUserMessage(msg.content);
-        } else if (msg.role === "assistant") {
-          displayAIMessage(msg.content);
-        }
-      });
-    }
-  }
-  
-  updateSelectorVisibility();
-}
-
-async function showLimits() {
-  // Hide selector when showing limits
+  // Hide selector when starting new conversation
   state.selectorVisible = false;
   updateSelectorVisibility();
-  
+
   // Deactivate toggle-selector button
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
     toggleSelectorBtn.classList.remove("active");
     toggleSelectorBtn.style.display = "none";
   }
-  
+
+  // Show welcome message
+  const welcomeHtml = `
+    <div class="chat-message ai">
+      <div class="chat-bubble">New conversation started. Type your message below!</div>
+    </div>
+  `;
+  chatContainer.innerHTML = welcomeHtml;
+}
+
+async function showConversations() {
+  // Hide selector when showing conversations
+  state.selectorVisible = false;
+  updateSelectorVisibility();
+
+  // Deactivate toggle-selector button
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.classList.remove("active");
+    toggleSelectorBtn.style.display = "none";
+  }
+
   const chatContainer = document.getElementById("chat-container");
   if (!chatContainer) return;
-  
+
+  // Clear current chat and show loading
+  chatContainer.innerHTML = `
+    <div class="chat-message ai">
+      <div class="chat-bubble">Loading conversations...</div>
+    </div>
+  `;
+
+  // Load conversations in background
+  const conversations = await loadConversations();
+
+  // Clear current chat
+  chatContainer.innerHTML = "";
+
+  if (!conversations || conversations.length === 0) {
+    chatContainer.innerHTML = `
+      <div class="chat-message ai">
+        <div class="chat-bubble">No conversations found.</div>
+      </div>
+    `;
+    return;
+  }
+
+  // Display conversations
+  const conversationsHtml = conversations.map(conv => `
+    <div class="chat-message ai">
+      <div class="chat-bubble">
+        <strong>${escapeHtml(conv.name || "Untitled")}</strong>
+        <p style="margin: 4px 0 0; font-size: 0.85rem; color: var(--muted);">
+          ${new Date(conv.createdAt).toLocaleDateString()}
+        </p>
+        <button 
+          style="margin-top: 8px; padding: 6px 12px; background: var(--accent); border: none; border-radius: 6px; color: #1a1a1a; cursor: pointer; font-size: 0.85rem;"
+          onclick="loadConversation('${conv.id}')"
+        >
+          Load
+        </button>
+      </div>
+    </div>
+  `).join("");
+
+  chatContainer.innerHTML = conversationsHtml;
+}
+
+async function loadConversation(conversationId) {
+  try {
+    const data = await aiGet(`conversations/${conversationId}`);
+    console.log("Loaded conversation:", data);
+
+    if (data && data.conversation) {
+      state.conversationId = conversationId;
+      state.conversationName = data.conversation.name;
+      state.isNewConversation = false;
+
+      const chatContainer = document.getElementById("chat-container");
+      if (!chatContainer) return;
+
+      chatContainer.innerHTML = "";
+
+      // Display messages
+      if (data.conversation.messages && data.conversation.messages.length > 0) {
+        data.conversation.messages.forEach(msg => {
+          if (msg.role === "user") {
+            const userHtml = `
+              <div class="chat-message user">
+                <div class="chat-bubble">${escapeHtml(msg.content)}</div>
+              </div>
+            `;
+            chatContainer.insertAdjacentHTML("beforeend", userHtml);
+          } else if (msg.role === "assistant") {
+            displayAIMessage(msg.content);
+          }
+        });
+      }
+
+      // Show selector when loading conversation
+      state.selectorVisible = true;
+      updateSelectorVisibility();
+
+      // Show toggle-selector button
+      const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+      if (toggleSelectorBtn) {
+        toggleSelectorBtn.style.display = "flex";
+      }
+    }
+  } catch (error) {
+    console.error("Failed to load conversation:", error);
+    showError("Failed to load conversation");
+  }
+}
+
+async function showLimits() {
+  // Hide selector when showing limits
+  state.selectorVisible = false;
+  updateSelectorVisibility();
+
+  // Deactivate toggle-selector button
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.classList.remove("active");
+    toggleSelectorBtn.style.display = "none";
+  }
+
+  const chatContainer = document.getElementById("chat-container");
+  if (!chatContainer) return;
+
   // Clear current chat and show loading
   chatContainer.innerHTML = `
     <div class="chat-message ai">
       <div class="chat-bubble">Loading limits...</div>
     </div>
   `;
-  
+
   // Load limits in background
   const limits = await loadLimits();
-  
+
   // Clear current chat
   chatContainer.innerHTML = "";
-  
+
   if (!limits) {
     chatContainer.innerHTML = `
       <div class="chat-message ai">
@@ -916,41 +725,37 @@ async function showLimits() {
     `;
     return;
   }
-  
+
   // Display limits
   const limitsHtml = `
-    <div class="chat-message ai">
-      <div class="chat-bubble">
-        <div class="bento-grid">
-          <article class="bento-block limit-item" style="grid-column: span 4;">
-            <p class="block-eyebrow">Daily Usage</p>
-            <strong class="card-value">${limits.daily?.used || 0}</strong>
-            <p class="card-desc">Requests used today</p>
-          </article>
-          <article class="bento-block limit-item" style="grid-column: span 4;">
-            <p class="block-eyebrow">Limit</p>
-            <strong class="card-value">${limits.daily?.limit || 10000}</strong>
-            <p class="card-desc">Daily request limit</p>
-          </article>
-          <article class="bento-block limit-item" style="grid-column: span 4;">
-            <p class="block-eyebrow">Percentage</p>
-            <strong class="card-value" data-tone="accent">${limits.daily?.percentage || 0}%</strong>
-            <p class="card-desc">Usage percentage</p>
-          </article>
-        </div>
-        <p class="block-eyebrow" style="margin-top: 16px;">Model Consumption</p>
-        <div class="models-info">
-          ${(limits.models || []).map(model => `
-            <article class="bento-block model-item">
-              <span class="model-name">${escapeHtml(model.name)}</span>
-              <span class="model-consumption">${model.consumptionPercentage}%</span>
-            </article>
-          `).join("")}
-        </div>
-      </div>
+    <div class="bento-grid">
+      <article class="bento-block limit-item" style="grid-column: span 4;">
+        <p class="block-eyebrow">Daily Usage</p>
+        <strong class="card-value">${limits.daily?.used || 0}</strong>
+        <p class="card-desc">Requests used today</p>
+      </article>
+      <article class="bento-block limit-item" style="grid-column: span 4;">
+        <p class="block-eyebrow">Limit</p>
+        <strong class="card-value">${limits.daily?.limit || 10000}</strong>
+        <p class="card-desc">Daily request limit</p>
+      </article>
+      <article class="bento-block limit-item" style="grid-column: span 4;">
+        <p class="block-eyebrow">Percentage</p>
+        <strong class="card-value" data-tone="accent">${limits.daily?.percentage || 0}%</strong>
+        <p class="card-desc">Usage percentage</p>
+      </article>
+    </div>
+    <p class="block-eyebrow" style="margin-top: 16px;">Model Consumption</p>
+    <div class="models-info">
+      ${(limits.models || []).map(model => `
+        <article class="bento-block model-item">
+          <span class="model-name">${escapeHtml(model.name)}</span>
+          <span class="model-consumption">${model.consumptionPercentage}%</span>
+        </article>
+      `).join("")}
     </div>
   `;
-  
+
   chatContainer.innerHTML = limitsHtml;
 }
 
@@ -960,28 +765,31 @@ async function init() {
   setupPromptBar();
   setupSidebarButtons();
   setupNavbarRefreshListener();
-  
+
   // Automatically activate the + button when page opens
-  startNewConversation();
+  const newConversationBtn = document.getElementById("new-conversation-btn");
+  if (newConversationBtn) {
+    newConversationBtn.classList.add("active");
+  }
 }
 
 function setupNavbarRefreshListener() {
   const handleRefresh = (event) => {
     const detail = event.detail || {};
     const current = detail.current || "home";
-    
+
     // Only refresh if we're on the AI page
     if (current !== "AI") return;
-    
+
     // Refresh models, conversations, and limits
     const modelsPromise = loadModels();
     const conversationsPromise = loadConversations();
     const limitsPromise = loadLimits();
-    
+
     // Wait for all to complete
     detail.waitUntil(Promise.all([modelsPromise, conversationsPromise, limitsPromise]));
   };
-  
+
   window.addEventListener("site-navbar:refresh", handleRefresh);
   document.addEventListener("site-navbar:refresh", handleRefresh);
 }
