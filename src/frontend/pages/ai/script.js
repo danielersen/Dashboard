@@ -766,12 +766,6 @@ function setupSidebarButtons() {
 function toggleSelector() {
   state.selectorVisible = !state.selectorVisible;
   updateSelectorVisibility();
-  
-  // Update button state
-  const toggleBtn = document.getElementById("toggle-selector-btn");
-  if (toggleBtn) {
-    toggleBtn.dataset.active = String(state.selectorVisible);
-  }
 }
 
 async function showConversationsList() {
@@ -853,10 +847,22 @@ async function loadConversation(conversation) {
 }
 
 async function showLimits() {
-  const limits = await loadLimits();
+  // Hide selector when showing limits
+  state.selectorVisible = false;
+  updateSelectorVisibility();
   
   const chatContainer = document.getElementById("chat-container");
   if (!chatContainer) return;
+  
+  // Clear current chat and show loading
+  chatContainer.innerHTML = `
+    <div class="chat-message ai">
+      <div class="chat-bubble">Loading limits...</div>
+    </div>
+  `;
+  
+  // Load limits in background
+  const limits = await loadLimits();
   
   // Clear current chat
   chatContainer.innerHTML = "";
@@ -910,6 +916,28 @@ async function init() {
   await loadModels();
   setupPromptBar();
   setupSidebarButtons();
+  setupNavbarRefreshListener();
+}
+
+function setupNavbarRefreshListener() {
+  const handleRefresh = (event) => {
+    const detail = event.detail || {};
+    const current = detail.current || "home";
+    
+    // Only refresh if we're on the AI page
+    if (current !== "AI") return;
+    
+    // Refresh models, conversations, and limits
+    const modelsPromise = loadModels();
+    const conversationsPromise = loadConversations();
+    const limitsPromise = loadLimits();
+    
+    // Wait for all to complete
+    detail.waitUntil(Promise.all([modelsPromise, conversationsPromise, limitsPromise]));
+  };
+  
+  window.addEventListener("site-navbar:refresh", handleRefresh);
+  document.addEventListener("site-navbar:refresh", handleRefresh);
 }
 
 // Start initialization when DOM is ready

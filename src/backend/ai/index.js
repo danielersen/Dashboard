@@ -420,7 +420,9 @@ export async function AIfunction(env, subpath, method, headers, body) {
     
     // Also include model consumption info
     const cloudflareModels = await fetchCloudflareModels(env);
-    const modelsWithConsumption = cloudflareModels.map(model => ({
+    const modelsWithConsumption = cloudflareModels
+      .filter(model => !model.deprecated) // Filter out deprecated models
+      .map(model => ({
       id: model.id,
       name: model.name,
       brand: model.brand,
