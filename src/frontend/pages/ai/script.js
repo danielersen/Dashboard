@@ -728,9 +728,17 @@ function setupSidebarButtons() {
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   const limitsBtn = document.getElementById("limits-btn");
   
+  const allButtons = document.querySelectorAll(".ai-nav");
+  
+  function setActiveButton(activeBtn) {
+    allButtons.forEach(btn => btn.classList.remove("active"));
+    if (activeBtn) activeBtn.classList.add("active");
+  }
+  
   if (newConversationBtn) {
     newConversationBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      setActiveButton(newConversationBtn);
       startNewConversation();
     });
   }
@@ -738,6 +746,7 @@ function setupSidebarButtons() {
   if (conversationsBtn) {
     conversationsBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      setActiveButton(conversationsBtn);
       showConversationsList();
     });
   }
@@ -745,6 +754,7 @@ function setupSidebarButtons() {
   if (toggleSelectorBtn) {
     toggleSelectorBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      setActiveButton(toggleSelectorBtn);
       toggleSelector();
     });
   }
@@ -752,6 +762,7 @@ function setupSidebarButtons() {
   if (limitsBtn) {
     limitsBtn.addEventListener("click", (e) => {
       e.stopPropagation();
+      setActiveButton(limitsBtn);
       showLimits();
     });
   }
@@ -765,21 +776,17 @@ function toggleSelector() {
 async function showConversationsList() {
   const conversations = await loadConversations();
   
+  // If no conversations, don't change the screen
+  if (conversations.length === 0) {
+    return;
+  }
+  
   // Create a modal or dropdown to show conversations
   const chatContainer = document.getElementById("chat-container");
   if (!chatContainer) return;
   
   // Clear current chat
   chatContainer.innerHTML = "";
-  
-  if (conversations.length === 0) {
-    chatContainer.innerHTML = `
-      <div class="chat-message ai">
-        <div class="chat-bubble">No conversations yet. Start a new one!</div>
-      </div>
-    `;
-    return;
-  }
   
   // Display conversations list
   conversations.forEach(conv => {
@@ -844,6 +851,12 @@ async function showLimits() {
   // Hide selector when showing limits
   state.selectorVisible = false;
   updateSelectorVisibility();
+  
+  // Deactivate toggle-selector button
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.classList.remove("active");
+  }
   
   const chatContainer = document.getElementById("chat-container");
   if (!chatContainer) return;
