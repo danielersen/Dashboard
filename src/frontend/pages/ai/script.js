@@ -343,6 +343,12 @@ function startNewConversation() {
   state.isNewConversation = true;
   state.selectorVisible = true;
   
+  // Show toggle-selector button
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.style.display = "";
+  }
+  
   // Clear chat
   const chatContainer = document.getElementById("chat-container");
   if (chatContainer) {
@@ -731,6 +737,13 @@ function setupSidebarButtons() {
   const allButtons = document.querySelectorAll(".ai-nav");
   
   function setActiveButton(activeBtn) {
+    // Don't deactivate other buttons when toggle-selector is clicked (it's independent)
+    if (activeBtn === toggleSelectorBtn) {
+      if (activeBtn) activeBtn.classList.toggle("active");
+      return;
+    }
+    
+    // For other buttons, deactivate all and activate the clicked one
     allButtons.forEach(btn => btn.classList.remove("active"));
     if (activeBtn) activeBtn.classList.add("active");
   }
@@ -770,11 +783,24 @@ function setupSidebarButtons() {
 
 function toggleSelector() {
   state.selectorVisible = !state.selectorVisible;
+  
+  // Show toggle-selector button
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.style.display = "";
+  }
+  
   updateSelectorVisibility();
 }
 
 async function showConversationsList() {
   const conversations = await loadConversations();
+  
+  // Show toggle-selector button
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.style.display = "";
+  }
   
   // If no conversations, don't change the screen
   if (conversations.length === 0) {
@@ -813,6 +839,12 @@ async function loadConversation(conversation) {
   state.conversationName = conversation.title;
   state.isNewConversation = false;
   state.selectorVisible = false;
+  
+  // Show toggle-selector button
+  const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
+  if (toggleSelectorBtn) {
+    toggleSelectorBtn.style.display = "";
+  }
   
   // Set model from conversation metadata if available
   if (conversation.metadata && conversation.metadata.model) {
@@ -856,6 +888,7 @@ async function showLimits() {
   const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
   if (toggleSelectorBtn) {
     toggleSelectorBtn.classList.remove("active");
+    toggleSelectorBtn.style.display = "none";
   }
   
   const chatContainer = document.getElementById("chat-container");
@@ -887,28 +920,30 @@ async function showLimits() {
   const limitsHtml = `
     <div class="chat-message ai">
       <div class="chat-bubble">
-        <h3>Daily Usage</h3>
         <div class="limits-info">
-          <div class="limit-item">
-            <span class="limit-label">Used:</span>
-            <span class="limit-value">${limits.daily?.used || 0}</span>
-          </div>
-          <div class="limit-item">
-            <span class="limit-label">Limit:</span>
-            <span class="limit-value">${limits.daily?.limit || 10000}</span>
-          </div>
-          <div class="limit-item">
-            <span class="limit-label">Percentage:</span>
-            <span class="limit-value">${limits.daily?.percentage || 0}%</span>
-          </div>
+          <article class="bento-block limit-item">
+            <p class="block-eyebrow">Daily Usage</p>
+            <strong class="card-value">${limits.daily?.used || 0}</strong>
+            <p class="card-desc">Requests used today</p>
+          </article>
+          <article class="bento-block limit-item">
+            <p class="block-eyebrow">Limit</p>
+            <strong class="card-value">${limits.daily?.limit || 10000}</strong>
+            <p class="card-desc">Daily request limit</p>
+          </article>
+          <article class="bento-block limit-item">
+            <p class="block-eyebrow">Percentage</p>
+            <strong class="card-value" data-tone="accent">${limits.daily?.percentage || 0}%</strong>
+            <p class="card-desc">Usage percentage</p>
+          </article>
         </div>
-        <h3>Model Consumption</h3>
+        <p class="block-eyebrow" style="margin-top: 16px;">Model Consumption</p>
         <div class="models-info">
           ${(limits.models || []).map(model => `
-            <div class="model-item">
+            <article class="bento-block model-item">
               <span class="model-name">${escapeHtml(model.name)}</span>
               <span class="model-consumption">${model.consumptionPercentage}%</span>
-            </div>
+            </article>
           `).join("")}
         </div>
       </div>
