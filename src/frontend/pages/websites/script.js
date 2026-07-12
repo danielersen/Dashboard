@@ -67,16 +67,16 @@ async function addWebsite(name, url) {
   }
 }
 
-async function updateWebsite(name, url) {
+async function updateWebsite(oldName, newName, newUrl) {
   try {
     const token = await getAuthToken();
-    const response = await fetch('/api/websites/add', {
+    const response = await fetch('/api/websites/update', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, url })
+      body: JSON.stringify({ oldName, newName, newUrl })
     });
 
     if (!response.ok) {
@@ -351,9 +351,9 @@ websiteForm.addEventListener('submit', async (e) => {
 
   try {
     if (editingWebsite) {
-      console.log('Updating existing website with name:', editingWebsite.name);
+      console.log('Updating existing website with old name:', editingWebsite.name, 'new name:', name);
       // Update existing website
-      websites = await updateWebsite(name, url);
+      websites = await updateWebsite(editingWebsite.name, name, url);
     } else {
       console.log('Adding new website');
       // Add new website
