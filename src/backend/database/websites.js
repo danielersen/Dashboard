@@ -21,6 +21,7 @@ async function writeWebsites(env, websites) {
   return await megaWrite(env, WEBSITES_FILE, websites);
 }
 
+// AJOUTER un site web
 export async function addWebsite(env, name, url) {
   if (!name || !url) {
     throw new Error("Name and URL are required");
@@ -42,22 +43,37 @@ export async function addWebsite(env, name, url) {
   return { success: true, websites };
 }
 
+// SUPPRIMER un site web
 export async function deleteWebsite(env, name) {
   if (!name) {
     throw new Error("Name is required");
   }
 
   const websites = await readWebsites(env);
-  const initialLength = websites.length;
-  
   const filteredWebsites = websites.filter(w => w.name !== name);
   
-  if (filteredWebsites.length === initialLength) {
-    throw new Error("Website not found");
-  }
-
   await writeWebsites(env, filteredWebsites);
   return { success: true, websites: filteredWebsites };
+}
+
+// MODIFIER un site web
+export async function updateWebsite(env, oldName, newName, newUrl) {
+  if (!oldName || !newName || !newUrl) {
+    throw new Error("Old name, new name and new URL are required");
+  }
+
+  const websites = await readWebsites(env);
+  const existingIndex = websites.findIndex(w => w.name === oldName);
+  
+  if (existingIndex === -1) {
+    throw new Error("Website not found");
+  }
+  
+  // Update the website
+  websites[existingIndex] = { name: newName, url: newUrl };
+  
+  await writeWebsites(env, websites);
+  return { success: true, websites };
 }
 
 export async function getWebsites(env) {
@@ -76,6 +92,9 @@ export async function WebsitesFunction(env, path, method, body) {
     case "POST":
       if (path === "add") {
         return await addWebsite(env, body.name, body.url);
+      }
+      if (path === "update") {
+        return await updateWebsite(env, body.oldName, body.newName, body.newUrl);
       }
       throw new Error("Invalid POST path");
     
