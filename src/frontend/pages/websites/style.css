@@ -186,7 +186,7 @@ a {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: transparent;
   color: rgba(243, 251, 247, 0.55);
   cursor: pointer;
   transition:
@@ -204,7 +204,7 @@ a {
 
 .website-action-btn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
 }
@@ -215,13 +215,13 @@ a {
 
 .website-action-btn.delete:hover {
   color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  background: transparent;
   border-color: rgba(255, 107, 107, 0.3);
 }
 
 .website-action-btn.edit:hover {
   color: var(--accent);
-  background: var(--accent-soft);
+  background: transparent;
   border-color: rgba(75, 216, 139, 0.3);
 }
 
