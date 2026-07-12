@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="fr" data-auth-pending>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08100f">
+    <title>Tools - Daniel Ersen Dashboard</title>
+    <meta name="description" content="Useful Tools - Scientific calculator, unit converter, code executor and more.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dashboard.danielersen.fr.eu.org/tools">
+    <link rel="icon" href="/assets/logo/square.png">
+    <link rel="manifest" href="/seo/manifest.json">
+    <meta name="msapplication-config" content="/seo/browserconfig.xml">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dashboard.danielersen.fr.eu.org/tools">
+    <meta property="og:title" content="Tools - Daniel Ersen Dashboard">
+    <meta property="og:description" content="Useful Tools - Scientific calculator, unit converter, code executor and more.">
+    <meta property="og:image" content="https://dashboard.danielersen.fr.eu.org/assets/logo/main.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://dashboard.danielersen.fr.eu.org/tools">
+    <meta property="twitter:title" content="Tools - Daniel Ersen Dashboard">
+    <meta property="twitter:description" content="Useful Tools - Scientific calculator, unit converter, code executor and more.">
+    <meta property="twitter:image" content="https://dashboard.danielersen.fr.eu.org/assets/logo/main.png">
+    
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Tools",
+      "url": "https://dashboard.danielersen.fr.eu.org/tools",
+      "description": "Useful Tools - Scientific calculator, unit converter, code executor and more.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Daniel Ersen Dashboard",
+        "url": "https://dashboard.danielersen.fr.eu.org/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://dashboard.danielersen.fr.eu.org/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Tools",
+            "item": "https://dashboard.danielersen.fr.eu.org/tools"
+          }
+        ]
+      }
+    }
+    </script>
+    
+    <style>html[data-auth-pending] body { visibility: hidden; }</style>
+    <script type="module">
+      import { guardPage } from "/lib/auth.js";
+      guardPage().then((ok) => {
+        if (ok) document.documentElement.removeAttribute("data-auth-pending");
+      });
+    </script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/block.css">
+    <link rel="stylesheet" href="/pages/tools/style.css">
+    <script type="module" src="/components/navbar.js"></script>
+    <script type="module" src="/pages/tools/icons.js"></script>
+    <script type="module" src="/pages/tools/script.js"></script>
+  </head>
+  <body>
+    <site-navbar current="tools"></site-navbar>
+
+    <div class="tools-shell">
+      <aside class="tools-sidebar" aria-label="Tools sections">
+        <button class="tools-nav" type="button" id="calculator-btn" data-section="calculator" aria-label="Calculator">
+          <span class="tools-icon" data-icon="/assets/icons/calculator.svg"></span>
+        </button>
+        <button class="tools-nav" type="button" id="converter-btn" data-section="converter" aria-label="Converter">
+          <span class="tools-icon" data-icon="/assets/icons/converter.svg"></span>
+        </button>
+        <button class="tools-nav" type="button" id="code-executor-btn" data-section="code-executor" aria-label="Code Executor">
+          <span class="tools-icon" data-icon="/assets/icons/code.svg"></span>
+        </button>
+      </aside>
+
+      <main class="tools-main">
+        <!-- Calculator Section -->
+        <section class="tools-section" id="calculator-section" data-active="true">
+          <div class="bento-block calculator-container">
+            <p class="block-eyebrow">Calculator</p>
+            <h2 class="section-title">Scientific Calculator</h2>
+            <div class="calculator-display">
+              <div class="calculator-expression" id="calc-expression"></div>
+              <div class="calculator-result" id="calc-result">0</div>
+            </div>
+            <div class="calculator-buttons">
+              <div class="calc-row">
+                <button class="calc-btn calc-btn-function" data-action="clear">C</button>
+                <button class="calc-btn calc-btn-function" data-action="backspace">⌫</button>
+                <button class="calc-btn calc-btn-function" data-action="percent">%</button>
+                <button class="calc-btn calc-btn-operator" data-action="operator" data-value="/">÷</button>
+              </div>
+              <div class="calc-row">
+                <button class="calc-btn calc-btn-function" data-action="sin">sin</button>
+                <button class="calc-btn calc-btn-function" data-action="cos">cos</button>
+                <button class="calc-btn calc-btn-function" data-action="tan">tan</button>
+                <button class="calc-btn calc-btn-operator" data-action="operator" data-value="*">×</button>
+              </div>
+              <div class="calc-row">
+                <button class="calc-btn calc-btn-function" data-action="log">log</button>
+                <button class="calc-btn calc-btn-function" data-action="ln">ln</button>
+                <button class="calc-btn calc-btn-function" data-action="sqrt">√</button>
+                <button class="calc-btn calc-btn-operator" data-action="operator" data-value="-">−</button>
+              </div>
+              <div class="calc-row">
+                <button class="calc-btn calc-btn-function" data-action="power">x^y</button>
+                <button class="calc-btn calc-btn-function" data-action="pi">π</button>
+                <button class="calc-btn calc-btn-function" data-action="e">e</button>
+                <button class="calc-btn calc-btn-operator" data-action="operator" data-value="+">+</button>
+              </div>
+              <div class="calc-row">
+                <button class="calc-btn calc-btn-function" data-action="parenthesis" data-value="(">(</button>
+                <button class="calc-btn calc-btn-function" data-action="parenthesis" data-value=")">)</button>
+                <button class="calc-btn calc-btn-function" data-action="factorial">n!</button>
+                <button class="calc-btn calc-btn-operator" data-action="equals">=</button>
+              </div>
+              <div class="calc-row calc-row-numbers">
+                <button class="calc-btn calc-btn-number" data-value="7">7</button>
+                <button class="calc-btn calc-btn-number" data-value="8">8</button>
+                <button class="calc-btn calc-btn-number" data-value="9">9</button>
+                <button class="calc-btn calc-btn-number" data-value="4">4</button>
+                <button class="calc-btn calc-btn-number" data-value="5">5</button>
+                <button class="calc-btn calc-btn-number" data-value="6">6</button>
+                <button class="calc-btn calc-btn-number" data-value="1">1</button>
+                <button class="calc-btn calc-btn-number" data-value="2">2</button>
+                <button class="calc-btn calc-btn-number" data-value="3">3</button>
+                <button class="calc-btn calc-btn-number" data-value="0">0</button>
+                <button class="calc-btn calc-btn-number" data-value=".">.</button>
+                <button class="calc-btn calc-btn-number" data-action="sign">±</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Converter Section -->
+        <section class="tools-section" id="converter-section" data-active="false">
+          <div class="bento-block converter-container">
+            <p class="block-eyebrow">Converter</p>
+            <h2 class="section-title">Unit Converter</h2>
+            
+            <div class="converter-type-selector">
+              <button class="converter-type-btn" data-type="length" data-active="true">Length</button>
+              <button class="converter-type-btn" data-type="volume">Volume</button>
+              <button class="converter-type-btn" data-type="capacity">Capacity</button>
+              <button class="converter-type-btn" data-type="currency">Currency</button>
+            </div>
+
+            <div class="converter-inputs">
+              <div class="converter-input-group">
+                <label for="converter-from">From</label>
+                <input type="number" id="converter-from" placeholder="Enter value" step="any">
+                <select id="converter-from-unit">
+                  <!-- Units will be populated by JS -->
+                </select>
+              </div>
+              
+              <div class="converter-swap">
+                <button id="converter-swap-btn" aria-label="Swap units">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l4-4M17 20l-4-4"/>
+                  </svg>
+                </button>
+              </div>
+
+              <div class="converter-input-group">
+                <label for="converter-to">To</label>
+                <input type="number" id="converter-to" placeholder="Result" readonly>
+                <select id="converter-to-unit">
+                  <!-- Units will be populated by JS -->
+                </select>
+              </div>
+            </div>
+
+            <div class="converter-result" id="converter-result-display"></div>
+          </div>
+        </section>
+
+        <!-- Code Executor Section -->
+        <section class="tools-section" id="code-executor-section" data-active="false">
+          <div class="bento-block code-executor-container">
+            <p class="block-eyebrow">Code Executor</p>
+            <h2 class="section-title">Run Code</h2>
+            
+            <div class="code-language-selector">
+              <button class="code-lang-btn" data-lang="python" data-active="true">Python</button>
+              <button class="code-lang-btn" data-lang="javascript">JavaScript</button>
+              <button class="code-lang-btn" data-lang="c">C</button>
+              <button class="code-lang-btn" data-lang="cpp">C++</button>
+            </div>
+
+            <div class="code-editor-container">
+              <textarea id="code-input" placeholder="Enter your code here..." spellcheck="false"></textarea>
+            </div>
+
+            <div class="code-actions">
+              <button id="code-run-btn" type="button">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Run Code
+              </button>
+              <button id="code-clear-btn" type="button">Clear</button>
+            </div>
+
+            <div class="code-output">
+              <div class="code-output-header">
+                <span>Output</span>
+                <button id="code-copy-output" type="button" aria-label="Copy output">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                  </svg>
+                </button>
+              </div>
+              <pre id="code-output-content"></pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
