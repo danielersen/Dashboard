@@ -1,6 +1,6 @@
 import { megaRead, megaWrite } from "./mega.js";
 
-const WEBSITES_FILE = "dashboard/websites/websites.json";
+const WEBSITES_FILE = "websites/websites.json";
 
 async function readWebsites(env) {
   try {
