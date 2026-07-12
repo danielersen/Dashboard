@@ -28,10 +28,14 @@ document.querySelector('.tools-nav[data-section="calculator"]').dataset.active =
 class ScientificCalculator {
   constructor() {
     this.expression = '';
+    this.cursorPos = 0;
     this.result = '0';
+    this.secondMode = false;
     this.displayExpression = document.getElementById('calc-expression');
     this.displayResult = document.getElementById('calc-result');
+    this.secondBtn = document.getElementById('second-btn');
     this.initEventListeners();
+    this.updateDisplay();
   }
 
   initEventListeners() {
@@ -43,8 +47,11 @@ class ScientificCalculator {
   handleButton(btn) {
     const action = btn.dataset.action;
     const value = btn.dataset.value;
+    const altAction = btn.dataset.alt;
 
-    if (action === 'clear') {
+    if (action === 'second') {
+      this.toggleSecond();
+    } else if (action === 'clear') {
       this.clear();
     } else if (action === 'backspace') {
       this.backspace();
@@ -59,63 +66,92 @@ class ScientificCalculator {
     } else if (action === 'parenthesis') {
       this.addParenthesis(value);
     } else if (action === 'sin' || action === 'cos' || action === 'tan') {
-      this.trigFunction(action);
+      this.trigFunction(this.secondMode && altAction ? altAction : action);
     } else if (action === 'log' || action === 'ln') {
-      this.logFunction(action);
+      this.logFunction(this.secondMode && altAction ? altAction : action);
     } else if (action === 'sqrt') {
-      this.sqrt();
+      this.rootFunction(this.secondMode && altAction ? altAction : action);
     } else if (action === 'power') {
-      this.addOperator('^');
+      this.powerFunction(this.secondMode && altAction ? altAction : action);
     } else if (action === 'factorial') {
       this.factorial();
     } else if (action === 'pi') {
-      this.addConstant('Math.PI');
+      this.addConstant('π');
     } else if (action === 'e') {
-      this.addConstant('Math.E');
+      this.addConstant('e');
     } else if (value) {
       this.addNumber(value);
     }
   }
 
+  toggleSecond() {
+    this.secondMode = !this.secondMode;
+    this.secondBtn.dataset.active = this.secondMode ? 'true' : 'false';
+    
+    // Update button labels
+    document.querySelectorAll('.calc-btn[data-alt]').forEach(btn => {
+      const alt = btn.dataset.alt;
+      if (this.secondMode) {
+        btn.dataset.originalText = btn.textContent;
+        btn.textContent = alt;
+      } else {
+        btn.textContent = btn.dataset.originalText || btn.dataset.action;
+      }
+    });
+  }
+
   clear() {
     this.expression = '';
+    this.cursorPos = 0;
     this.result = '0';
     this.updateDisplay();
   }
 
   backspace() {
-    this.expression = this.expression.slice(0, -1);
+    if (this.cursorPos > 0) {
+      this.expression = this.expression.slice(0, this.cursorPos - 1) + this.expression.slice(this.cursorPos);
+      this.cursorPos--;
+    }
     this.updateDisplay();
   }
 
   addNumber(num) {
-    this.expression += num;
+    this.expression = this.insertAtCursor(this.expression, num, this.cursorPos);
+    this.cursorPos += num.length;
     this.updateDisplay();
   }
 
   addOperator(op) {
-    const lastChar = this.expression.slice(-1);
+    const lastChar = this.expression.slice(this.cursorPos - 1, this.cursorPos);
     if (['+', '-', '*', '/', '^'].includes(lastChar)) {
-      this.expression = this.expression.slice(0, -1) + op;
+      this.expression = this.expression.slice(0, this.cursorPos - 1) + op + this.expression.slice(this.cursorPos);
     } else {
-      this.expression += op;
+      this.expression = this.insertAtCursor(this.expression, op, this.cursorPos);
+      this.cursorPos += op.length;
     }
     this.updateDisplay();
   }
 
   addParenthesis(paren) {
-    this.expression += paren;
+    this.expression = this.insertAtCursor(this.expression, paren, this.cursorPos);
+    this.cursorPos += paren.length;
     this.updateDisplay();
   }
 
   addConstant(constant) {
-    this.expression += constant;
+    this.expression = this.insertAtCursor(this.expression, constant, this.cursorPos);
+    this.cursorPos += constant.length;
     this.updateDisplay();
+  }
+
+  insertAtCursor(str, insert, pos) {
+    return str.slice(0, pos) + insert + str.slice(pos);
   }
 
   percent() {
     if (this.expression) {
       this.expression = `(${this.expression})/100`;
+      this.cursorPos = this.expression.length;
       this.calculate();
     }
   }
@@ -123,43 +159,69 @@ class ScientificCalculator {
   toggleSign() {
     if (this.expression) {
       this.expression = `-${this.expression}`;
+      this.cursorPos = this.expression.length;
       this.updateDisplay();
     }
   }
 
   trigFunction(func) {
-    if (this.expression) {
-      this.expression = `Math.${func}(${this.expression})`;
-      this.calculate();
-    }
+    const funcName = func === 'asin' ? 'asin' : func === 'acos' ? 'acos' : func === 'atan' ? 'atan' : func;
+    const displayFunc = funcName === 'asin' ? 'sin⁻¹' : funcName === 'acos' ? 'cos⁻¹' : funcName === 'atan' ? 'tan⁻¹' : func;
+    this.expression = this.insertAtCursor(this.expression, `${displayFunc}(`, this.cursorPos);
+    this.cursorPos += displayFunc.length + 1;
+    this.updateDisplay();
   }
 
   logFunction(func) {
-    if (this.expression) {
-      if (func === 'log') {
-        this.expression = `Math.log10(${this.expression})`;
-      } else {
-        this.expression = `Math.log(${this.expression})`;
-      }
-      this.calculate();
+    if (func === '10x') {
+      this.expression = this.insertAtCursor(this.expression, '10^', this.cursorPos);
+      this.cursorPos += 3;
+    } else if (func === 'ex') {
+      this.expression = this.insertAtCursor(this.expression, 'e^', this.cursorPos);
+      this.cursorPos += 2;
+    } else {
+      const displayFunc = func === 'log' ? 'log(' : 'ln(';
+      this.expression = this.insertAtCursor(this.expression, displayFunc, this.cursorPos);
+      this.cursorPos += displayFunc.length;
     }
+    this.updateDisplay();
   }
 
-  sqrt() {
-    if (this.expression) {
-      this.expression = `Math.sqrt(${this.expression})`;
-      this.calculate();
+  rootFunction(func) {
+    if (func === 'cbrt') {
+      this.expression = this.insertAtCursor(this.expression, '∛(', this.cursorPos);
+      this.cursorPos += 2;
+    } else {
+      this.expression = this.insertAtCursor(this.expression, '√(', this.cursorPos);
+      this.cursorPos += 2;
     }
+    this.updateDisplay();
+  }
+
+  powerFunction(func) {
+    if (func === 'root') {
+      this.expression = this.insertAtCursor(this.expression, '^(1/', this.cursorPos);
+      this.cursorPos += 4;
+    } else {
+      this.expression = this.insertAtCursor(this.expression, '^', this.cursorPos);
+      this.cursorPos += 1;
+    }
+    this.updateDisplay();
   }
 
   factorial() {
-    if (this.expression) {
-      const num = parseFloat(this.expression);
-      if (num >= 0 && Number.isInteger(num)) {
-        this.expression = this.factorialCalc(num).toString();
-        this.updateDisplay();
+    const beforeCursor = this.expression.slice(0, this.cursorPos);
+    const num = parseFloat(beforeCursor.match(/-?\d*\.?\d+$/)?.[0] || '0');
+    
+    if (num >= 0 && Number.isInteger(num)) {
+      const fact = this.factorialCalc(num);
+      const match = beforeCursor.match(/-?\d*\.?\d+$/);
+      if (match) {
+        this.expression = beforeCursor.slice(0, -match[0].length) + fact + this.expression.slice(this.cursorPos);
+        this.cursorPos = beforeCursor.slice(0, -match[0].length).length + fact.toString().length;
       }
     }
+    this.updateDisplay();
   }
 
   factorialCalc(n) {
@@ -169,12 +231,32 @@ class ScientificCalculator {
 
   calculate() {
     try {
-      // Replace display operators with JS operators
+      // Convert display format to JS eval format
       let evalExpression = this.expression
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
         .replace(/−/g, '-')
-        .replace(/\^/g, '**');
+        .replace(/π/g, 'Math.PI')
+        .replace(/e(?![x])/g, 'Math.E')
+        .replace(/sin⁻¹\(/g, 'Math.asin(')
+        .replace(/cos⁻¹\(/g, 'Math.acos(')
+        .replace(/tan⁻¹\(/g, 'Math.atan(')
+        .replace(/sin\(/g, 'Math.sin(')
+        .replace(/cos\(/g, 'Math.cos(')
+        .replace(/tan\(/g, 'Math.tan(')
+        .replace(/log\(/g, 'Math.log10(')
+        .replace(/ln\(/g, 'Math.log(')
+        .replace(/√\(/g, 'Math.sqrt(')
+        .replace(/∛\(/g, 'Math.cbrt(')
+        .replace(/10\^/g, 'Math.pow(10,')
+        .replace(/e\^/g, 'Math.exp(');
+
+      // Close any open parentheses
+      const openParens = (evalExpression.match(/\(/g) || []).length;
+      const closeParens = (evalExpression.match(/\)/g) || []).length;
+      if (openParens > closeParens) {
+        evalExpression += ')'.repeat(openParens - closeParens);
+      }
 
       // Evaluate the expression
       const result = eval(evalExpression);
@@ -185,6 +267,7 @@ class ScientificCalculator {
         // Round to avoid floating point errors
         this.result = Math.round(result * 1000000000) / 1000000000;
         this.expression = this.result.toString();
+        this.cursorPos = this.expression.length;
       }
     } catch (e) {
       this.result = 'Error';
@@ -193,18 +276,16 @@ class ScientificCalculator {
   }
 
   updateDisplay() {
-    this.displayExpression.textContent = this.expression
-      .replace(/\*/g, '×')
-      .replace(/\//g, '÷')
-      .replace(/-/g, '−')
-      .replace(/Math\.PI/g, 'π')
-      .replace(/Math\.E/g, 'e')
-      .replace(/Math\.sin/g, 'sin')
-      .replace(/Math\.cos/g, 'cos')
-      .replace(/Math\.tan/g, 'tan')
-      .replace(/Math\.log10/g, 'log')
-      .replace(/Math\.log/g, 'ln')
-      .replace(/Math\.sqrt/g, '√');
+    // Display expression with cursor indicator
+    const beforeCursor = this.expression.slice(0, this.cursorPos);
+    const afterCursor = this.expression.slice(this.cursorPos);
+    
+    this.displayExpression.innerHTML = `
+      <span>${beforeCursor}</span>
+      <span class="cursor">|</span>
+      <span>${afterCursor}</span>
+    `;
+    
     this.displayResult.textContent = this.result;
   }
 }
@@ -216,20 +297,20 @@ const calculator = new ScientificCalculator();
 
 const converterUnits = {
   length: {
-    units: ['meter', 'kilometer', 'centimeter', 'millimeter', 'mile', 'yard', 'foot', 'inch'],
-    symbols: ['m', 'km', 'cm', 'mm', 'mi', 'yd', 'ft', 'in']
+    units: ['meter', 'kilometer', 'centimeter', 'millimeter', 'micrometer', 'nanometer', 'mile', 'yard', 'foot', 'inch', 'nautical-mile', 'light-year', 'astronomical-unit', 'parsec', 'angstrom', 'furlong', 'chain', 'rod', 'fathom', 'hand'],
+    symbols: ['m', 'km', 'cm', 'mm', 'μm', 'nm', 'mi', 'yd', 'ft', 'in', 'nmi', 'ly', 'AU', 'pc', 'Å', 'fur', 'ch', 'rd', 'fm', 'h']
   },
   volume: {
-    units: ['cubic-meter', 'cubic-kilometer', 'cubic-centimeter', 'liter', 'milliliter', 'gallon', 'quart', 'pint'],
-    symbols: ['m³', 'km³', 'cm³', 'L', 'mL', 'gal', 'qt', 'pt']
+    units: ['cubic-meter', 'cubic-kilometer', 'cubic-centimeter', 'cubic-millimeter', 'liter', 'milliliter', 'cubic-inch', 'cubic-foot', 'cubic-yard', 'gallon-us', 'quart-us', 'pint-us', 'cup-us', 'fluid-ounce-us', 'tablespoon-us', 'teaspoon-us', 'gallon-uk', 'quart-uk', 'pint-uk', 'cup-uk', 'fluid-ounce-uk', 'tablespoon-uk', 'teaspoon-uk', 'barrel', 'bushel', 'peck', 'dry-gallon', 'dry-quart', 'dry-pint', 'cord', 'cubic-fathom', 'board-foot'],
+    symbols: ['m³', 'km³', 'cm³', 'mm³', 'L', 'mL', 'in³', 'ft³', 'yd³', 'gal (US)', 'qt (US)', 'pt (US)', 'cup (US)', 'fl oz (US)', 'tbsp (US)', 'tsp (US)', 'gal (UK)', 'qt (UK)', 'pt (UK)', 'cup (UK)', 'fl oz (UK)', 'tbsp (UK)', 'tsp (UK)', 'bbl', 'bu', 'pk', 'dry gal', 'dry qt', 'dry pt', 'cord', 'fm³', 'fbm']
   },
   capacity: {
-    units: ['liter', 'milliliter', 'gallon', 'quart', 'pint', 'cup', 'fluid-ounce', 'tablespoon'],
-    symbols: ['L', 'mL', 'gal', 'qt', 'pt', 'cup', 'fl oz', 'tbsp']
+    units: ['liter', 'milliliter', 'cubic-meter', 'cubic-centimeter', 'cubic-millimeter', 'gallon-us', 'quart-us', 'pint-us', 'cup-us', 'fluid-ounce-us', 'tablespoon-us', 'teaspoon-us', 'gallon-uk', 'quart-uk', 'pint-uk', 'cup-uk', 'fluid-ounce-uk', 'tablespoon-uk', 'teaspoon-uk', 'barrel', 'bushel', 'peck', 'dry-gallon', 'dry-quart', 'dry-pint', 'deciliter', 'centiliter', 'decaliter', 'hectoliter', 'kiloliter', 'megaliter', 'drop', 'minim', 'fluid-dram', 'gill', 'gill-uk', 'jigger', 'shot', 'fifth', 'magnum', 'jeroboam', 'rehoboam', 'methuselah', 'salmanazar', 'balthazar', 'nebuchadnezzar', 'melchior'],
+    symbols: ['L', 'mL', 'm³', 'cm³', 'mm³', 'gal (US)', 'qt (US)', 'pt (US)', 'cup (US)', 'fl oz (US)', 'tbsp (US)', 'tsp (US)', 'gal (UK)', 'qt (UK)', 'pt (UK)', 'cup (UK)', 'fl oz (UK)', 'tbsp (UK)', 'tsp (UK)', 'bbl', 'bu', 'pk', 'dry gal', 'dry qt', 'dry pt', 'dL', 'cL', 'daL', 'hL', 'kL', 'ML', 'gtt', 'min', 'fl dr', 'gi (US)', 'gi (UK)', 'jig', 'shot', 'fifth', 'mag', 'jer', 'reh', 'meth', 'sal', 'bal', 'neb', 'mel']
   },
   currency: {
-    units: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY'],
-    symbols: ['$', '€', '£', '¥', 'C$', 'A$', 'Fr', '¥']
+    units: ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'MXN', 'BRL', 'KRW', 'SGD', 'HKD', 'NOK', 'SEK', 'DKK', 'PLN', 'THB', 'MYR', 'IDR', 'PHP', 'VND', 'RUB', 'TRY', 'ZAR', 'AED', 'SAR'],
+    symbols: ['$', '€', '£', '¥', 'C$', 'A$', 'Fr', '¥', '₹', '$', 'R$', '₩', 'S$', 'HK$', 'kr', 'kr', 'kr', 'zł', '฿', 'RM', 'Rp', '₱', '₫', '₽', '₺', 'R', 'د.إ', '﷼']
   }
 };
 
@@ -438,14 +519,20 @@ async function runCode() {
     
     if (response.ok) {
       const data = await response.json();
-      codeOutputContent.textContent = data.output || data.error || 'Code executed successfully';
+      if (data.output) {
+        codeOutputContent.textContent = data.output;
+      } else if (data.error) {
+        codeOutputContent.textContent = data.error;
+      } else {
+        codeOutputContent.textContent = 'Code executed successfully (no output)';
+      }
     } else {
       const errorData = await response.json();
-      codeOutputContent.textContent = errorData.error || 'Execution failed';
+      codeOutputContent.textContent = errorData.error || errorData.message || 'Execution failed';
     }
   } catch (error) {
     console.error('Code execution error:', error);
-    codeOutputContent.textContent = 'Error executing code';
+    codeOutputContent.textContent = error.message || 'Error executing code';
   } finally {
     codeRunBtn.disabled = false;
   }

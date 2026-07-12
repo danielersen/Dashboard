@@ -3,7 +3,8 @@
 /* Sidebar container */
 .ai-sidebar,
 .ws-sidebar,
-.websites-sidebar {
+.websites-sidebar,
+.tools-sidebar {
   position: sticky;
   top: calc(var(--navbar-height) + 14px);
   display: flex;
@@ -15,7 +16,8 @@
 /* Navigation buttons */
 .ai-nav,
 .ws-nav,
-.websites-nav {
+.websites-nav,
+.tools-nav {
   width: 56px;
   height: 56px;
   display: grid;
@@ -35,7 +37,8 @@
 /* SVG styling */
 .ai-nav svg,
 .ws-nav svg,
-.websites-nav svg {
+.websites-nav svg,
+.tools-nav svg {
   width: 24px;
   height: 24px;
   fill: currentColor;
@@ -43,7 +46,8 @@
 
 /* Icon container */
 .ai-icon,
-.websites-icon {
+.websites-icon,
+.tools-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,15 +58,17 @@
 /* Hover state */
 .ai-nav:hover,
 .ws-nav:hover,
-.websites-nav:hover {
+.websites-nav:hover,
+.tools-nav:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
+  background: transparent;
 }
 
 /* Active/pressed state */
 .ai-nav:active,
 .ws-nav:active,
-.websites-nav:active {
+.websites-nav:active,
+.tools-nav:active {
   transform: translateY(1px);
 }
 
@@ -70,10 +76,11 @@
 .ai-nav.active,
 .ai-nav[data-active="true"],
 .ws-nav[data-active="true"],
-.websites-nav[data-active="true"] {
+.websites-nav[data-active="true"],
+.tools-nav[data-active="true"] {
   color: #f4fbf8;
-  background: var(--accent-soft);
-  border-color: rgba(82, 214, 168, 0.28);
+  background: transparent;
+  border-color: transparent;
 }
 
 /* ===================== RESPONSIVE ===================== */
@@ -81,7 +88,8 @@
   /* Sidebar container - horizontal layout */
   .ai-sidebar,
   .ws-sidebar,
-  .websites-sidebar {
+  .websites-sidebar,
+  .tools-sidebar {
     position: sticky;
     top: calc(var(--navbar-height) + 8px);
     z-index: 5;
@@ -98,7 +106,8 @@
   /* Navigation buttons - smaller size */
   .ai-nav,
   .ws-nav,
-  .websites-nav {
+  .websites-nav,
+  .tools-nav {
     width: 52px;
     height: 48px;
   }

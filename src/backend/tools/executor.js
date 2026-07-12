@@ -46,7 +46,7 @@ export async function executeCode(env, language, code) {
     };
   } catch (error) {
     console.error('Code execution error:', error);
-    throw new Error(`Execution failed: ${error.message}`);
+    throw error;
   }
 }
 
@@ -79,6 +79,6 @@ export async function executorHandler(env, path, method, body) {
       output: result.output
     };
   } catch (error) {
-    throw new Error(`Execution failed: ${error.message}`);
+    throw error;
   }
 }
