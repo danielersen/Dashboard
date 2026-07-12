@@ -124,26 +124,8 @@ async function getWebsiteLogo(url) {
   try {
     const domain = new URL(url).hostname;
     
-    // Try to get favicon from common paths
-    const faviconPaths = [
-      `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
-      `https://${domain}/favicon.ico`,
-      `https://${domain}/favicon.png`,
-      `https://${domain}/apple-touch-icon.png`
-    ];
-
-    for (const faviconUrl of faviconPaths) {
-      try {
-        const response = await fetch(faviconUrl, { method: 'HEAD' });
-        if (response.ok) {
-          return faviconUrl;
-        }
-      } catch (e) {
-        continue;
-      }
-    }
-
-    return null;
+    // Use Google favicon service directly (most reliable)
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
   } catch (error) {
     console.error('Error fetching logo:', error);
     return null;
@@ -210,11 +192,16 @@ function createWebsiteBlock(website) {
   getWebsiteLogo(website.url).then(logoUrl => {
     if (logoUrl) {
       logoImg.src = logoUrl;
+      logoImg.style.display = 'block';
     } else {
       logoImg.style.display = 'none';
       logoContainer.classList.add('fallback');
       logoContainer.textContent = getFallbackLogo(website.name);
     }
+  }).catch(() => {
+    logoImg.style.display = 'none';
+    logoContainer.classList.add('fallback');
+    logoContainer.textContent = getFallbackLogo(website.name);
   });
 
   logoContainer.appendChild(logoImg);
@@ -328,12 +315,14 @@ document.getElementById('confirm-delete-btn').addEventListener('click', async ()
   if (deletingWebsite) {
     try {
       console.log('Deleting website with name:', deletingWebsite.name);
-      websites = await deleteWebsite(deletingWebsite.name);
+      await deleteWebsite(deletingWebsite.name);
+      // Refresh websites from server to ensure consistency
+      websites = await fetchWebsites();
       renderWebsites();
       closeDeleteModal();
     } catch (error) {
       console.error('Error deleting website:', error);
-      alert('Failed to delete website. Please try again.');
+      alert(`Failed to delete website: ${error.message}`);
     }
   } else {
     console.error('No deletingWebsite set');
@@ -357,18 +346,22 @@ websiteForm.addEventListener('submit', async (e) => {
     if (editingWebsite) {
       console.log('Updating existing website with old name:', editingWebsite.name, 'new name:', name);
       // Update existing website
-      websites = await updateWebsite(editingWebsite.name, name, url);
+      await updateWebsite(editingWebsite.name, name, url);
+      // Refresh websites from server to ensure consistency
+      websites = await fetchWebsites();
     } else {
       console.log('Adding new website');
       // Add new website
-      websites = await addWebsite(name, url);
+      await addWebsite(name, url);
+      // Refresh websites from server to ensure consistency
+      websites = await fetchWebsites();
     }
     
     renderWebsites();
     closeWebsiteModal();
   } catch (error) {
     console.error('Error saving website:', error);
-    alert('Failed to save website. Please try again.');
+    alert(`Failed to save website: ${error.message}`);
   }
 });
 
