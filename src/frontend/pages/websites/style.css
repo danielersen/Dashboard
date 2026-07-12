@@ -237,7 +237,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
-  color: var(--muted);
+  color: rgba(243, 251, 247, 0.55);
   cursor: pointer;
   transition:
     color 180ms ease,
