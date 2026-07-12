@@ -59,29 +59,16 @@
     }
     </script>
     
-    <style>
-      html[data-auth-pending] body { visibility: hidden; }
-      body { 
-        background: #08100f !important;
-        color: #f3fbf7 !important;
-      }
-    </style>
+    <style>html[data-auth-pending] body { visibility: hidden; }</style>
     <script type="module">
       import { guardPage } from "/lib/auth.js";
+      // Remove auth pending immediately for faster loading
+      document.documentElement.removeAttribute("data-auth-pending");
       guardPage().then((ok) => {
-        console.log('Auth guard result:', ok);
-        if (ok) {
-          document.documentElement.removeAttribute("data-auth-pending");
-          console.log('Auth pending removed');
-        } else {
-          console.error('Auth guard failed');
-          // Temporarily show content even if auth fails for debugging
-          document.documentElement.removeAttribute("data-auth-pending");
+        if (!ok) {
+          // Redirect if auth fails
+          window.location.href = '/pages/auth';
         }
-      }).catch(err => {
-        console.error('Auth guard error:', err);
-        // Temporarily show content even if auth fails for debugging
-        document.documentElement.removeAttribute("data-auth-pending");
       });
     </script>
     <link rel="stylesheet" href="/styles/sidebar.css">
