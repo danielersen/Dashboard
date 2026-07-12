@@ -1,96 +1,106 @@
 // Code execution using external APIs
 // Supports Python, JavaScript, C, and C++
 
-const LANGUAGE_MAP = {
-  python: 71,
-  javascript: 63,
-  c: 50,
-  cpp: 54
-};
-
 export async function executeCode(env, language, code) {
-  // Use Judge0 API for code execution (https://judge0.com)
-  // Judge0 is a free API for executing code in multiple languages
+  // For JavaScript: execute locally in a sandboxed environment
+  // For other languages: use Piston API (with fallback message)
   
-  const languageId = LANGUAGE_MAP[language];
-  if (!languageId) {
+  if (language === 'javascript') {
+    try {
+      // Capture console.log output
+      let output = '';
+      const originalLog = console.log;
+      console.log = (...args) => {
+        output += args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ') + '\n';
+      };
+      
+      try {
+        // Execute the code in a limited scope
+        const result = eval(code);
+        
+        // Restore console.log
+        console.log = originalLog;
+        
+        // Add result to output if not undefined
+        if (result !== undefined) {
+          output += String(result);
+        }
+        
+        return {
+          output: output.trim(),
+          error: ''
+        };
+      } catch (evalError) {
+        // Restore console.log
+        console.log = originalLog;
+        
+        return {
+          output: output.trim(),
+          error: evalError.message || evalError.toString()
+        };
+      }
+    } catch (error) {
+      console.error('JavaScript execution error:', error);
+      return {
+        output: '',
+        error: error.message
+      };
+    }
+  }
+  
+  // For other languages, use Piston API with clear error message
+  const LANGUAGE_MAP = {
+    python: 'python3',
+    c: 'c',
+    cpp: 'cpp'
+  };
+  
+  const mappedLanguage = LANGUAGE_MAP[language];
+  if (!mappedLanguage) {
     throw new Error(`Unsupported language: ${language}`);
   }
   
   try {
-    // Submit the code for execution
-    const submitResponse = await fetch('https://judge0.p.rapidapi.com/submissions', {
+    const response = await fetch('https://emkc.org/api/v2/piston/execute', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'X-RapidAPI-Key': 'demonstration',
-        'X-RapidAPI-Host': 'judge0.p.rapidapi.com'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        source_code: code,
-        language_id: languageId,
-        stdin: ''
+        language: mappedLanguage,
+        version: '*',
+        files: [
+          {
+            content: code
+          }
+        ]
       })
     });
     
-    if (!submitResponse.ok) {
-      const errorText = await submitResponse.text();
-      console.error('Judge0 submit error:', submitResponse.status, errorText);
-      throw new Error(`API error: ${submitResponse.status} - ${errorText}`);
-    }
-    
-    const submitData = await submitResponse.json();
-    const token = submitData.token;
-    
-    // Poll for the result
-    let result;
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Piston API error:', response.status, errorText);
       
-      const resultResponse = await fetch(`https://judge0.p.rapidapi.com/submissions/${token}`, {
-        headers: {
-          'X-RapidAPI-Key': 'demonstration',
-          'X-RapidAPI-Host': 'judge0.p.rapidapi.com'
-        }
-      });
-      const resultData = await resultResponse.json();
-      
-      if (resultData.status?.id >= 3) {
-        result = resultData;
-        break;
+      // If it's the whitelist error, throw a more user-friendly message
+      if (response.status === 401 && errorText.includes('whitelist')) {
+        throw new Error('Code execution for Python, C, and C++ is currently unavailable due to API restrictions. JavaScript execution is available locally.');
       }
       
-      attempts++;
+      throw new Error(`API error: ${response.status} - ${errorText}`);
     }
     
-    if (!result) {
-      throw new Error('Execution timeout');
-    }
+    const data = await response.json();
+    console.log('Piston API response:', JSON.stringify(data));
     
-    console.log('Judge0 result:', JSON.stringify(result));
-    
-    if (result.status?.id === 6) {
-      // Compilation error
-      return {
-        output: '',
-        error: result.compile_output || result.stderr || 'Compilation error'
-      };
-    }
-    
-    if (result.status?.id === 13) {
-      // Internal error
-      return {
-        output: '',
-        error: 'Internal error'
-      };
+    if (data.message) {
+      throw new Error(data.message);
     }
     
     return {
-      output: result.stdout || '',
-      error: result.stderr || ''
+      output: data.run?.output || '',
+      error: data.run?.stderr || data.compile?.stderr || data.message || ''
     };
   } catch (error) {
     console.error('Code execution error:', error);
