@@ -318,17 +318,18 @@ const converterUnits = {
 };
 
 let currentConverterType = 'length';
-
-const converterTypeBtns = document.querySelectorAll('.converter-type-btn');
-const converterFromSelect = document.getElementById('converter-from-unit');
-const converterToSelect = document.getElementById('converter-to-unit');
-const converterFromInput = document.getElementById('converter-from');
-const converterToInput = document.getElementById('converter-to');
-const converterSwapBtn = document.getElementById('converter-swap-btn');
-const converterResultDisplay = document.getElementById('converter-result-display');
+let converterTypeBtns, converterFromSelect, converterToSelect, converterFromInput, converterToInput, converterSwapBtn, converterResultDisplay;
 
 // Initialize converter
 function initConverter() {
+  converterTypeBtns = document.querySelectorAll('.converter-type-btn');
+  converterFromSelect = document.getElementById('converter-from-unit');
+  converterToSelect = document.getElementById('converter-to-unit');
+  converterFromInput = document.getElementById('converter-from');
+  converterToInput = document.getElementById('converter-to');
+  converterSwapBtn = document.getElementById('converter-swap-btn');
+  converterResultDisplay = document.getElementById('converter-result-display');
+  
   populateUnits(currentConverterType);
   
   converterTypeBtns.forEach(btn => {
@@ -404,8 +405,19 @@ async function handleConversion() {
     if (response.ok) {
       const data = await response.json();
       console.log('Conversion result:', data);
-      converterToInput.value = data.result;
-      converterResultDisplay.textContent = `${value} ${fromUnit} = ${data.result} ${toUnit}`;
+      console.log('converterToInput:', converterToInput);
+      console.log('converterResultDisplay:', converterResultDisplay);
+      console.log('data.result:', data.result);
+      console.log('value:', value);
+      console.log('fromUnit:', fromUnit);
+      console.log('toUnit:', toUnit);
+      
+      if (converterToInput && data.result) {
+        converterToInput.value = data.result;
+      }
+      if (converterResultDisplay) {
+        converterResultDisplay.textContent = `${value} ${fromUnit} = ${data.result} ${toUnit}`;
+      }
     } else {
       const errorData = await response.json();
       console.error('Conversion failed:', errorData);

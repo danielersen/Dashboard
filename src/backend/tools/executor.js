@@ -2,54 +2,88 @@
 // Supports Python, JavaScript, C, and C++
 
 const LANGUAGE_MAP = {
-  python: 'python3',
-  javascript: 'nodejs',
-  c: 'c',
-  cpp: 'cpp'
+  python: 71,
+  javascript: 63,
+  c: 50,
+  cpp: 54
 };
 
 export async function executeCode(env, language, code) {
-  // Use Piston API for code execution (https://emkc.org/api/v2/piston)
-  // Piston is a free API for executing code in multiple languages
+  // Use Judge0 API for code execution (https://judge0.com)
+  // Judge0 is a free API for executing code in multiple languages
   
-  const mappedLanguage = LANGUAGE_MAP[language];
-  if (!mappedLanguage) {
+  const languageId = LANGUAGE_MAP[language];
+  if (!languageId) {
     throw new Error(`Unsupported language: ${language}`);
   }
   
   try {
-    const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+    // Submit the code for execution
+    const submitResponse = await fetch('https://judge0.com/api/v1/submissions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        language: mappedLanguage,
-        version: '*',
-        files: [
-          {
-            content: code
-          }
-        ]
+        source_code: code,
+        language_id: languageId,
+        stdin: ''
       })
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Piston API error:', response.status, errorText);
-      throw new Error(`API error: ${response.status} - ${errorText}`);
+    if (!submitResponse.ok) {
+      const errorText = await submitResponse.text();
+      console.error('Judge0 submit error:', submitResponse.status, errorText);
+      throw new Error(`API error: ${submitResponse.status} - ${errorText}`);
     }
     
-    const data = await response.json();
-    console.log('Piston API response:', JSON.stringify(data));
+    const submitData = await submitResponse.json();
+    const token = submitData.token;
     
-    if (data.message) {
-      throw new Error(data.message);
+    // Poll for the result
+    let result;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const resultResponse = await fetch(`https://judge0.com/api/v1/submissions/${token}`);
+      const resultData = await resultResponse.json();
+      
+      if (resultData.status?.id >= 3) {
+        result = resultData;
+        break;
+      }
+      
+      attempts++;
+    }
+    
+    if (!result) {
+      throw new Error('Execution timeout');
+    }
+    
+    console.log('Judge0 result:', JSON.stringify(result));
+    
+    if (result.status?.id === 6) {
+      // Compilation error
+      return {
+        output: '',
+        error: result.compile_output || result.stderr || 'Compilation error'
+      };
+    }
+    
+    if (result.status?.id === 13) {
+      // Internal error
+      return {
+        output: '',
+        error: 'Internal error'
+      };
     }
     
     return {
-      output: data.run?.output || '',
-      error: data.run?.stderr || data.compile?.stderr || data.message || ''
+      output: result.stdout || '',
+      error: result.stderr || ''
     };
   } catch (error) {
     console.error('Code execution error:', error);
