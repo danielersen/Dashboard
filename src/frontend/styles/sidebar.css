@@ -25,7 +25,7 @@
   border: 1px solid transparent;
   border-radius: 16px;
   background: transparent;
-  color: rgba(243, 251, 247, 0.55);
+  color: var(--text);
   cursor: pointer;
   transition:
     color 180ms ease,
@@ -78,7 +78,7 @@
 .ws-nav[data-active="true"],
 .websites-nav[data-active="true"],
 .tools-nav[data-active="true"] {
-  color: #f4fbf8;
+  color: var(--text);
   background: transparent;
   border-color: transparent;
 }

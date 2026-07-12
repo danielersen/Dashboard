@@ -237,7 +237,7 @@ class ScientificCalculator {
         .replace(/÷/g, '/')
         .replace(/−/g, '-')
         .replace(/π/g, 'Math.PI')
-        .replace(/e(?![x])/g, 'Math.E')
+        .replace(/e(?![x^])/g, 'Math.E')
         .replace(/sin⁻¹\(/g, 'Math.asin(')
         .replace(/cos⁻¹\(/g, 'Math.acos(')
         .replace(/tan⁻¹\(/g, 'Math.atan(')
