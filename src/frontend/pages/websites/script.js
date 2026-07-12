@@ -5,6 +5,8 @@ import { ensureSessionToken } from "/lib/auth.js";
 let websites = [];
 let editingWebsite = null;
 let deletingWebsite = null;
+let editingWebsiteId = null;
+let deletingWebsiteId = null;
 
 // ===================== API FUNCTIONS =====================
 
@@ -43,7 +45,7 @@ async function fetchWebsites() {
   }
 }
 
-async function addWebsite(name, url) {
+async function addWebsite(name, url, websiteId = null) {
   try {
     const token = await getAuthToken();
     const response = await fetch('/api/websites/add', {
@@ -52,7 +54,7 @@ async function addWebsite(name, url) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, url })
+      body: JSON.stringify({ name, url, websiteId })
     });
 
     if (!response.ok) {
@@ -60,14 +62,15 @@ async function addWebsite(name, url) {
     }
 
     const data = await response.json();
-    return data.resp.websites || [];
+    // After adding/updating, fetch the updated list
+    return await fetchWebsites();
   } catch (error) {
     console.error('Error adding website:', error);
     throw error;
   }
 }
 
-async function updateWebsite(name, url) {
+async function updateWebsite(websiteId, name, url) {
   try {
     const token = await getAuthToken();
     const response = await fetch('/api/websites/add', {
@@ -76,7 +79,7 @@ async function updateWebsite(name, url) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, url })
+      body: JSON.stringify({ name, url, websiteId })
     });
 
     if (!response.ok) {
@@ -84,17 +87,18 @@ async function updateWebsite(name, url) {
     }
 
     const data = await response.json();
-    return data.resp.websites || [];
+    // After updating, fetch the updated list
+    return await fetchWebsites();
   } catch (error) {
     console.error('Error updating website:', error);
     throw error;
   }
 }
 
-async function deleteWebsite(name) {
+async function deleteWebsite(websiteId) {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`/api/websites/delete/${encodeURIComponent(name)}`, {
+    const response = await fetch(`/api/websites/delete/${encodeURIComponent(websiteId)}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -107,7 +111,8 @@ async function deleteWebsite(name) {
     }
 
     const data = await response.json();
-    return data.resp.websites || [];
+    // After deleting, fetch the updated list
+    return await fetchWebsites();
   } catch (error) {
     console.error('Error deleting website:', error);
     throw error;
@@ -185,6 +190,7 @@ function renderWebsites() {
 function createWebsiteBlock(website) {
   const block = document.createElement('div');
   block.className = 'website-block';
+  block.dataset.id = website.id;
   block.dataset.name = website.name;
 
   const content = document.createElement('div');
@@ -286,6 +292,7 @@ function openAddModal() {
 
 function openEditModal(website) {
   editingWebsite = website;
+  editingWebsiteId = website.id;
   modalTitle.textContent = 'Edit Website';
   nameInput.value = website.name;
   urlInput.value = website.url;
@@ -296,17 +303,20 @@ function openEditModal(website) {
 function closeWebsiteModal() {
   websiteModal.setAttribute('aria-hidden', 'true');
   editingWebsite = null;
+  editingWebsiteId = null;
   websiteForm.reset();
 }
 
 function openDeleteModal(website) {
   deletingWebsite = website;
+  deletingWebsiteId = website.id;
   deleteModal.setAttribute('aria-hidden', 'false');
 }
 
 function closeDeleteModal() {
   deleteModal.setAttribute('aria-hidden', 'true');
   deletingWebsite = null;
+  deletingWebsiteId = null;
 }
 
 // ===================== EVENT LISTENERS =====================
@@ -318,9 +328,9 @@ document.getElementById('cancel-btn').addEventListener('click', closeWebsiteModa
 document.getElementById('cancel-delete-btn').addEventListener('click', closeDeleteModal);
 
 document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-  if (deletingWebsite) {
+  if (deletingWebsiteId) {
     try {
-      websites = await deleteWebsite(deletingWebsite.name);
+      websites = await deleteWebsite(deletingWebsiteId);
       renderWebsites();
       closeDeleteModal();
     } catch (error) {
@@ -341,9 +351,9 @@ websiteForm.addEventListener('submit', async (e) => {
   }
 
   try {
-    if (editingWebsite) {
+    if (editingWebsiteId) {
       // Update existing website
-      websites = await updateWebsite(name, url);
+      websites = await updateWebsite(editingWebsiteId, name, url);
     } else {
       // Add new website
       websites = await addWebsite(name, url);
