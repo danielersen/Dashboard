@@ -5,8 +5,6 @@ import { ensureSessionToken } from "/lib/auth.js";
 let websites = [];
 let editingWebsite = null;
 let deletingWebsite = null;
-let editingWebsiteId = null;
-let deletingWebsiteId = null;
 
 // ===================== API FUNCTIONS =====================
 
@@ -45,7 +43,7 @@ async function fetchWebsites() {
   }
 }
 
-async function addWebsite(name, url, websiteId = null) {
+async function addWebsite(name, url) {
   try {
     const token = await getAuthToken();
     const response = await fetch('/api/websites/add', {
@@ -54,7 +52,7 @@ async function addWebsite(name, url, websiteId = null) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, url, websiteId })
+      body: JSON.stringify({ name, url })
     });
 
     if (!response.ok) {
@@ -62,15 +60,14 @@ async function addWebsite(name, url, websiteId = null) {
     }
 
     const data = await response.json();
-    // After adding/updating, fetch the updated list
-    return await fetchWebsites();
+    return data.resp.websites || [];
   } catch (error) {
     console.error('Error adding website:', error);
     throw error;
   }
 }
 
-async function updateWebsite(websiteId, name, url) {
+async function updateWebsite(name, url) {
   try {
     const token = await getAuthToken();
     const response = await fetch('/api/websites/add', {
@@ -79,7 +76,7 @@ async function updateWebsite(websiteId, name, url) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ name, url, websiteId })
+      body: JSON.stringify({ name, url })
     });
 
     if (!response.ok) {
@@ -87,18 +84,17 @@ async function updateWebsite(websiteId, name, url) {
     }
 
     const data = await response.json();
-    // After updating, fetch the updated list
-    return await fetchWebsites();
+    return data.resp.websites || [];
   } catch (error) {
     console.error('Error updating website:', error);
     throw error;
   }
 }
 
-async function deleteWebsite(websiteId) {
+async function deleteWebsite(name) {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`/api/websites/delete/${encodeURIComponent(websiteId)}`, {
+    const response = await fetch(`/api/websites/delete/${encodeURIComponent(name)}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -111,8 +107,7 @@ async function deleteWebsite(websiteId) {
     }
 
     const data = await response.json();
-    // After deleting, fetch the updated list
-    return await fetchWebsites();
+    return data.resp.websites || [];
   } catch (error) {
     console.error('Error deleting website:', error);
     throw error;
@@ -190,7 +185,6 @@ function renderWebsites() {
 function createWebsiteBlock(website) {
   const block = document.createElement('div');
   block.className = 'website-block';
-  block.dataset.id = website.id;
   block.dataset.name = website.name;
 
   const content = document.createElement('div');
@@ -291,8 +285,8 @@ function openAddModal() {
 }
 
 function openEditModal(website) {
+  console.log('Opening edit modal for website:', website);
   editingWebsite = website;
-  editingWebsiteId = website.id;
   modalTitle.textContent = 'Edit Website';
   nameInput.value = website.name;
   urlInput.value = website.url;
@@ -303,20 +297,18 @@ function openEditModal(website) {
 function closeWebsiteModal() {
   websiteModal.setAttribute('aria-hidden', 'true');
   editingWebsite = null;
-  editingWebsiteId = null;
   websiteForm.reset();
 }
 
 function openDeleteModal(website) {
+  console.log('Opening delete modal for website:', website);
   deletingWebsite = website;
-  deletingWebsiteId = website.id;
   deleteModal.setAttribute('aria-hidden', 'false');
 }
 
 function closeDeleteModal() {
   deleteModal.setAttribute('aria-hidden', 'true');
   deletingWebsite = null;
-  deletingWebsiteId = null;
 }
 
 // ===================== EVENT LISTENERS =====================
@@ -328,14 +320,19 @@ document.getElementById('cancel-btn').addEventListener('click', closeWebsiteModa
 document.getElementById('cancel-delete-btn').addEventListener('click', closeDeleteModal);
 
 document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-  if (deletingWebsiteId) {
+  console.log('Delete button clicked, deletingWebsite:', deletingWebsite);
+  if (deletingWebsite) {
     try {
-      websites = await deleteWebsite(deletingWebsiteId);
+      console.log('Deleting website with name:', deletingWebsite.name);
+      websites = await deleteWebsite(deletingWebsite.name);
       renderWebsites();
       closeDeleteModal();
     } catch (error) {
+      console.error('Error deleting website:', error);
       alert('Failed to delete website. Please try again.');
     }
+  } else {
+    console.error('No deletingWebsite set');
   }
 });
 
@@ -345,16 +342,20 @@ websiteForm.addEventListener('submit', async (e) => {
   const name = nameInput.value.trim();
   const url = urlInput.value.trim();
 
+  console.log('Form submitted:', { name, url, editingWebsite });
+
   if (!name || !url) {
     alert('Please fill in all fields');
     return;
   }
 
   try {
-    if (editingWebsiteId) {
+    if (editingWebsite) {
+      console.log('Updating existing website with name:', editingWebsite.name);
       // Update existing website
-      websites = await updateWebsite(editingWebsiteId, name, url);
+      websites = await updateWebsite(name, url);
     } else {
+      console.log('Adding new website');
       // Add new website
       websites = await addWebsite(name, url);
     }
@@ -362,6 +363,7 @@ websiteForm.addEventListener('submit', async (e) => {
     renderWebsites();
     closeWebsiteModal();
   } catch (error) {
+    console.error('Error saving website:', error);
     alert('Failed to save website. Please try again.');
   }
 });
