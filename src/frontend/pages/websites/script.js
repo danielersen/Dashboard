@@ -17,8 +17,10 @@ async function getAuthToken() {
 }
 
 async function fetchWebsites() {
+  console.log('fetchWebsites called');
   try {
     const token = await getAuthToken();
+    console.log('Token obtained:', token ? 'yes' : 'no');
     const response = await fetch('/api/websites/', {
       method: 'GET',
       headers: {
@@ -27,11 +29,13 @@ async function fetchWebsites() {
       }
     });
 
+    console.log('Response status:', response.status);
     if (!response.ok) {
       throw new Error('Failed to fetch websites');
     }
 
     const data = await response.json();
+    console.log('Response data:', data);
     return data.resp.websites || [];
   } catch (error) {
     console.error('Error fetching websites:', error);
@@ -150,21 +154,32 @@ function getFallbackLogo(name) {
 // ===================== RENDER FUNCTIONS =====================
 
 function renderWebsites() {
+  console.log('renderWebsites called, websites:', websites);
   const grid = document.getElementById('websites-grid');
   
+  if (!grid) {
+    console.error('websites-grid element not found');
+    return;
+  }
+  
   if (websites.length === 0) {
+    console.log('No websites to display, showing empty state');
     grid.classList.add('empty');
     grid.innerHTML = '';
     return;
   }
 
+  console.log('Rendering', websites.length, 'websites');
   grid.classList.remove('empty');
   grid.innerHTML = '';
 
   websites.forEach(website => {
+    console.log('Creating block for:', website);
     const block = createWebsiteBlock(website);
     grid.appendChild(block);
   });
+  
+  console.log('All blocks added to grid');
 }
 
 function createWebsiteBlock(website) {
@@ -356,8 +371,26 @@ document.addEventListener('keydown', (e) => {
 // ===================== INITIALIZATION =====================
 
 async function init() {
-  websites = await fetchWebsites();
-  renderWebsites();
+  console.log('Websites page initializing...');
+  console.log('DOM ready, elements:', {
+    grid: document.getElementById('websites-grid'),
+    addBtn: document.getElementById('add-website-btn'),
+    modal: document.getElementById('website-modal')
+  });
+  
+  try {
+    websites = await fetchWebsites();
+    console.log('Websites fetched:', websites);
+    renderWebsites();
+    console.log('Websites rendered');
+  } catch (error) {
+    console.error('Error initializing websites page:', error);
+    // Show error message to user
+    const grid = document.getElementById('websites-grid');
+    if (grid) {
+      grid.innerHTML = '<p style="color: var(--text); padding: 20px;">Error loading websites. Please try again.</p>';
+    }
+  }
 }
 
 // Initialize when DOM is ready
