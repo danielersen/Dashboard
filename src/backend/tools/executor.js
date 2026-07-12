@@ -1,21 +1,16 @@
 // Code execution using external APIs
-// Supports languages with simple console output
+// Supports languages with simple console output via Agent Code Runner API
 
 const LANGUAGE_MAP = {
-  python: 'python3',
-  javascript: 'nodejs',
+  python: 'python',
+  javascript: 'javascript',
   typescript: 'typescript',
-  c: 'c',
-  cpp: 'cpp17',
-  ruby: 'ruby',
-  go: 'go',
-  rust: 'rust',
   bash: 'bash'
 };
 
 export async function executeCode(env, language, code) {
-  // Use CompilerOnline API (free, no signup required)
-  // Supports Python, JavaScript, TypeScript, C, C++, PHP, Ruby, etc.
+  // Use Agent Code Runner API (free, no signup required)
+  // 30 requests/minute without API key, supports Python, JavaScript, TypeScript, Bash
   
   const mappedLanguage = LANGUAGE_MAP[language];
   if (!mappedLanguage) {
@@ -23,30 +18,29 @@ export async function executeCode(env, language, code) {
   }
   
   try {
-    const response = await fetch('https://api.compileronline.com/api/v1/execute', {
+    const response = await fetch('https://agent-gateway-kappa.vercel.app/v1/agent-coderunner/api/execute', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         language: mappedLanguage,
-        code: code,
-        input: ''
+        code: code
       })
     });
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('CompilerOnline API error:', response.status, errorText);
+      console.error('Agent Code Runner API error:', response.status, errorText);
       throw new Error(`API error: ${response.status} - ${errorText}`);
     }
     
     const data = await response.json();
-    console.log('CompilerOnline result:', JSON.stringify(data));
+    console.log('Agent Code Runner result:', JSON.stringify(data));
     
     return {
-      output: data.output || data.stdout || '',
-      error: data.error || data.stderr || ''
+      output: data.stdout || '',
+      error: data.stderr || ''
     };
   } catch (error) {
     console.error('Code execution error:', error);
