@@ -407,16 +407,17 @@ async function handleConversion() {
       console.log('Conversion result:', data);
       console.log('converterToInput:', converterToInput);
       console.log('converterResultDisplay:', converterResultDisplay);
-      console.log('data.result:', data.result);
+      console.log('data.resp.result:', data.resp?.result);
       console.log('value:', value);
       console.log('fromUnit:', fromUnit);
       console.log('toUnit:', toUnit);
       
-      if (converterToInput && data.result) {
-        converterToInput.value = data.result;
+      const result = data.resp?.result;
+      if (converterToInput && result) {
+        converterToInput.value = result;
       }
       if (converterResultDisplay) {
-        converterResultDisplay.textContent = `${value} ${fromUnit} = ${data.result} ${toUnit}`;
+        converterResultDisplay.textContent = `${value} ${fromUnit} = ${result} ${toUnit}`;
       }
     } else {
       const errorData = await response.json();

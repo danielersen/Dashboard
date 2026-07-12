@@ -19,10 +19,12 @@ export async function executeCode(env, language, code) {
   
   try {
     // Submit the code for execution
-    const submitResponse = await fetch('https://judge0.com/api/v1/submissions', {
+    const submitResponse = await fetch('https://judge0.p.rapidapi.com/submissions', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-RapidAPI-Key': 'demonstration',
+        'X-RapidAPI-Host': 'judge0.p.rapidapi.com'
       },
       body: JSON.stringify({
         source_code: code,
@@ -48,7 +50,12 @@ export async function executeCode(env, language, code) {
     while (attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const resultResponse = await fetch(`https://judge0.com/api/v1/submissions/${token}`);
+      const resultResponse = await fetch(`https://judge0.p.rapidapi.com/submissions/${token}`, {
+        headers: {
+          'X-RapidAPI-Key': 'demonstration',
+          'X-RapidAPI-Host': 'judge0.p.rapidapi.com'
+        }
+      });
       const resultData = await resultResponse.json();
       
       if (resultData.status?.id >= 3) {
