@@ -56,6 +56,7 @@ In your HTML files, reference the files as follows:
 ## Recommended URL structure
 
 - Home: `https://dashboard.danielersen.fr.eu.org/`
+- Login: `https://dashboard.danielersen.fr.eu.org/login`
 - Workspace: `https://dashboard.danielersen.fr.eu.org/workspace`
 - AI: `https://dashboard.danielersen.fr.eu.org/ai`
 - Websites: `https://dashboard.danielersen.fr.eu.org/websites`

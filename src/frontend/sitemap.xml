@@ -7,6 +7,12 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://dashboard.danielersen.fr.eu.org/login</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://dashboard.danielersen.fr.eu.org/workspace</loc>
     <lastmod>2026-07-12</lastmod>
     <changefreq>weekly</changefreq>
