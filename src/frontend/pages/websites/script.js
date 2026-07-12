@@ -31,15 +31,16 @@ async function fetchWebsites() {
 
     console.log('Response status:', response.status);
     if (!response.ok) {
-      throw new Error('Failed to fetch websites');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch websites');
     }
 
     const data = await response.json();
     console.log('Response data:', data);
-    return data.resp.websites || [];
+    return data.resp?.websites || [];
   } catch (error) {
     console.error('Error fetching websites:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -56,11 +57,12 @@ async function addWebsite(name, url) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to add website');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to add website');
     }
 
     const data = await response.json();
-    return data.resp.websites || [];
+    return data.resp?.websites || [];
   } catch (error) {
     console.error('Error adding website:', error);
     throw error;
@@ -80,11 +82,12 @@ async function updateWebsite(oldName, newName, newUrl) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update website');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update website');
     }
 
     const data = await response.json();
-    return data.resp.websites || [];
+    return data.resp?.websites || [];
   } catch (error) {
     console.error('Error updating website:', error);
     throw error;
@@ -103,11 +106,12 @@ async function deleteWebsite(name) {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to delete website');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete website');
     }
 
     const data = await response.json();
-    return data.resp.websites || [];
+    return data.resp?.websites || [];
   } catch (error) {
     console.error('Error deleting website:', error);
     throw error;
@@ -400,7 +404,7 @@ async function init() {
     // Show error message to user
     const grid = document.getElementById('websites-grid');
     if (grid) {
-      grid.innerHTML = '<p style="color: var(--text); padding: 20px;">Error loading websites. Please try again.</p>';
+      grid.innerHTML = `<p style="color: var(--text); padding: 20px;">Error loading websites: ${error.message}. Please try again.</p>`;
     }
   }
 }

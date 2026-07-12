@@ -32,12 +32,11 @@ export async function addWebsite(env, name, url) {
   // Check if website with same name already exists
   const existingIndex = websites.findIndex(w => w.name === name);
   if (existingIndex !== -1) {
-    // Update existing website
-    websites[existingIndex] = { name, url };
-  } else {
-    // Add new website
-    websites.push({ name, url });
+    throw new Error("Website with this name already exists");
   }
+  
+  // Add new website
+  websites.push({ name, url });
 
   await writeWebsites(env, websites);
   return { success: true, websites };
@@ -100,7 +99,7 @@ export async function WebsitesFunction(env, path, method, body) {
     
     case "DELETE":
       if (path.startsWith("delete/")) {
-        const name = path.slice("delete/".length);
+        const name = decodeURIComponent(path.slice("delete/".length));
         return await deleteWebsite(env, name);
       }
       throw new Error("Invalid DELETE path");
