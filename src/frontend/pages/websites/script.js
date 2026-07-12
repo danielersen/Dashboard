@@ -165,7 +165,7 @@ function renderWebsites() {
   if (websites.length === 0) {
     console.log('No websites to display, showing empty state');
     grid.classList.add('empty');
-    grid.innerHTML = '';
+    grid.innerHTML = '<div class="empty-state">No websites yet. Click the + button to add your first website.</div>';
     return;
   }
 

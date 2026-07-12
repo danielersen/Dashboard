@@ -396,8 +396,7 @@
 
 /* ===================== EMPTY STATE ===================== */
 
-.websites-grid.empty::after {
-  content: "No websites yet. Click the + button to add your first website.";
+.empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -408,6 +407,10 @@
   text-align: center;
   border: 2px dashed var(--line);
   border-radius: var(--radius);
+}
+
+.websites-grid.empty {
+  display: grid;
 }
 
 /* ===================== RESPONSIVE ===================== */
