@@ -2,9 +2,9 @@ import { megaRead, megaWrite } from "./mega.js";
 
 const WEBSITES_FILE = "websites/websites.json";
 
-async function readWebsites(env) {
+async function readWebsites(env, forceRefresh = false) {
   try {
-    const websites = await megaRead(env, WEBSITES_FILE);
+    const websites = await megaRead(env, WEBSITES_FILE, null, forceRefresh);
     if (Array.isArray(websites)) {
       return websites;
     }
@@ -81,7 +81,7 @@ export async function updateWebsite(env, oldName, newName, newUrl) {
 }
 
 export async function getWebsites(env) {
-  const websites = await readWebsites(env);
+  const websites = await readWebsites(env, true); // Force refresh to get latest data
   return { success: true, websites };
 }
 
