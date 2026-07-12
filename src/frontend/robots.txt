@@ -5,4 +5,7 @@ Allow: /
 Disallow: /auth
 Disallow: /error-token
 
+# Disallow secondary/hidden pages
+Disallow: /workspace/index2
+
 Sitemap: https://dashboard.danielersen.fr.eu.org/sitemap.xml
