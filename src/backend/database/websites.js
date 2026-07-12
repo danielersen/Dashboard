@@ -62,9 +62,14 @@ export async function updateWebsite(env, oldName, newName, newUrl) {
   }
 
   const websites = await readWebsites(env);
+  console.log('Current websites:', websites);
+  console.log('Looking for oldName:', oldName);
+  
   const existingIndex = websites.findIndex(w => w.name === oldName);
+  console.log('Found index:', existingIndex);
   
   if (existingIndex === -1) {
+    console.log('Website not found. Available names:', websites.map(w => w.name));
     throw new Error("Website not found");
   }
   
