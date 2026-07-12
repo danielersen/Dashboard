@@ -4,6 +4,7 @@ const NAV_ITEMS = [
   { slug: "home", label: "Home", href: "/pages/home", icon: "home" },
   { slug: "workspace", label: "Workspace", href: "/pages/workspace", icon: "grid" },
   { slug: "AI", label: "AI", href: "/pages/ai", icon: "sparkles" },
+  { slug: "websites", label: "Websites", href: "/pages/websites", icon: "database" },
   { slug: "files", label: "Files", href: "/pages/files", icon: "database" },
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
