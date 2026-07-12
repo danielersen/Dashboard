@@ -1,12 +1,21 @@
-import { megaRead, megaWrite } from "./mega.js";
+import { megaRead, megaWrite, megaDelete } from "./mega.js";
 
-const WEBSITES_FILE = "websites/websites.json";
+const WEBSITES_INDEX_FILE = "websites/index.json";
 
-async function readWebsites(env) {
+function websiteFilePath(websiteId) {
+  return `websites/${websiteId}.json`;
+}
+
+function websiteFilePathWithTimestamp(websiteId) {
+  const timestamp = Date.now();
+  return `websites/${websiteId}_${timestamp}.json`;
+}
+
+async function readIndex(env) {
   try {
-    const websites = await megaRead(env, WEBSITES_FILE);
-    if (Array.isArray(websites)) {
-      return websites;
+    const index = await megaRead(env, WEBSITES_INDEX_FILE);
+    if (Array.isArray(index)) {
+      return index;
     }
     return [];
   } catch (e) {
@@ -17,52 +26,127 @@ async function readWebsites(env) {
   }
 }
 
-async function writeWebsites(env, websites) {
-  return await megaWrite(env, WEBSITES_FILE, websites);
+async function writeIndex(env, index) {
+  return await megaWrite(env, WEBSITES_INDEX_FILE, index);
 }
 
-export async function addWebsite(env, name, url) {
+async function readWebsite(env, websiteId) {
+  try {
+    const website = await megaRead(env, websiteFilePath(websiteId));
+    return website;
+  } catch (e) {
+    if (e.message.includes("File not found") || e.message.includes("Folder not found")) {
+      return null;
+    }
+    throw e;
+  }
+}
+
+function nowTS() { return new Date().toISOString(); }
+
+export async function addWebsite(env, name, url, websiteId = null) {
   if (!name || !url) {
     throw new Error("Name and URL are required");
   }
 
-  const websites = await readWebsites(env);
+  let website;
   
-  // Check if website with same name already exists
-  const existingIndex = websites.findIndex(w => w.name === name);
-  if (existingIndex !== -1) {
-    // Update existing website
-    websites[existingIndex] = { name, url };
+  // Read existing website if websiteId is provided
+  if (websiteId) {
+    const existingWebsite = await readWebsite(env, websiteId);
+    if (existingWebsite) {
+      website = existingWebsite;
+    } else {
+      // Create new website if ID doesn't exist
+      website = {
+        id: websiteId,
+        createdAt: nowTS(),
+        updatedAt: nowTS(),
+        name: name,
+        url: url
+      };
+    }
   } else {
-    // Add new website
-    websites.push({ name, url });
+    // Create new website
+    website = {
+      id: String(Date.now()) + Math.random().toString(36).slice(2,8),
+      createdAt: nowTS(),
+      updatedAt: nowTS(),
+      name: name,
+      url: url
+    };
   }
 
-  await writeWebsites(env, websites);
-  return { success: true, websites };
+  // Update website data
+  website.name = name;
+  website.url = url;
+  website.updatedAt = nowTS();
+
+  // Save website to individual file
+  try {
+    await megaWrite(env, websiteFilePath(website.id), website);
+    
+    // Update index
+    const index = await readIndex(env);
+    const existingIndex = index.findIndex(w => w.id === website.id);
+    if (existingIndex >= 0) {
+      index[existingIndex] = {
+        id: website.id,
+        name: website.name,
+        url: website.url,
+        updatedAt: website.updatedAt,
+        createdAt: website.createdAt
+      };
+    } else {
+      index.push({
+        id: website.id,
+        name: website.name,
+        url: website.url,
+        createdAt: website.createdAt,
+        updatedAt: website.updatedAt
+      });
+    }
+    await writeIndex(env, index);
+  } catch (error) {
+    console.error("Failed to save website:", error);
+    throw error;
+  }
+
+  return { success: true, website };
 }
 
-export async function deleteWebsite(env, name) {
-  if (!name) {
-    throw new Error("Name is required");
+export async function deleteWebsite(env, websiteId) {
+  if (!websiteId) {
+    throw new Error("Website ID is required");
   }
 
-  const websites = await readWebsites(env);
-  const initialLength = websites.length;
-  
-  const filteredWebsites = websites.filter(w => w.name !== name);
-  
-  if (filteredWebsites.length === initialLength) {
-    throw new Error("Website not found");
+  try {
+    // Delete the website file
+    await megaDelete(env, websiteFilePath(websiteId));
+    
+    // Update index to remove the website
+    const index = await readIndex(env);
+    const updatedIndex = index.filter(w => w.id !== websiteId);
+    await writeIndex(env, updatedIndex);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete website:", error);
+    throw error;
   }
-
-  await writeWebsites(env, filteredWebsites);
-  return { success: true, websites: filteredWebsites };
 }
 
 export async function getWebsites(env) {
-  const websites = await readWebsites(env);
-  return { success: true, websites };
+  const index = await readIndex(env);
+  return { success: true, websites: index };
+}
+
+export async function getWebsite(env, websiteId) {
+  const website = await readWebsite(env, websiteId);
+  if (!website) {
+    throw new Error("Website not found");
+  }
+  return { success: true, website };
 }
 
 export async function WebsitesFunction(env, path, method, body) {
@@ -71,18 +155,22 @@ export async function WebsitesFunction(env, path, method, body) {
       if (path === "" || path === "/") {
         return await getWebsites(env);
       }
+      if (path.startsWith("get/")) {
+        const websiteId = path.slice("get/".length);
+        return await getWebsite(env, websiteId);
+      }
       throw new Error("Invalid GET path");
     
     case "POST":
       if (path === "add") {
-        return await addWebsite(env, body.name, body.url);
+        return await addWebsite(env, body.name, body.url, body.websiteId);
       }
       throw new Error("Invalid POST path");
     
     case "DELETE":
       if (path.startsWith("delete/")) {
-        const name = path.slice("delete/".length);
-        return await deleteWebsite(env, name);
+        const websiteId = path.slice("delete/".length);
+        return await deleteWebsite(env, websiteId);
       }
       throw new Error("Invalid DELETE path");
     
