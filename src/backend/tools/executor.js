@@ -14,37 +14,38 @@ export async function executeCode(env, language, code) {
   
   if (language === 'javascript') {
     try {
-      // Capture console.log output
-      let output = '';
-      const originalLog = console.log;
-      console.log = (...args) => {
-        output += args.map(arg => 
-          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-        ).join(' ') + '\n';
+      // Create a custom console to capture output
+      const logs = [];
+      const customConsole = {
+        log: (...args) => {
+          logs.push(args.map(arg => 
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+          ).join(' '));
+        },
+        error: (...args) => {
+          logs.push('ERROR: ' + args.map(arg => String(arg)).join(' '));
+        },
+        warn: (...args) => {
+          logs.push('WARN: ' + args.map(arg => String(arg)).join(' '));
+        }
       };
       
       try {
-        // Execute the code in a limited scope
-        const result = eval(code);
+        // Create a function with custom console in scope
+        const fn = new Function('console', code);
+        fn(customConsole);
         
-        // Restore console.log
-        console.log = originalLog;
-        
-        // Add result to output if not undefined
-        if (result !== undefined) {
-          output += String(result);
-        }
+        const output = logs.join('\n');
         
         return {
-          output: output.trim(),
+          output: output || 'Code executed successfully (no output)',
           error: ''
         };
       } catch (evalError) {
-        // Restore console.log
-        console.log = originalLog;
+        const output = logs.join('\n');
         
         return {
-          output: output.trim(),
+          output: output || '',
           error: evalError.message || evalError.toString()
         };
       }
