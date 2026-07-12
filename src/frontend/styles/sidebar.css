@@ -25,7 +25,7 @@
   border: 1px solid transparent;
   border-radius: 16px;
   background: transparent;
-  color: var(--text);
+  color: transparent;
   cursor: pointer;
   transition:
     color 180ms ease,
@@ -41,7 +41,8 @@
 .tools-nav svg {
   width: 24px;
   height: 24px;
-  fill: currentColor;
+  stroke: var(--accent);
+  fill: none;
 }
 
 /* Icon container */
@@ -60,7 +61,7 @@
 .ws-nav:hover,
 .websites-nav:hover,
 .tools-nav:hover {
-  color: var(--text);
+  color: var(--accent);
   background: transparent;
 }
 
@@ -78,7 +79,7 @@
 .ws-nav[data-active="true"],
 .websites-nav[data-active="true"],
 .tools-nav[data-active="true"] {
-  color: var(--text);
+  color: var(--accent);
   background: transparent;
   border-color: transparent;
 }
