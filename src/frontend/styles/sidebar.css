@@ -2,7 +2,8 @@
 
 /* Sidebar container */
 .ai-sidebar,
-.ws-sidebar {
+.ws-sidebar,
+.websites-sidebar {
   position: sticky;
   top: calc(var(--navbar-height) + 14px);
   display: flex;
@@ -13,7 +14,8 @@
 
 /* Navigation buttons */
 .ai-nav,
-.ws-nav {
+.ws-nav,
+.websites-nav {
   width: 56px;
   height: 56px;
   display: grid;
@@ -32,14 +34,16 @@
 
 /* SVG styling */
 .ai-nav svg,
-.ws-nav svg {
+.ws-nav svg,
+.websites-nav svg {
   width: 24px;
   height: 24px;
   fill: currentColor;
 }
 
 /* Icon container */
-.ai-icon {
+.ai-icon,
+.websites-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,21 +53,24 @@
 
 /* Hover state */
 .ai-nav:hover,
-.ws-nav:hover {
+.ws-nav:hover,
+.websites-nav:hover {
   color: var(--text);
   background: rgba(255, 255, 255, 0.06);
 }
 
 /* Active/pressed state */
 .ai-nav:active,
-.ws-nav:active {
+.ws-nav:active,
+.websites-nav:active {
   transform: translateY(1px);
 }
 
 /* Active/selected state */
 .ai-nav.active,
 .ai-nav[data-active="true"],
-.ws-nav[data-active="true"] {
+.ws-nav[data-active="true"],
+.websites-nav[data-active="true"] {
   color: #f4fbf8;
   background: var(--accent-soft);
   border-color: rgba(82, 214, 168, 0.28);
