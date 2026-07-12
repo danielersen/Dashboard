@@ -14,41 +14,33 @@ export async function executeCode(env, language, code) {
   
   if (language === 'javascript') {
     try {
-      // Create a custom console to capture output
-      const logs = [];
-      const customConsole = {
-        log: (...args) => {
-          logs.push(args.map(arg => 
-            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
-          ).join(' '));
-        },
-        error: (...args) => {
-          logs.push('ERROR: ' + args.map(arg => String(arg)).join(' '));
-        },
-        warn: (...args) => {
-          logs.push('WARN: ' + args.map(arg => String(arg)).join(' '));
-        }
-      };
+      // Simple approach: wrap code to capture console.log
+      const wrappedCode = `
+        (function() {
+          const output = [];
+          const originalConsole = {
+            log: (...args) => output.push(args.join(' ')),
+            error: (...args) => output.push('ERROR: ' + args.join(' ')),
+            warn: (...args) => output.push('WARN: ' + args.join(' '))
+          };
+          
+          const console = originalConsole;
+          
+          try {
+            ${code}
+            return output.join('\\n') || 'Code executed successfully (no output)';
+          } catch (e) {
+            return output.join('\\n') + '\\nERROR: ' + e.message;
+          }
+        })()
+      `;
       
-      try {
-        // Create a function with custom console in scope
-        const fn = new Function('console', code);
-        fn(customConsole);
-        
-        const output = logs.join('\n');
-        
-        return {
-          output: output || 'Code executed successfully (no output)',
-          error: ''
-        };
-      } catch (evalError) {
-        const output = logs.join('\n');
-        
-        return {
-          output: output || '',
-          error: evalError.message || evalError.toString()
-        };
-      }
+      const result = eval(wrappedCode);
+      
+      return {
+        output: String(result),
+        error: ''
+      };
     } catch (error) {
       console.error('JavaScript execution error:', error);
       return {
