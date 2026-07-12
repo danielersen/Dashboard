@@ -459,49 +459,6 @@ console.log("Hello, World!");
 for (let i = 0; i < 5; i++) {
     console.log(\`Number: \${i}\`);
 }`,
-  c: `// C example
-#include <stdio.h>
-
-int main() {
-    printf("Hello, World!\\n");
-    for (int i = 0; i < 5; i++) {
-        printf("Number: %d\\n", i);
-    }
-    return 0;
-}`,
-  cpp: `// C++ example
-#include <iostream>
-
-int main() {
-    std::cout << "Hello, World!" << std::endl;
-    for (int i = 0; i < 5; i++) {
-        std::cout << "Number: " << i << std::endl;
-    }
-    return 0;
-}`,
-  ruby: `# Ruby example
-puts "Hello, World!"
-(0..4).each do |i|
-  puts "Number: #{i}"
-end`,
-  go: `// Go example
-package main
-
-import "fmt"
-
-func main() {
-    fmt.Println("Hello, World!")
-    for i := 0; i < 5; i++ {
-        fmt.Printf("Number: %d\\n", i)
-    }
-}`,
-  rust: `// Rust example
-fn main() {
-    println!("Hello, World!");
-    for i in 0..5 {
-        println!("Number: {}", i);
-    }
-}`,
   bash: `#!/bin/bash
 # Bash example
 echo "Hello, World!"
