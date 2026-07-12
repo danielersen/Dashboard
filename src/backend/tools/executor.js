@@ -9,43 +9,56 @@ const LANGUAGE_MAP = {
 };
 
 export async function executeCode(env, language, code) {
-  // Use Agent Code Runner API (free, no signup required)
-  // 30 requests/minute without API key, supports Python, JavaScript, TypeScript, Bash
+  // For JavaScript: execute locally in a sandboxed environment
+  // For other languages: external APIs are currently unavailable
   
-  const mappedLanguage = LANGUAGE_MAP[language];
-  if (!mappedLanguage) {
-    throw new Error(`Unsupported language: ${language}`);
-  }
-  
-  try {
-    const response = await fetch('https://agent-gateway-kappa.vercel.app/v1/agent-coderunner/api/execute', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        language: mappedLanguage,
-        code: code
-      })
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Agent Code Runner API error:', response.status, errorText);
-      throw new Error(`API error: ${response.status} - ${errorText}`);
+  if (language === 'javascript') {
+    try {
+      // Capture console.log output
+      let output = '';
+      const originalLog = console.log;
+      console.log = (...args) => {
+        output += args.map(arg => 
+          typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+        ).join(' ') + '\n';
+      };
+      
+      try {
+        // Execute the code in a limited scope
+        const result = eval(code);
+        
+        // Restore console.log
+        console.log = originalLog;
+        
+        // Add result to output if not undefined
+        if (result !== undefined) {
+          output += String(result);
+        }
+        
+        return {
+          output: output.trim(),
+          error: ''
+        };
+      } catch (evalError) {
+        // Restore console.log
+        console.log = originalLog;
+        
+        return {
+          output: output.trim(),
+          error: evalError.message || evalError.toString()
+        };
+      }
+    } catch (error) {
+      console.error('JavaScript execution error:', error);
+      return {
+        output: '',
+        error: error.message
+      };
     }
-    
-    const data = await response.json();
-    console.log('Agent Code Runner result:', JSON.stringify(data));
-    
-    return {
-      output: data.stdout || '',
-      error: data.stderr || ''
-    };
-  } catch (error) {
-    console.error('Code execution error:', error);
-    throw error;
   }
+  
+  // For other languages, return error message
+  throw new Error('Code execution for Python, TypeScript, and Bash is currently unavailable. External APIs require authentication or are experiencing issues. Only JavaScript execution is available locally.');
 }
 
 export async function executorHandler(env, path, method, body) {

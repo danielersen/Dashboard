@@ -434,7 +434,7 @@ initConverter();
 
 // ===================== CODE EXECUTOR =====================
 
-let currentLanguage = 'python';
+let currentLanguage = 'javascript';
 
 const codeLangBtns = document.querySelectorAll('.code-lang-btn');
 const codeInput = document.getElementById('code-input');
@@ -445,26 +445,11 @@ const codeCopyOutput = document.getElementById('code-copy-output');
 
 // Set default code examples
 const codeExamples = {
-  python: `# Python example
-print("Hello, World!")
-for i in range(5):
-    print(f"Number: {i}")`,
   javascript: `// JavaScript example
 console.log("Hello, World!");
 for (let i = 0; i < 5; i++) {
     console.log(\`Number: \${i}\`);
-}`,
-  typescript: `// TypeScript example
-console.log("Hello, World!");
-for (let i = 0; i < 5; i++) {
-    console.log(\`Number: \${i}\`);
-}`,
-  bash: `#!/bin/bash
-# Bash example
-echo "Hello, World!"
-for i in {0..4}; do
-    echo "Number: $i"
-done`
+}`
 };
 
 // Initialize code executor
