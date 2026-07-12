@@ -1,5 +1,7 @@
 // ===================== WEBSITES PAGE JAVASCRIPT =====================
 
+import { ensureSessionToken } from "/lib/auth.js";
+
 let websites = [];
 let editingWebsite = null;
 let deletingWebsite = null;
@@ -7,7 +9,7 @@ let deletingWebsite = null;
 // ===================== API FUNCTIONS =====================
 
 async function getAuthToken() {
-  const token = localStorage.getItem('sessionToken');
+  const token = await ensureSessionToken();
   if (!token) {
     throw new Error('No authentication token found');
   }
