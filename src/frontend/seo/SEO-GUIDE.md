@@ -1,85 +1,72 @@
-# Guide SEO - Daniel Ersen Dashboard
+# SEO Guide - Daniel Ersen Dashboard
 
-## Structure des fichiers SEO
+## SEO Files Structure
 
-### Fichiers à la racine de `/frontend/` (à servir)
-- `sitemap.xml` - Sitemap optimisé avec les URLs propres
-- `robots.txt` - Directives pour les robots d'indexation
+### Files at `/frontend/` root (to be served)
+- `sitemap.xml` - Optimized sitemap with clean URLs
+- `robots.txt` - Directives for indexing robots
 
-### Fichiers dans le dossier `/frontend/seo/` (configuration et templates)
-- `manifest.json` - Manifest Web App pour PWA
-- `browserconfig.xml` - Configuration pour Microsoft Edge/IE
-- `seo-config.json` - Configuration centralisée SEO
-- `seo-head-template.html` - Template HTML avec tous les meta tags SEO
-- `SEO-GUIDE.md` - Ce guide
+### Files in `/frontend/seo/` folder (configuration and templates)
+- `manifest.json` - Web App Manifest for PWA
+- `browserconfig.xml` - Configuration for Microsoft Edge/IE
+- `seo-config.json` - Centralized SEO configuration
+- `seo-head-template.html` - HTML template with all SEO meta tags
+- `SEO-GUIDE.md` - This guide
 
-## Icônes et Favicons à générer
+## Icons and Assets
 
-Vous devez créer les fichiers d'icônes suivants dans `/assets/logo/` ou `/public/` :
+The project already uses the following logos in `/assets/logo/`:
+- `square.png` - Square logo (512x512) - Used for favicon, PWA, and icons
+- `main.png` - Rectangular logo - Used for Open Graph and social sharing
 
-```
-favicon-16x16.png (16x16)
-favicon-32x32.png (32x32)
-apple-touch-icon.png (180x180)
-icon-70.png (70x70)
-icon-150.png (150x150)
-icon-192.png (192x192)
-icon-310.png (310x310)
-icon-512.png (512x512)
-safari-pinned-tab.svg (SVG)
-og-image.png (1200x630 pour partage social)
-```
-
-### Génération d'icônes
-Utilisez un outil comme [favicon.io](https://favicon.io/) ou [RealFaviconGenerator](https://realfavicongenerator.net/) pour générer tous les formats à partir d'une image source.
+These logos are already referenced in the SEO configuration files.
 
 ## Google Search Console
 
-### Propriété à ajouter
-1. Ajoutez `https://dashboard.danielersen.fr.eu.org/` comme propriété
-2. Vérifiez la propriété (via DNS ou fichier HTML)
+### Property to add
+1. Add `https://dashboard.danielersen.fr.eu.org/` as a property
+2. Verify the property (via DNS or HTML file)
 
-### Sitemap à soumettre
+### Sitemap to submit
 ```
 https://dashboard.danielersen.fr.eu.org/sitemap.xml
 ```
 
-### Code de vérification
-Ajoutez le code de verification Google dans `seo-config.json` :
+### Verification code
+Add the Google verification code in `seo-config.json`:
 ```json
 "verification": {
-  "google": "votre-code-google-here",
-  "bing": "votre-code-bing-here"
+  "google": "your-google-code-here",
+  "bing": "your-bing-code-here"
 }
 ```
 
-## Intégration dans les pages
+## Integration in pages
 
-Ajoutez les meta tags SEO dans le `<head>` de chaque page en vous basant sur `seo/seo-head-template.html`.
+Add SEO meta tags in the `<head>` of each page based on `seo/seo-head-template.html`.
 
-## Références dans le code
+## Code references
 
-Dans vos fichiers HTML, référez les fichiers comme suit :
-- Sitemap : `/sitemap.xml`
-- Robots : `/robots.txt`
-- Manifest : `/seo/manifest.json`
-- BrowserConfig : `/seo/browserconfig.xml`
+In your HTML files, reference the files as follows:
+- Sitemap: `/sitemap.xml`
+- Robots: `/robots.txt`
+- Manifest: `/seo/manifest.json`
+- BrowserConfig: `/seo/browserconfig.xml`
 
-## Structure d'URLs recommandée
+## Recommended URL structure
 
-- Accueil : `https://dashboard.danielersen.fr.eu.org/`
-- Workspace : `https://dashboard.danielersen.fr.eu.org/workspace`
-- AI : `https://dashboard.danielersen.fr.eu.org/ai`
-- Files : `https://dashboard.danielersen.fr.eu.org/files`
-- Tools : `https://dashboard.danielersen.fr.eu.org/tools`
-- Settings : `https://dashboard.danielersen.fr.eu.org/settings`
+- Home: `https://dashboard.danielersen.fr.eu.org/`
+- Workspace: `https://dashboard.danielersen.fr.eu.org/workspace`
+- AI: `https://dashboard.danielersen.fr.eu.org/ai`
+- Files: `https://dashboard.danielersen.fr.eu.org/files`
+- Tools: `https://dashboard.danielersen.fr.eu.org/tools`
+- Settings: `https://dashboard.danielersen.fr.eu.org/settings`
 
-## Points à vérifier
+## Checklist
 
-- [ ] Déployer les fichiers sitemap.xml et robots.txt
-- [ ] Générer et ajouter les icônes/favicons
-- [ ] Intégrer les meta tags dans toutes les pages
-- [ ] Soumettre le sitemap dans Google Search Console
-- [ ] Vérifier la propriété dans Search Console
-- [ ] Tester les meta tags avec [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
-- [ ] Tester avec [Twitter Card Validator](https://cards-dev.twitter.com/validator)
+- [ ] Deploy sitemap.xml and robots.txt files
+- [ ] Integrate meta tags in all pages (based on seo-head-template.html)
+- [ ] Submit sitemap in Google Search Console
+- [ ] Verify property in Search Console
+- [ ] Test meta tags with [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
+- [ ] Test with [Twitter Card Validator](https://cards-dev.twitter.com/validator)
