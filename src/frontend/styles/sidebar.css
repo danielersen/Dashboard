@@ -75,3 +75,31 @@
   background: var(--accent-soft);
   border-color: rgba(82, 214, 168, 0.28);
 }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 768px) {
+  /* Sidebar container - horizontal layout */
+  .ai-sidebar,
+  .ws-sidebar,
+  .websites-sidebar {
+    position: sticky;
+    top: calc(var(--navbar-height) + 8px);
+    z-index: 5;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(10, 18, 17, 0.42);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+
+  /* Navigation buttons - smaller size */
+  .ai-nav,
+  .ws-nav,
+  .websites-nav {
+    width: 52px;
+    height: 48px;
+  }
+}
