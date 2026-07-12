@@ -758,8 +758,8 @@ async function showLimits() {
 /* ===================== INITIALIZATION ===================== */
 async function init() {
   await loadModels();
-  setupPromptBar();
   setupSidebarButtons();
+  setupPromptBar();
   setupNavbarRefreshListener();
 
   // Automatically start new conversation when page opens

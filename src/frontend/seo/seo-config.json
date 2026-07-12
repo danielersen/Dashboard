@@ -1,0 +1,24 @@
+{
+  "site": {
+    "name": "Daniel Arsen Dashboard",
+    "url": "https://dashboard.danielersen.fr.eu.org",
+    "description": "Dashboard personnel de Daniel Arsen - Espace de travail intégré avec outils IA et gestion de projets",
+    "keywords": ["dashboard", "Daniel Arsen", "espace de travail", "IA", "productivité", "outils"],
+    "author": "Daniel Arsen",
+    "locale": "fr_FR"
+  },
+  "social": {
+    "twitter": {
+      "card": "summary_large_image",
+      "site": "@danielarsen"
+    },
+    "og": {
+      "type": "website",
+      "image": "https://dashboard.danielersen.fr.eu.org/og-image.png"
+    }
+  },
+  "verification": {
+    "google": "",
+    "bing": ""
+  }
+}
