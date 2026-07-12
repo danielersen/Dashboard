@@ -4,7 +4,7 @@ const NAV_ITEMS = [
   { slug: "home", label: "Home", href: "/pages/home", icon: "home" },
   { slug: "workspace", label: "Workspace", href: "/pages/workspace", icon: "grid" },
   { slug: "AI", label: "AI", href: "/pages/ai", icon: "sparkles" },
-  { slug: "websites", label: "Websites", href: "/pages/websites", icon: "database" },
+  { slug: "websites", label: "Websites", href: "/pages/websites", icon: "web" },
   { slug: "files", label: "Files", href: "/pages/files", icon: "database" },
   { slug: "tools", label: "Tools", href: "/pages/tools", icon: "wrench" },
 ];
@@ -13,6 +13,7 @@ const ICONS = {
   home: '/assets/icons/home.svg',
   grid: '/assets/icons/grid.svg',
   sparkles: '/assets/icons/sparkles.svg',
+  web: '/assets/icons/web.svg',
   database: '/assets/icons/database.svg',
   wrench: '/assets/icons/wrench.svg',
   settings: '/assets/icons/settings.svg',
