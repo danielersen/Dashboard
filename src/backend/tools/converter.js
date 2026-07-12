@@ -126,8 +126,11 @@ export async function convertUnits(env, type, value, from, to) {
   const fromFactor = factors[from];
   const toFactor = factors[to];
   
+  console.log(`Converting ${value} ${from} to ${to}`);
+  console.log(`fromFactor: ${fromFactor}, toFactor: ${toFactor}`);
+  
   if (fromFactor === undefined || toFactor === undefined) {
-    throw new Error(`Unsupported unit for type ${type}`);
+    throw new Error(`Unsupported unit for type ${type}. From: ${from}, To: ${to}`);
   }
   
   // Convert from unit to base unit, then to target unit
@@ -135,6 +138,8 @@ export async function convertUnits(env, type, value, from, to) {
   // So to convert: value * fromFactor = base value, then base value / toFactor = target value
   const baseValue = value * fromFactor;
   const result = baseValue / toFactor;
+  
+  console.log(`baseValue: ${baseValue}, result: ${result}`);
   
   // Round to appropriate precision
   return roundToPrecision(result, 10);

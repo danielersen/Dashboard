@@ -236,6 +236,9 @@ class ScientificCalculator {
         .replace(/×/g, '*')
         .replace(/÷/g, '/')
         .replace(/−/g, '-')
+        // Add implicit multiplication for number followed by π or e
+        .replace(/(\d)(π)/g, '$1*Math.PI')
+        .replace(/(\d)(e(?![x^]))/g, '$1*Math.E')
         .replace(/π/g, 'Math.PI')
         .replace(/e(?![x^])/g, 'Math.E')
         .replace(/sin⁻¹\(/g, 'Math.asin(')
@@ -378,6 +381,8 @@ async function handleConversion() {
   const fromUnit = converterFromSelect.value;
   const toUnit = converterToSelect.value;
   
+  console.log(`Converting: ${value} from ${fromUnit} to ${toUnit}`);
+  
   if (isNaN(value)) {
     converterToInput.value = '';
     converterResultDisplay.textContent = '';
@@ -398,10 +403,13 @@ async function handleConversion() {
     
     if (response.ok) {
       const data = await response.json();
+      console.log('Conversion result:', data);
       converterToInput.value = data.result;
       converterResultDisplay.textContent = `${value} ${fromUnit} = ${data.result} ${toUnit}`;
     } else {
-      converterResultDisplay.textContent = 'Conversion failed';
+      const errorData = await response.json();
+      console.error('Conversion failed:', errorData);
+      converterResultDisplay.textContent = errorData.error || 'Conversion failed';
     }
   } catch (error) {
     console.error('Conversion error:', error);

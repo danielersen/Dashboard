@@ -25,16 +25,23 @@ export async function executeCode(env, language, code) {
       },
       body: JSON.stringify({
         language: mappedLanguage,
-        source: code,
-        args: []
+        version: '*',
+        files: [
+          {
+            content: code
+          }
+        ]
       })
     });
     
     if (!response.ok) {
-      throw new Error('Failed to execute code');
+      const errorText = await response.text();
+      console.error('Piston API error:', response.status, errorText);
+      throw new Error(`API error: ${response.status} - ${errorText}`);
     }
     
     const data = await response.json();
+    console.log('Piston API response:', JSON.stringify(data));
     
     if (data.message) {
       throw new Error(data.message);
@@ -42,7 +49,7 @@ export async function executeCode(env, language, code) {
     
     return {
       output: data.run?.output || '',
-      error: data.run?.stderr || data.compile?.stderr || ''
+      error: data.run?.stderr || data.compile?.stderr || data.message || ''
     };
   } catch (error) {
     console.error('Code execution error:', error);
