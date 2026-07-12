@@ -1,4 +1,4 @@
-# Guide SEO - Daniel Arsen Dashboard
+# Guide SEO - Daniel Ersen Dashboard
 
 ## Structure des fichiers SEO
 
