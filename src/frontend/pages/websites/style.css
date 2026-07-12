@@ -415,12 +415,6 @@ a {
     padding: 16px 0 32px;
   }
 
-  .websites-sidebar {
-    position: static;
-    flex-direction: row;
-    justify-content: flex-start;
-  }
-
   .websites-grid {
     grid-template-columns: 1fr;
   }

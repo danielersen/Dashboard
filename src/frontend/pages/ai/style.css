@@ -417,13 +417,6 @@ a {
     padding: 16px 0;
   }
   
-  .ai-sidebar {
-    position: static;
-    flex-direction: row;
-    justify-content: center;
-    gap: 8px;
-  }
-  
   .ai-selector-bar {
     margin: 16px;
     padding: 16px;

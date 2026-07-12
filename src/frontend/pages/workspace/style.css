@@ -1013,25 +1013,6 @@ a {
     gap: 14px;
   }
 
-  .ws-sidebar {
-    position: sticky;
-    top: calc(var(--navbar-height) + 8px);
-    z-index: 5;
-    flex-direction: row;
-    justify-content: space-around;
-    padding: 6px;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    background: rgba(10, 18, 17, 0.42);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-  }
-
-  .ws-nav {
-    width: 52px;
-    height: 48px;
-  }
-
   .hw-item {
     grid-template-columns: 1fr;
   }
