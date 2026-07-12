@@ -61,53 +61,7 @@ a {
   align-items: start;
 }
 
-/* ===================== SIDEBAR ===================== */
-.ws-sidebar {
-  position: sticky;
-  top: calc(var(--navbar-height) + 14px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 4px;
-}
 
-.ws-nav {
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 16px;
-  background: transparent;
-  color: rgba(243, 251, 247, 0.55);
-  cursor: pointer;
-  transition:
-    color 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease;
-}
-
-.ws-nav svg {
-  width: 24px;
-  height: 24px;
-  fill: currentColor;
-}
-
-.ws-nav:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.ws-nav:active {
-  transform: translateY(1px);
-}
-
-.ws-nav[data-active="true"] {
-  color: #f4fbf8;
-  background: var(--accent-soft);
-  border-color: rgba(82, 214, 168, 0.28);
-}
 
 /* ===================== MAIN ===================== */
 .ws-main {
