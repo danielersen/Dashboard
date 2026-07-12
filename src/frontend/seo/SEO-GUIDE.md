@@ -58,6 +58,7 @@ In your HTML files, reference the files as follows:
 - Home: `https://dashboard.danielersen.fr.eu.org/`
 - Workspace: `https://dashboard.danielersen.fr.eu.org/workspace`
 - AI: `https://dashboard.danielersen.fr.eu.org/ai`
+- Websites: `https://dashboard.danielersen.fr.eu.org/websites`
 - Files: `https://dashboard.danielersen.fr.eu.org/files`
 - Tools: `https://dashboard.danielersen.fr.eu.org/tools`
 - Settings: `https://dashboard.danielersen.fr.eu.org/settings`

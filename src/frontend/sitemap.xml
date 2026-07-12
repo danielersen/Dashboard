@@ -19,9 +19,9 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://dashboard.danielersen.fr.eu.org/auth</loc>
+    <loc>https://dashboard.danielersen.fr.eu.org/websites</loc>
     <lastmod>2026-07-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>
 </urlset>

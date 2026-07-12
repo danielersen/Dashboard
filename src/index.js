@@ -7,6 +7,7 @@ import { AIfunction } from "./backend/ai/index.js";
 import { Cache } from "./backend/cache/index.js";
 import { Auth, verifySessionToken } from "./backend/auth/index.js";
 import { Pomodoro } from "./backend/database/pomodoro.js";
+import { WebsitesFunction } from "./backend/database/websites.js";
  
 import { sendMail } from "./backend/notifications/mail.js";
 
@@ -121,6 +122,8 @@ export default {
           resp = await AIfunction(env, url.pathname.slice("/api/ai/".length), method, headers, body);
         } else if (url.pathname.startsWith("/api/pomodoro/")) {
           resp = await Pomodoro(env, url.pathname.slice("/api/pomodoro/".length), method, body);
+        } else if (url.pathname.startsWith("/api/websites/")) {
+          resp = await WebsitesFunction(env, url.pathname.slice("/api/websites/".length), method, body);
         };
         // Return response
         return new Response(JSON.stringify({

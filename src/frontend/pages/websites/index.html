@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en" data-auth-pending>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#08100f">
+    <title>Websites - Daniel Ersen Dashboard</title>
+    <meta name="description" content="Manage your favorite websites - Quick access to your most visited sites with custom organization.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://dashboard.danielersen.fr.eu.org/websites">
+    <link rel="icon" href="/assets/logo/square.png">
+    <link rel="manifest" href="/seo/manifest.json">
+    <meta name="msapplication-config" content="/seo/browserconfig.xml">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dashboard.danielersen.fr.eu.org/websites">
+    <meta property="og:title" content="Websites - Daniel Ersen Dashboard">
+    <meta property="og:description" content="Manage your favorite websites - Quick access to your most visited sites with custom organization.">
+    <meta property="og:image" content="https://dashboard.danielersen.fr.eu.org/assets/logo/main.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://dashboard.danielersen.fr.eu.org/websites">
+    <meta property="twitter:title" content="Websites - Daniel Ersen Dashboard">
+    <meta property="twitter:description" content="Manage your favorite websites - Quick access to your most visited sites with custom organization.">
+    <meta property="twitter:image" content="https://dashboard.danielersen.fr.eu.org/assets/logo/main.png">
+    
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "Websites",
+      "url": "https://dashboard.danielersen.fr.eu.org/websites",
+      "description": "Manage your favorite websites - Quick access to your most visited sites with custom organization.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "Daniel Ersen Dashboard",
+        "url": "https://dashboard.danielersen.fr.eu.org/"
+      },
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://dashboard.danielersen.fr.eu.org/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Websites",
+            "item": "https://dashboard.danielersen.fr.eu.org/websites"
+          }
+        ]
+      }
+    }
+    </script>
+    
+    <style>html[data-auth-pending] body { visibility: hidden; }</style>
+    <script type="module">
+      import { guardPage } from "/lib/auth.js";
+      guardPage().then((ok) => {
+        if (ok) document.documentElement.removeAttribute("data-auth-pending");
+      });
+    </script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/block.css">
+    <link rel="stylesheet" href="/pages/websites/style.css">
+    <script type="module" src="/components/navbar/navbar.js"></script>
+    <script type="module" src="/pages/websites/icons.js"></script>
+    <script type="module" src="/pages/websites/script.js"></script>
+  </head>
+  <body>
+    <site-navbar current="Websites"></site-navbar>
+
+    <div class="websites-shell">
+      <aside class="websites-sidebar" aria-label="Websites actions">
+        <button class="websites-nav" type="button" id="add-website-btn" aria-label="Add website">
+          <span class="websites-icon" data-icon="/assets/icons/plus.svg"></span>
+        </button>
+      </aside>
+
+      <main class="websites-main">
+        <div class="websites-header">
+          <h1 class="websites-title">My Websites</h1>
+        </div>
+        
+        <div class="websites-grid" id="websites-grid">
+          <!-- Website blocks will be populated by JS -->
+        </div>
+      </main>
+    </div>
+
+    <!-- Add/Edit Website Modal -->
+    <div class="modal" id="website-modal" aria-hidden="true">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h2 class="modal-title" id="modal-title">Add Website</h2>
+        <form id="website-form">
+          <div class="form-group">
+            <label for="website-name">Name</label>
+            <input type="text" id="website-name" name="name" required placeholder="Website name">
+          </div>
+          <div class="form-group">
+            <label for="website-url">URL</label>
+            <input type="url" id="website-url" name="url" required placeholder="https://example.com">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="delete-modal" aria-hidden="true">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h2 class="modal-title">Delete Website</h2>
+        <p class="modal-message">Are you sure you want to delete this website?</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="cancel-delete-btn">No</button>
+          <button type="button" class="btn-danger" id="confirm-delete-btn">Yes</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
