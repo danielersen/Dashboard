@@ -313,6 +313,11 @@ document.getElementById('cancel-delete-btn').addEventListener('click', closeDele
 document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
   console.log('Delete button clicked, deletingWebsite:', deletingWebsite);
   if (deletingWebsite) {
+    const btn = document.getElementById('confirm-delete-btn');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor = 'not-allowed';
+    
     try {
       console.log('Deleting website with name:', deletingWebsite.name);
       await deleteWebsite(deletingWebsite.name);
@@ -323,6 +328,10 @@ document.getElementById('confirm-delete-btn').addEventListener('click', async ()
     } catch (error) {
       console.error('Error deleting website:', error);
       alert(`Failed to delete website: ${error.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
     }
   } else {
     console.error('No deletingWebsite set');
@@ -341,6 +350,11 @@ websiteForm.addEventListener('submit', async (e) => {
     alert('Please fill in all fields');
     return;
   }
+
+  const submitBtn = websiteForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.5';
+  submitBtn.style.cursor = 'not-allowed';
 
   try {
     if (editingWebsite) {
@@ -362,6 +376,10 @@ websiteForm.addEventListener('submit', async (e) => {
   } catch (error) {
     console.error('Error saving website:', error);
     alert(`Failed to save website: ${error.message}`);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
   }
 });
 
