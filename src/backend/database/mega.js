@@ -4,7 +4,7 @@ import { Storage } from "megajs";
 const connectionCache = new Map();
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 heures pour éviter les blocages MEGA (credential stuffing)
 const MAX_CACHE_SIZE = 1; // Maximum 1 connexion simultanée
-const MIN_OPERATION_DELAY = 1000; // Délai minimum entre opérations (ms)
+const MIN_OPERATION_DELAY = 2000; // Délai minimum entre opérations (ms) - augmenté pour éviter le throttling MEGA
 let lastOperationTime = 0; // Timestamp de la dernière opération
 
 // Liste de user agents de navigateurs réels pour éviter la détection
@@ -355,6 +355,7 @@ export async function megaWrite(env, path, body, storage = null) {
 
     const uploadPromise = new Promise((resolve, reject) => {
       // Optimisations d'upload pour éviter les blocages
+      // Utiliser le système de retry intégré de megajs
       folder.upload({ 
         name: fileName, 
         size: content.length,
@@ -362,13 +363,26 @@ export async function megaWrite(env, path, body, storage = null) {
         initialChunkSize: 65536, // 64KB pour réduire le nombre de requêtes
         chunkSizeIncrement: 65536, // 64KB incréments
         maxChunkSize: 524288, // 512KB max
+        // Utiliser le système de retry intégré de megajs avec backoff exponentiel
+        handleRetries: (tries, error, cb) => {
+          console.log(`MEGA upload retry ${tries}/8, error:`, error.message);
+          if (tries > 8) {
+            // Abandonner après 8 tentatives
+            cb(error);
+          } else {
+            // Attendre avec backoff exponentiel
+            const delay = 1000 * Math.pow(2, tries);
+            console.log(`Retrying upload in ${delay}ms...`);
+            setTimeout(cb, delay);
+          }
+        }
       }, content, (err, file) => {
         if (err) reject(err);
         else resolve(file);
       });
     });
 
-    const file = await withTimeout(uploadPromise, 10000, `Mega upload timed out for ${fullPath}`);
+    const file = await withTimeout(uploadPromise, 60000, `Mega upload timed out for ${fullPath}`);
     console.log(`Successfully uploaded file: ${file.name}`);
     return {
       name: file.name,
