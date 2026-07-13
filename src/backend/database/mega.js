@@ -56,12 +56,12 @@ function withTimeout(promise, ms, message) {
 }
 
 // Exponential backoff pour éviter les blocages
-async function retryOperation(operation, attempts = 3, baseTimeoutMs = 5000, baseDelayMs = 100) {
+async function retryOperation(operation, attempts = 5, baseTimeoutMs = 120000, baseDelayMs = 2000) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const timeoutMs = baseTimeoutMs; // Timeout fixe pour éviter les dépassements
+      const timeoutMs = baseTimeoutMs; // Timeout très long pour les gros fichiers
       return await withTimeout(operation(), timeoutMs, `Mega operation timed out after ${timeoutMs}ms`);
     } catch (error) {
       lastError = error;
