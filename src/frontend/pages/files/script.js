@@ -8,9 +8,76 @@ let folders = [];
 let deletingItem = null;
 let selectedFile = null;
 
+// Cache configuration
+const CACHE_PREFIX = 'files_cache_';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// ===================== CACHE FUNCTIONS =====================
+
+function getCacheKey(path) {
+  return `${CACHE_PREFIX}${path}`;
+}
+
+function getCachedData(path) {
+  try {
+    const key = getCacheKey(path);
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+    
+    const data = JSON.parse(cached);
+    const now = Date.now();
+    
+    // Check if cache is still valid
+    if (now - data.timestamp > CACHE_DURATION) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    
+    return data.content;
+  } catch (error) {
+    console.error('Error reading cache:', error);
+    return null;
+  }
+}
+
+function setCachedData(path, data) {
+  try {
+    const key = getCacheKey(path);
+    const cacheData = {
+      content: data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(key, JSON.stringify(cacheData));
+  } catch (error) {
+    console.error('Error writing cache:', error);
+  }
+}
+
+function clearCache() {
+  try {
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith(CACHE_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    });
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+  }
+}
+
 // ===================== API FUNCTIONS =====================
 
-async function fetchFiles(path = "") {
+async function fetchFiles(path = "", useCache = true) {
+  // Try to get cached data first
+  if (useCache) {
+    const cached = getCachedData(path);
+    if (cached) {
+      console.log(`Using cached data for path: ${path || 'root'}`);
+      return cached;
+    }
+  }
+
   try {
     const encodedPath = encodeURIComponent(path);
     const response = await authedFetch(`/api/files/list/${encodedPath}`, {
@@ -23,7 +90,12 @@ async function fetchFiles(path = "") {
     }
 
     const data = await response.json();
-    return data.resp || { files: [], folders: [], path };
+    const result = data.resp || { files: [], folders: [], path };
+    
+    // Cache the result
+    setCachedData(path, result);
+    
+    return result;
   } catch (error) {
     console.error('Error fetching files:', error);
     throw error;
@@ -336,12 +408,32 @@ async function navigateTo(path) {
   currentPath = path;
   selectedFile = null;
   updateUploadButton();
+  
   try {
-    const data = await fetchFiles(currentPath);
+    // First, try to show cached data immediately for instant display
+    const cached = getCachedData(path);
+    if (cached) {
+      console.log(`Showing cached data for path: ${path || 'root'}`);
+      folders = cached.folders || [];
+      files = cached.files || [];
+      renderBreadcrumb();
+      renderFiles();
+    }
+    
+    // Then fetch fresh data in background
+    const data = await fetchFiles(path, false); // Don't use cache for fresh fetch
     folders = data.folders || [];
     files = data.files || [];
+    
+    // Update display with fresh data
     renderBreadcrumb();
     renderFiles();
+    
+    // Invalidate cache for this path since we just refreshed
+    const cacheKey = getCacheKey(path);
+    localStorage.removeItem(cacheKey);
+    setCachedData(path, data);
+    
   } catch (error) {
     console.error('Error navigating to path:', error);
     alert(`Failed to load folder: ${error.message}`);
@@ -349,6 +441,16 @@ async function navigateTo(path) {
 }
 
 function selectFile(file, block) {
+  // Toggle selection if clicking on the same file
+  if (selectedFile && selectedFile.path === file.path) {
+    // Deselect
+    selectedFile = null;
+    block.classList.remove('selected');
+    block.style.borderColor = '';
+    updateUploadButton();
+    return;
+  }
+
   // Remove previous selection
   document.querySelectorAll('.file-block.selected').forEach(b => {
     b.classList.remove('selected');
@@ -620,7 +722,26 @@ document.addEventListener('keydown', (e) => {
 
 async function init() {
   try {
-    await navigateTo("");
+    // Load root directory with cache
+    const data = await fetchFiles("", true);
+    folders = data.folders || [];
+    files = data.files || [];
+    renderBreadcrumb();
+    renderFiles();
+    
+    // Preload all folders in parallel for faster navigation
+    if (folders.length > 0) {
+      console.log(`Preloading ${folders.length} folders in parallel...`);
+      const preloadPromises = folders.map(folder => 
+        fetchFiles(folder.path, true).catch(error => {
+          console.error(`Failed to preload folder ${folder.path}:`, error);
+          return null;
+        })
+      );
+      
+      await Promise.all(preloadPromises);
+      console.log('Folder preloading complete');
+    }
   } catch (error) {
     console.error('Error initializing files page:', error);
     const filesList = document.getElementById('files-list');
