@@ -87,7 +87,14 @@ async function writeFile(env, relativePath, content) {
     await getOrCreateFolder(storage, folderPath);
   }
 
-  await megaWrite(env, fullPath, content, storage);
+  // Decode base64 content if it's a data URL
+  let actualContent = content;
+  if (typeof content === 'string' && content.startsWith('data:')) {
+    const base64Data = content.split(',')[1];
+    actualContent = Buffer.from(base64Data, 'base64').toString('utf8');
+  }
+
+  await megaWrite(env, fullPath, actualContent, storage);
   return { success: true };
 }
 
