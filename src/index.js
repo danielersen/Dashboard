@@ -8,6 +8,7 @@ import { Cache } from "./backend/cache/index.js";
 import { Auth, verifySessionToken } from "./backend/auth/index.js";
 import { Pomodoro } from "./backend/database/pomodoro.js";
 import { WebsitesFunction } from "./backend/database/websites.js";
+import { FilesFunction } from "./backend/database/files_management.js";
 import { ToolsFunction } from "./backend/tools/index.js";
  
 import { sendMail } from "./backend/notifications/mail.js";
@@ -135,6 +136,8 @@ export default {
           resp = await WebsitesFunction(env, url.pathname.slice("/api/websites/".length), method, body);
         } else if (url.pathname.startsWith("/api/tools/")) {
           resp = await ToolsFunction(env, url.pathname.slice("/api/tools/".length), method, body);
+        } else if (url.pathname.startsWith("/api/files/")) {
+          resp = await FilesFunction(env, url.pathname.slice("/api/files/".length), method, body);
         };
         // Return response
         return new Response(JSON.stringify({
