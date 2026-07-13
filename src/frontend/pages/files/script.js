@@ -459,35 +459,6 @@ uploadForm.addEventListener('submit', async (e) => {
   }
 });
 
-folderForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const name = folderNameInput.value.trim();
-  if (!name) {
-    alert('Please enter a folder name');
-    return;
-  }
-
-  const submitBtn = folderForm.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.style.opacity = '0.5';
-  submitBtn.style.cursor = 'not-allowed';
-
-  try {
-    const relativePath = currentPath ? `${currentPath}/${name}` : name;
-    await createFolder(relativePath);
-    await navigateTo(currentPath);
-    closeFolderModal();
-  } catch (error) {
-    console.error('Error creating folder:', error);
-    alert(`Failed to create folder: ${error.message}`);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.style.opacity = '1';
-    submitBtn.style.cursor = 'pointer';
-  }
-});
-
 // Close modals on backdrop click
 uploadModal.querySelector('.modal-backdrop').addEventListener('click', closeUploadModal);
 deleteModal.querySelector('.modal-backdrop').addEventListener('click', closeDeleteModal);
