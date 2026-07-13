@@ -230,6 +230,7 @@ class ScientificCalculator {
   }
 
   calculate() {
+    const originalExpression = this.expression;
     try {
       // Convert display format to JS eval format
       let evalExpression = this.expression
@@ -252,7 +253,9 @@ class ScientificCalculator {
         .replace(/√\(/g, 'Math.sqrt(')
         .replace(/∛\(/g, 'Math.cbrt(')
         .replace(/10\^/g, 'Math.pow(10,')
-        .replace(/e\^/g, 'Math.exp(');
+        .replace(/e\^/g, 'Math.exp(')
+        // Replace ^ with ** for power operator
+        .replace(/\^/g, '**');
 
       // Close any open parentheses
       const openParens = (evalExpression.match(/\(/g) || []).length;
@@ -271,6 +274,11 @@ class ScientificCalculator {
         this.result = Math.round(result * 1000000000) / 1000000000;
         this.expression = this.result.toString();
         this.cursorPos = this.expression.length;
+        
+        // Add to history if calculation was successful
+        if (originalExpression && this.result !== 'Error') {
+          addCalculationToHistory(originalExpression, this.result);
+        }
       }
     } catch (e) {
       this.result = 'Error';
@@ -283,10 +291,17 @@ class ScientificCalculator {
     const beforeCursor = this.expression.slice(0, this.cursorPos);
     const afterCursor = this.expression.slice(this.cursorPos);
     
+    // Format power expressions with superscript
+    const formatExpression = (expr) => {
+      // Replace ^ with superscript formatting for the following characters
+      // This is a simple implementation - for complex expressions, more sophisticated parsing would be needed
+      return expr.replace(/\^([^\^]+)/g, '<sup>$1</sup>');
+    };
+    
     this.displayExpression.innerHTML = `
-      <span>${beforeCursor}</span>
+      <span>${formatExpression(beforeCursor)}</span>
       <span class="cursor">|</span>
-      <span>${afterCursor}</span>
+      <span>${formatExpression(afterCursor)}</span>
     `;
     
     this.displayResult.textContent = this.result;
@@ -295,6 +310,89 @@ class ScientificCalculator {
 
 // Initialize calculator
 const calculator = new ScientificCalculator();
+
+// ===================== CALCULATOR HISTORY =====================
+
+const calculatorHistoryContainer = document.getElementById('calculator-history');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+async function loadCalculatorHistory() {
+  try {
+    const response = await authedFetch('/api/tools/calcul-history', {
+      method: 'GET'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      renderCalculatorHistory(data.history || []);
+    }
+  } catch (error) {
+    console.error('Error loading calculator history:', error);
+  }
+}
+
+function renderCalculatorHistory(history) {
+  if (!history || history.length === 0) {
+    calculatorHistoryContainer.innerHTML = '<p class="history-empty">No calculations yet</p>';
+    return;
+  }
+  
+  calculatorHistoryContainer.innerHTML = history.map(item => `
+    <div class="history-item" data-calculation="${item.calculation}" data-result="${item.result}">
+      <div class="history-calculation">${item.calculation}</div>
+      <div class="history-result">= ${item.result}</div>
+      <div class="history-timestamp">${new Date(item.timestamp).toLocaleString()}</div>
+    </div>
+  `).join('');
+  
+  // Add click handlers to history items
+  document.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const calculation = item.dataset.calculation;
+      const result = item.dataset.result;
+      calculator.expression = result;
+      calculator.cursorPos = result.length;
+      calculator.updateDisplay();
+    });
+  });
+}
+
+async function addCalculationToHistory(calculation, result) {
+  try {
+    const response = await authedFetch('/api/tools/calcul-history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ calculation, result })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      renderCalculatorHistory(data.history || []);
+    }
+  } catch (error) {
+    console.error('Error adding to calculator history:', error);
+  }
+}
+
+async function clearCalculatorHistory() {
+  try {
+    const response = await authedFetch('/api/tools/calcul-history', {
+      method: 'DELETE'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      renderCalculatorHistory(data.history || []);
+    }
+  } catch (error) {
+    console.error('Error clearing calculator history:', error);
+  }
+}
+
+clearHistoryBtn.addEventListener('click', clearCalculatorHistory);
+
+// Load history on page load
+loadCalculatorHistory();
 
 // ===================== CONVERTER =====================
 
