@@ -6,6 +6,7 @@ let currentPath = "";
 let files = [];
 let folders = [];
 let deletingItem = null;
+let selectedFile = null;
 
 // ===================== API FUNCTIONS =====================
 
@@ -137,36 +138,6 @@ function getFileIcon(extension) {
 }
 
 // ===================== RENDER FUNCTIONS =====================
-
-function renderPath() {
-  const pathContainer = document.getElementById('files-path');
-  if (!pathContainer) return;
-
-  const segments = currentPath ? currentPath.split('/') : [];
-  
-  let html = `<span class="path-segment" data-path="">Root</span>`;
-  
-  let accumulatedPath = "";
-  segments.forEach((segment, index) => {
-    accumulatedPath += (accumulatedPath ? "/" : "") + segment;
-    if (index > 0) {
-      html += `<span class="path-separator">/</span>`;
-    }
-    html += `<span class="path-segment" data-path="${accumulatedPath}">${segment}</span>`;
-  });
-
-  pathContainer.innerHTML = html;
-
-  // Add click handlers for path segments
-  pathContainer.querySelectorAll('.path-segment').forEach(segment => {
-    segment.addEventListener('click', () => {
-      const newPath = segment.dataset.path;
-      if (newPath !== currentPath) {
-        navigateTo(newPath);
-      }
-    });
-  });
-}
 
 function renderFiles() {
   const filesList = document.getElementById('files-list');
@@ -300,9 +271,9 @@ function createFileBlock(file) {
   block.appendChild(info);
   block.appendChild(actions);
 
-  // Click to open file (using device's default preview)
+  // Click to select file
   block.addEventListener('click', () => {
-    openFile(file);
+    selectFile(file, block);
   });
 
   return block;
@@ -312,15 +283,38 @@ function createFileBlock(file) {
 
 async function navigateTo(path) {
   currentPath = path;
+  selectedFile = null;
+  updateUploadButton();
   try {
     const data = await fetchFiles(currentPath);
     folders = data.folders || [];
     files = data.files || [];
-    renderPath();
     renderFiles();
   } catch (error) {
     console.error('Error navigating to path:', error);
     alert(`Failed to load folder: ${error.message}`);
+  }
+}
+
+function selectFile(file, block) {
+  // Remove previous selection
+  document.querySelectorAll('.file-block.selected').forEach(b => {
+    b.classList.remove('selected');
+    b.style.borderColor = '';
+  });
+
+  // Select new file
+  selectedFile = file;
+  block.classList.add('selected');
+  block.style.borderColor = 'var(--accent)';
+  
+  updateUploadButton();
+}
+
+function updateUploadButton() {
+  const uploadBtn = document.getElementById('upload-btn');
+  if (uploadBtn) {
+    uploadBtn.style.display = selectedFile ? 'grid' : 'none';
   }
 }
 

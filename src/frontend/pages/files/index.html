@@ -81,11 +81,11 @@
 
     <div class="files-shell">
       <aside class="files-sidebar" aria-label="Files actions">
-        <button class="files-nav" type="button" id="upload-btn" aria-label="Upload file">
-          <span class="files-icon" data-icon="/assets/icons/upload.svg"></span>
-        </button>
         <button class="files-nav" type="button" id="create-folder-btn" aria-label="Create folder">
           <span class="files-icon" data-icon="/assets/icons/plus.svg"></span>
+        </button>
+        <button class="files-nav" type="button" id="upload-btn" aria-label="Upload file" style="display: none;">
+          <span class="files-icon" data-icon="/assets/icons/upload.svg"></span>
         </button>
       </aside>
 
@@ -95,10 +95,6 @@
         </div>
         
         <div class="bento-block files-container">
-          <div class="files-path" id="files-path">
-            <span class="path-segment" data-path="">Root</span>
-          </div>
-          
           <div class="files-list" id="files-list">
             <!-- Files and folders will be populated by JS -->
           </div>
