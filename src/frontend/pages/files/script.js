@@ -402,18 +402,43 @@ uploadForm.addEventListener('submit', async (e) => {
       const content = event.target.result;
       const relativePath = currentPath ? `${currentPath}/${file.name}` : file.name;
       
-      try {
-        await uploadFile(relativePath, content);
-        await navigateTo(currentPath);
-        closeUploadModal();
-      } catch (error) {
-        console.error('Error uploading file:', error);
-        alert(`Failed to upload file: ${error.message}`);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        submitBtn.style.cursor = 'pointer';
-      }
+      // Close modal immediately after starting upload
+      closeUploadModal();
+      
+      // Start upload in background without waiting
+      uploadFile(relativePath, content)
+        .then(async () => {
+          await navigateTo(currentPath);
+        })
+        .catch((error) => {
+          // Show error message for 2 seconds
+          const errorMsg = document.createElement('div');
+          errorMsg.className = 'upload-error-message';
+          errorMsg.textContent = 'File too heavy';
+          errorMsg.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+          `;
+          document.body.appendChild(errorMsg);
+          
+          setTimeout(() => {
+            errorMsg.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => errorMsg.remove(), 300);
+          }, 2000);
+        })
+        .finally(() => {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+          submitBtn.style.cursor = 'pointer';
+          fileInput.value = '';
+        });
     };
     
     reader.onerror = () => {
