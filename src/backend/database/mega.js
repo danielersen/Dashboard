@@ -56,7 +56,7 @@ function withTimeout(promise, ms, message) {
 }
 
 // Exponential backoff pour éviter les blocages
-async function retryOperation(operation, attempts = 1, baseTimeoutMs = 5000, baseDelayMs = 100) {
+async function retryOperation(operation, attempts = 3, baseTimeoutMs = 5000, baseDelayMs = 100) {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
@@ -67,14 +67,15 @@ async function retryOperation(operation, attempts = 1, baseTimeoutMs = 5000, bas
       lastError = error;
       const message = String(error?.message || "").toLowerCase();
       const isNotFound = message.includes("file not found") || message.includes("folder not found");
-      const isRateLimit = message.includes("rate limit") || message.includes("too many requests") || message.includes("bandwidth");
+      const isRateLimit = message.includes("rate limit") || message.includes("too many requests") || message.includes("bandwidth") || message.includes("-7");
       
       if (isNotFound || attempt === attempts) {
         throw error;
       }
       
-      // Exponential backoff pour rate limits
+      // Exponential backoff pour rate limits et erreurs temporaires
       const delayMs = isRateLimit ? baseDelayMs * Math.pow(2, attempt) : baseDelayMs * attempt;
+      console.log(`MEGA operation failed (attempt ${attempt}/${attempts}), retrying in ${delayMs}ms...`);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
