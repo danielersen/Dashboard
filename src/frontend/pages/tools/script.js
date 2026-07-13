@@ -445,9 +445,7 @@ const codeCopyOutput = document.getElementById('code-copy-output');
 
 // Set default code examples
 const codeExamples = {
-  javascript: `const numbers = [1, 2, 3, 4, 5];
-const doubled = numbers.map(n => n * 2);
-doubled;`
+  javascript: `console.log("Hello")`
 };
 
 // Initialize code executor
@@ -503,27 +501,59 @@ async function runCode() {
   codeRunBtn.disabled = true;
   
   try {
-    const response = await authedFetch('/api/tools/execute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        language: currentLanguage,
-        code
-      })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.output) {
-        codeOutputContent.textContent = data.output;
-      } else if (data.error) {
-        codeOutputContent.textContent = data.error;
-      } else {
-        codeOutputContent.textContent = 'Code executed successfully (no output)';
+    // Execute JavaScript directly in the browser
+    if (currentLanguage === 'javascript') {
+      const logs = [];
+      const customConsole = {
+        log: (...args) => {
+          logs.push(args.map(arg => 
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+          ).join(' '));
+        },
+        error: (...args) => {
+          logs.push('ERROR: ' + args.map(arg => String(arg)).join(' '));
+        },
+        warn: (...args) => {
+          logs.push('WARN: ' + args.map(arg => String(arg)).join(' '));
+        },
+        info: (...args) => {
+          logs.push('INFO: ' + args.map(arg => String(arg)).join(' '));
+        }
+      };
+      
+      try {
+        const fn = new Function('console', code);
+        fn(customConsole);
+        
+        const output = logs.join('\n');
+        codeOutputContent.textContent = output || 'Code executed successfully (no output)';
+      } catch (evalError) {
+        codeOutputContent.textContent = 'Error: ' + evalError.message;
       }
     } else {
-      const errorData = await response.json();
-      codeOutputContent.textContent = errorData.error || errorData.message || 'Execution failed';
+      // For other languages, use backend API
+      const response = await authedFetch('/api/tools/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: currentLanguage,
+          code
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.output) {
+          codeOutputContent.textContent = data.output;
+        } else if (data.error) {
+          codeOutputContent.textContent = data.error;
+        } else {
+          codeOutputContent.textContent = 'Code executed successfully (no output)';
+        }
+      } else {
+        const errorData = await response.json();
+        codeOutputContent.textContent = errorData.error || errorData.message || 'Execution failed';
+      }
     }
   } catch (error) {
     console.error('Code execution error:', error);
