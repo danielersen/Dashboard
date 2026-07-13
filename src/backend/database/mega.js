@@ -113,7 +113,7 @@ export async function getClient(env, forceRefresh = false) {
   return storage;
 }
 
-async function getOrCreateFolder(storage, folderPath) {
+export async function getOrCreateFolder(storage, folderPath) {
   const normalized = normalizePath(folderPath);
   if (!normalized) return storage.root;
 
@@ -152,7 +152,7 @@ async function getOrCreateFolder(storage, folderPath) {
   return current;
 }
 
-async function getFolderIfExists(storage, folderPath) {
+export async function getFolderIfExists(storage, folderPath) {
   const normalized = normalizePath(folderPath);
   if (!normalized) return storage.root;
 
