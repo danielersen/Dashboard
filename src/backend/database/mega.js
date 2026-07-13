@@ -7,6 +7,20 @@ const MAX_CACHE_SIZE = 1; // Maximum 1 connexion simultanée
 const MIN_OPERATION_DELAY = 1000; // Délai minimum entre opérations (ms)
 let lastOperationTime = 0; // Timestamp de la dernière opération
 
+// Liste de user agents de navigateurs réels pour éviter la détection
+const USER_AGENTS = [
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+];
+
+function getRandomUserAgent() {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
   return normalized || "";
@@ -95,7 +109,7 @@ export async function getClient(env, forceRefresh = false) {
   const storage = new Storage({ 
     email, 
     password,
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", // UserAgent navigateur standard pour éviter suspicion
+    userAgent: getRandomUserAgent(), // UserAgent aléatoire de navigateur réel pour éviter suspicion
     keepalive: true, // Activé pour éviter les reconnexions fréquentes
     autoload: true, // Activé pour s'assurer que root est disponible
     autologin: true, // Garder le login automatique
