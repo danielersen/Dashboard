@@ -18,11 +18,13 @@ vars = { JWT_SECRET = "generate-a-secure-random-key", JWT = "generate-a-secure-r
 
 # Static site
 [assets]
+name = "ASSETS"
 directory = "./src/frontend"
 binding = "ASSETS"
 
 # Worker AI
 [ai]
+name = "AI"
 binding = "AI"
 
 # Worker executed before assets
