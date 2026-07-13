@@ -30,12 +30,12 @@ async function fetchFiles(path = "") {
   }
 }
 
-async function uploadFile(relativePath, content) {
+async function uploadFile(relativePath, content = null, url = null) {
   try {
     const response = await authedFetch('/api/files/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ relativePath, content })
+      body: JSON.stringify({ relativePath, content, url })
     });
 
     if (!response.ok) {
@@ -384,9 +384,11 @@ document.getElementById('confirm-delete-btn').addEventListener('click', async ()
 uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const file = fileInput.files[0];
-  if (!file) {
-    alert('Please select a file');
+  const fileName = document.getElementById('file-name').value.trim();
+  const fileUrl = document.getElementById('file-url').value.trim();
+  
+  if (!fileName || !fileUrl) {
+    alert('Please enter both file name and URL');
     return;
   }
 
@@ -396,63 +398,49 @@ uploadForm.addEventListener('submit', async (e) => {
   submitBtn.style.cursor = 'not-allowed';
 
   try {
-    // Read file as text (for text files) or base64 (for binary files)
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const content = event.target.result;
-      const relativePath = currentPath ? `${currentPath}/${file.name}` : file.name;
-      
-      // Close modal immediately after starting upload
-      closeUploadModal();
-      
-      // Start upload in background without waiting
-      uploadFile(relativePath, content)
-        .then(async () => {
-          await navigateTo(currentPath);
-        })
-        .catch((error) => {
-          // Show error message for 2 seconds
-          const errorMsg = document.createElement('div');
-          errorMsg.className = 'upload-error-message';
-          errorMsg.textContent = 'File too heavy';
-          errorMsg.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #ef4444;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-          `;
-          document.body.appendChild(errorMsg);
-          
-          setTimeout(() => {
-            errorMsg.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => errorMsg.remove(), 300);
-          }, 2000);
-        })
-        .finally(() => {
-          submitBtn.disabled = false;
-          submitBtn.style.opacity = '1';
-          submitBtn.style.cursor = 'pointer';
-          fileInput.value = '';
-        });
-    };
+    const relativePath = currentPath ? `${currentPath}/${fileName}` : fileName;
     
-    reader.onerror = () => {
-      alert('Error reading file');
-      submitBtn.disabled = false;
-      submitBtn.style.opacity = '1';
-      submitBtn.style.cursor = 'pointer';
-    };
-
-    // Read as data URL (base64) to handle all file types
-    reader.readAsDataURL(file);
+    // Close modal immediately after starting upload
+    closeUploadModal();
+    
+    // Start upload in background without waiting
+    uploadFile(relativePath, null, fileUrl)
+      .then(async () => {
+        await navigateTo(currentPath);
+      })
+      .catch((error) => {
+        // Show error message for 2 seconds
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'upload-error-message';
+        errorMsg.textContent = 'Upload failed';
+        errorMsg.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #ef4444;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          z-index: 10000;
+          animation: slideIn 0.3s ease;
+        `;
+        document.body.appendChild(errorMsg);
+        
+        setTimeout(() => {
+          errorMsg.style.animation = 'slideOut 0.3s ease';
+          setTimeout(() => errorMsg.remove(), 300);
+        }, 2000);
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+        document.getElementById('file-name').value = '';
+        document.getElementById('file-url').value = '';
+      });
   } catch (error) {
-    console.error('Error processing file:', error);
-    alert(`Failed to process file: ${error.message}`);
+    console.error('Error processing upload:', error);
+    alert(`Failed to process upload: ${error.message}`);
     submitBtn.disabled = false;
     submitBtn.style.opacity = '1';
     submitBtn.style.cursor = 'pointer';
