@@ -14,35 +14,37 @@ export async function executeCode(env, language, code) {
   
   if (language === 'javascript') {
     try {
-      // Simple approach: wrap code to capture console.log
-      const wrappedCode = `
-        (function() {
-          const output = [];
-          const originalConsole = {
-            log: (...args) => output.push(args.join(' ')),
-            error: (...args) => output.push('ERROR: ' + args.join(' ')),
-            warn: (...args) => output.push('WARN: ' + args.join(' '))
-          };
-          
-          const console = originalConsole;
-          
-          try {
-            ${code}
-            return output.join('\\n') || 'Code executed successfully (no output)';
-          } catch (e) {
-            return output.join('\\n') + '\\nERROR: ' + e.message;
-          }
-        })()
-      `;
+      console.log('Executing JavaScript code:', code);
       
-      const result = eval(wrappedCode);
+      // Wrap code in a function to allow return statements
+      const fn = new Function(code);
+      const result = fn();
+      
+      console.log('Execution result:', result);
+      console.log('Result type:', typeof result);
+      console.log('Result is undefined:', result === undefined);
+      
+      // Convert result to string
+      let output;
+      if (result === undefined) {
+        output = 'Code executed successfully (no output)';
+      } else if (result === null) {
+        output = 'null';
+      } else if (typeof result === 'object') {
+        output = JSON.stringify(result, null, 2);
+      } else {
+        output = String(result);
+      }
+      
+      console.log('Final output:', output);
       
       return {
-        output: String(result),
+        output: output,
         error: ''
       };
     } catch (error) {
       console.error('JavaScript execution error:', error);
+      console.error('Error stack:', error.stack);
       return {
         output: '',
         error: error.message
