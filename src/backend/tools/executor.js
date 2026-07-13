@@ -17,55 +17,54 @@ export async function executeCode(env, language, code) {
       console.log('Executing JavaScript code:', code);
       console.log('Code length:', code.length);
       
-      // Split code into lines and find the last non-empty, non-comment line
-      const lines = code.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
-      const lastLine = lines[lines.length - 1];
+      // Create a custom console to capture output
+      const logs = [];
+      const customConsole = {
+        log: (...args) => {
+          const message = args.map(arg => 
+            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+          ).join(' ');
+          logs.push(message);
+          console.log('[CAPTURED]', message);
+        },
+        error: (...args) => {
+          const message = 'ERROR: ' + args.map(arg => String(arg)).join(' ');
+          logs.push(message);
+          console.log('[CAPTURED]', message);
+        },
+        warn: (...args) => {
+          const message = 'WARN: ' + args.map(arg => String(arg)).join(' ');
+          logs.push(message);
+          console.log('[CAPTURED]', message);
+        },
+        info: (...args) => {
+          const message = 'INFO: ' + args.map(arg => String(arg)).join(' ');
+          logs.push(message);
+          console.log('[CAPTURED]', message);
+        }
+      };
       
-      console.log('Last line:', lastLine);
+      console.log('Creating function with custom console');
+      // Create a function with custom console as parameter
+      const fn = new Function('console', code);
+      console.log('Executing function');
+      fn(customConsole);
       
-      // If the last line doesn't start with return, const, let, var, function, or control structures
-      // prepend return to it
-      let modifiedCode = code;
-      if (lastLine && !lastLine.trim().startsWith('return') && 
-          !lastLine.trim().startsWith('const') && 
-          !lastLine.trim().startsWith('let') && 
-          !lastLine.trim().startsWith('var') &&
-          !lastLine.trim().startsWith('function') &&
-          !lastLine.trim().startsWith('if') &&
-          !lastLine.trim().startsWith('for') &&
-          !lastLine.trim().startsWith('while') &&
-          !lastLine.trim().startsWith('class')) {
-        modifiedCode = code.replace(lastLine, `return ${lastLine}`);
-        console.log('Modified code:', modifiedCode);
-      }
+      console.log('Captured logs:', logs);
+      console.log('Number of logs:', logs.length);
       
-      const fn = new Function(modifiedCode);
-      const result = fn();
-      
-      console.log('Execution result:', result);
-      console.log('Result type:', typeof result);
-      
-      // Convert result to string
-      let output;
-      if (result === undefined) {
-        output = 'Code executed successfully (no output)';
-      } else if (result === null) {
-        output = 'null';
-      } else if (typeof result === 'object') {
-        output = JSON.stringify(result, null, 2);
-      } else {
-        output = String(result);
-      }
+      const output = logs.join('\n');
       
       console.log('Final output:', output);
       
       return {
-        output: output,
+        output: output || 'Code executed successfully (no output)',
         error: ''
       };
     } catch (error) {
       console.error('JavaScript execution error:', error);
       console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
       return {
         output: '',
         error: error.message
