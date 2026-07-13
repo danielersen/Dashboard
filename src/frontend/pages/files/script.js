@@ -287,8 +287,12 @@ function selectFile(file, block) {
 
 function updateUploadButton() {
   const uploadBtn = document.getElementById('upload-btn');
+  const downloadBtn = document.getElementById('download-btn');
   if (uploadBtn) {
-    uploadBtn.style.display = selectedFile ? 'grid' : 'none';
+    uploadBtn.style.display = selectedFile ? 'none' : 'grid';
+  }
+  if (downloadBtn) {
+    downloadBtn.style.display = selectedFile ? 'grid' : 'none';
   }
 }
 
@@ -346,10 +350,13 @@ function closeDeleteModal() {
 // ===================== EVENT LISTENERS =====================
 
 document.getElementById('upload-btn').addEventListener('click', openUploadModal);
-document.getElementById('create-folder-btn').addEventListener('click', openFolderModal);
+document.getElementById('download-btn').addEventListener('click', () => {
+  if (selectedFile) {
+    openFile(selectedFile);
+  }
+});
 
 document.getElementById('cancel-upload-btn').addEventListener('click', closeUploadModal);
-document.getElementById('cancel-folder-btn').addEventListener('click', closeFolderModal);
 document.getElementById('cancel-delete-btn').addEventListener('click', closeDeleteModal);
 
 document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
@@ -458,14 +465,12 @@ folderForm.addEventListener('submit', async (e) => {
 
 // Close modals on backdrop click
 uploadModal.querySelector('.modal-backdrop').addEventListener('click', closeUploadModal);
-folderModal.querySelector('.modal-backdrop').addEventListener('click', closeFolderModal);
 deleteModal.querySelector('.modal-backdrop').addEventListener('click', closeDeleteModal);
 
 // Close modals on Escape key
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeUploadModal();
-    closeFolderModal();
     closeDeleteModal();
   }
 });
