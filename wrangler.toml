@@ -57,9 +57,7 @@ run_worker_first = [
 name = "check_grades"
 binding = "CHECK_GRADES"
 class_name = "CheckGradesWorkflow"
-
-[[workflows.crons]]
-cron = "0 */3 * * *"  # Vérifier les notes toutes les 3 heures
+schedules = ["0 */4 * * *"]  # Vérifier les notes toutes les 4 heures
 
 # Observability
 [observability]
