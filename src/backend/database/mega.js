@@ -317,6 +317,8 @@ export async function megaWrite(env, path, body, storage = null) {
     const fileName = segments.at(-1);
     const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
 
+    console.log(`Starting upload for: ${fullPath}, size: ${content.length} bytes`);
+
     const folder = folderPath ? await getOrCreateFolder(storageInstance, folderPath) : storageInstance.root;
     
     // Timeout pour éviter les blocages sur children
@@ -377,8 +379,13 @@ export async function megaWrite(env, path, body, storage = null) {
           }
         }
       }, content, (err, file) => {
-        if (err) reject(err);
-        else resolve(file);
+        if (err) {
+          console.error(`MEGA upload error:`, err);
+          reject(err);
+        } else {
+          console.log(`MEGA upload complete: ${file.name}`);
+          resolve(file);
+        }
       });
     });
 
@@ -390,7 +397,7 @@ export async function megaWrite(env, path, body, storage = null) {
       nodeId: file.nodeId,
       downloadId: file.downloadId
     };
-  }, 1, 5000, 100);
+  }, 5, 120000, 2000);
 }
 
 export async function megaDelete(env, path) {
