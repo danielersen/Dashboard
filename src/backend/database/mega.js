@@ -2,8 +2,10 @@ import { Storage } from "megajs";
 
 // Cache des connexions pour éviter trop de logins
 const connectionCache = new Map();
-const CACHE_TTL = 4 * 60 * 60 * 1000; // 4 heures pour éviter les blocages MEGA (credential stuffing)
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 heures pour éviter les blocages MEGA (credential stuffing)
 const MAX_CACHE_SIZE = 1; // Maximum 1 connexion simultanée
+const MIN_OPERATION_DELAY = 1000; // Délai minimum entre opérations (ms)
+let lastOperationTime = 0; // Timestamp de la dernière opération
 
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
@@ -13,6 +15,16 @@ function normalizePath(path) {
 function toText(value) {
   if (typeof value === "string") return value;
   return JSON.stringify(value);
+}
+
+async function withDelay() {
+  const now = Date.now();
+  const timeSinceLastOperation = now - lastOperationTime;
+  if (timeSinceLastOperation < MIN_OPERATION_DELAY) {
+    const delay = MIN_OPERATION_DELAY - timeSinceLastOperation;
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  lastOperationTime = Date.now();
 }
 
 function withTimeout(promise, ms, message) {
@@ -126,6 +138,7 @@ export async function getOrCreateFolder(storage, folderPath) {
   }
 
   for (const segment of segments) {
+    await withDelay(); // Rate limiting pour chaque opération de dossier
     // Timeout pour éviter les blocages sur children
     const children = await withTimeout(
       current.children, 
@@ -135,6 +148,7 @@ export async function getOrCreateFolder(storage, folderPath) {
     
     let folder = children.find(child => child.name === segment && child.directory);
     if (!folder) {
+      await withDelay(); // Rate limiting avant création
       folder = await withTimeout(
         current.mkdir(segment), 
         2000, 
@@ -165,6 +179,7 @@ export async function getFolderIfExists(storage, folderPath) {
   }
 
   for (const segment of segments) {
+    await withDelay(); // Rate limiting pour chaque opération de dossier
     // Timeout pour éviter les blocages sur children
     const children = await withTimeout(
       current.children, 
@@ -197,6 +212,7 @@ export async function megaRead(env, path, storage = null, forceRefresh = false) 
   const fullPath = `dashboard/${normalizePath(path)}`;
 
   return await retryOperation(async () => {
+    await withDelay(); // Rate limiting
     const storageInstance = storage || await getClient(env, forceRefresh);
 
     try {
@@ -279,6 +295,7 @@ export async function megaWrite(env, path, body, storage = null) {
   const content = Buffer.from(toText(body), "utf8");
 
   return await retryOperation(async () => {
+    await withDelay(); // Rate limiting
     const storageInstance = storage || await getClient(env);
 
     const segments = fullPath.split("/").filter(Boolean);
@@ -351,6 +368,7 @@ export async function megaDelete(env, path) {
   const fullPath = `dashboard/${normalizePath(path)}`;
 
   return await retryOperation(async () => {
+    await withDelay(); // Rate limiting
     const storage = await getClient(env);
 
     const segments = fullPath.split("/").filter(Boolean);

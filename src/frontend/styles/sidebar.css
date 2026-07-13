@@ -4,7 +4,8 @@
 .ai-sidebar,
 .ws-sidebar,
 .websites-sidebar,
-.tools-sidebar {
+.tools-sidebar,
+.files-sidebar {
   position: sticky;
   top: calc(var(--navbar-height) + 14px);
   display: flex;
@@ -17,7 +18,8 @@
 .ai-nav,
 .ws-nav,
 .websites-nav,
-.tools-nav {
+.tools-nav,
+.files-nav {
   width: 56px;
   height: 56px;
   display: grid;
@@ -38,7 +40,8 @@
 .ai-nav svg,
 .ws-nav svg,
 .websites-nav svg,
-.tools-nav svg {
+.tools-nav svg,
+.files-nav svg {
   width: 24px;
   height: 24px;
   stroke: var(--accent);
@@ -48,7 +51,8 @@
 /* Icon container */
 .ai-icon,
 .websites-icon,
-.tools-icon {
+.tools-icon,
+.files-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,7 +64,8 @@
 .ai-nav:hover,
 .ws-nav:hover,
 .websites-nav:hover,
-.tools-nav:hover {
+.tools-nav:hover,
+.files-nav:hover {
   color: var(--accent);
   background: transparent;
 }
@@ -69,7 +74,8 @@
 .ai-nav:active,
 .ws-nav:active,
 .websites-nav:active,
-.tools-nav:active {
+.tools-nav:active,
+.files-nav:active {
   transform: translateY(1px);
 }
 
@@ -78,7 +84,8 @@
 .ai-nav[data-active="true"],
 .ws-nav[data-active="true"],
 .websites-nav[data-active="true"],
-.tools-nav[data-active="true"] {
+.tools-nav[data-active="true"],
+.files-nav[data-active="true"] {
   color: var(--accent);
   background: transparent;
   border-color: transparent;
@@ -90,7 +97,8 @@
   .ai-sidebar,
   .ws-sidebar,
   .websites-sidebar,
-  .tools-sidebar {
+  .tools-sidebar,
+  .files-sidebar {
     position: sticky;
     top: calc(var(--navbar-height) + 8px);
     z-index: 5;
@@ -108,7 +116,8 @@
   .ai-nav,
   .ws-nav,
   .websites-nav,
-  .tools-nav {
+  .tools-nav,
+  .files-nav {
     width: 52px;
     height: 48px;
   }
