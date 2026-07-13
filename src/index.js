@@ -50,6 +50,14 @@ export default {
     }
     
     // =========================
+    // ⛔ BLOCK WORKERS.DEV URLS
+    // =========================
+    const host = url.hostname;
+    if (host.includes("workers.dev")) {
+      return new Response("Access denied. Use custom domain only.", { status: 403 });
+    }
+
+    // =========================
     // ⛔ PRODUCTION MODE DISABLED
     // =========================
     if (env.MODE !== "production") {
