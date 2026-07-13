@@ -80,6 +80,8 @@ async function writeFile(env, relativePath, content) {
   const fullPath = normalizePath(`${FILES_ROOT}/${relativePath}`);
   const storage = await getClient(env);
   
+  console.log(`writeFile called: path=${fullPath}, content length=${typeof content === 'string' ? content.length : 'unknown'}`);
+  
   // Ensure parent folder exists
   const segments = fullPath.split("/").filter(Boolean);
   if (segments.length > 1) {
@@ -92,6 +94,7 @@ async function writeFile(env, relativePath, content) {
   if (typeof content === 'string' && content.startsWith('data:')) {
     const base64Data = content.split(',')[1];
     actualContent = Buffer.from(base64Data, 'base64').toString('utf8');
+    console.log(`Decoded base64 content, new length: ${actualContent.length}`);
   }
 
   await megaWrite(env, fullPath, actualContent, storage);
