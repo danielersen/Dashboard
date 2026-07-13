@@ -143,7 +143,7 @@ a {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
+  padding: 10px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background:
@@ -178,18 +178,18 @@ a {
 }
 
 .file-icon {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   flex-shrink: 0;
 }
 
 .file-icon svg {
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
   fill: currentColor;
 }
 

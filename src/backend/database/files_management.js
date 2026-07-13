@@ -293,6 +293,39 @@ async function deleteFile(env, relativePath) {
   }
 }
 
+async function renameItem(env, oldPath, newName) {
+  const fullPath = normalizePath(`${FILES_ROOT}/${oldPath}`);
+  const storage = await getClient(env);
+  
+  console.log(`renameItem called: oldPath=${fullPath}, newName=${newName}`);
+  
+  // Get the segments to extract parent path
+  const segments = fullPath.split("/").filter(Boolean);
+  const oldName = segments.at(-1);
+  const parentPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
+  
+  // Get parent folder
+  const parent = parentPath ? await getFolderIfExists(storage, parentPath) : storage.root;
+  
+  if (!parent) {
+    throw new Error("Parent folder not found");
+  }
+  
+  // Find the item to rename
+  const children = await parent.children;
+  const item = children.find(child => child.name === oldName);
+  
+  if (!item) {
+    throw new Error("Item not found");
+  }
+  
+  // Rename the item
+  await item.rename(newName);
+  
+  console.log(`Successfully renamed item from ${oldName} to ${newName}`);
+  return { success: true };
+}
+
 async function createFolder(env, relativePath) {
   const storage = await getClient(env);
   const fullPath = normalizePath(`${FILES_ROOT}/${relativePath}`);
@@ -364,6 +397,53 @@ export async function FilesFunction(env, path, method, body) {
         return await deleteFile(env, relativePath);
       }
       throw new Error("Invalid DELETE path");
+    
+    case "POST":
+      if (path === "upload") {
+        // Check if body is FormData (multipart)
+        if (body instanceof FormData) {
+          const file = body.get('file');
+          const relativePath = body.get('relativePath');
+          
+          if (!relativePath) {
+            throw new Error("relativePath is required");
+          }
+          if (!file) {
+            throw new Error("file is required");
+          }
+          
+          // Convert file to ArrayBuffer then Buffer
+          const arrayBuffer = await file.arrayBuffer();
+          const fileData = Buffer.from(arrayBuffer);
+          
+          return await writeFile(env, relativePath, null, null, fileData);
+        } else {
+          // Legacy JSON upload
+          const { relativePath, content, url } = body;
+          if (!relativePath) {
+            throw new Error("relativePath is required");
+          }
+          if (!content && !url) {
+            throw new Error("content or url is required");
+          }
+          return await writeFile(env, relativePath, content, url);
+        }
+      }
+      if (path === "folder") {
+        const { relativePath } = body;
+        if (!relativePath) {
+          throw new Error("relativePath is required");
+        }
+        return await createFolder(env, relativePath);
+      }
+      if (path === "rename") {
+        const { oldPath, newName } = body;
+        if (!oldPath || !newName) {
+          throw new Error("oldPath and newName are required");
+        }
+        return await renameItem(env, oldPath, newName);
+      }
+      throw new Error("Invalid POST path");
     
     default:
       throw new Error("Method not allowed");
