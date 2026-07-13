@@ -445,11 +445,7 @@ const codeCopyOutput = document.getElementById('code-copy-output');
 
 // Set default code examples
 const codeExamples = {
-  javascript: `// JavaScript example
-console.log("Hello, World!");
-for (let i = 0; i < 5; i++) {
-    console.log(\`Number: \${i}\`);
-}`
+  javascript: `return "Hello, World!";`
 };
 
 // Initialize code executor
