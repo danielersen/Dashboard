@@ -312,13 +312,15 @@ const folderModal = document.getElementById('folder-modal');
 const deleteModal = document.getElementById('delete-modal');
 const uploadForm = document.getElementById('upload-form');
 const folderForm = document.getElementById('folder-form');
-const fileInput = document.getElementById('file-input');
+const fileNameInput = document.getElementById('file-name');
+const fileUrlInput = document.getElementById('file-url');
 const folderNameInput = document.getElementById('folder-name');
 
 function openUploadModal() {
-  fileInput.value = '';
+  fileNameInput.value = '';
+  fileUrlInput.value = '';
   uploadModal.setAttribute('aria-hidden', 'false');
-  fileInput.focus();
+  fileNameInput.focus();
 }
 
 function closeUploadModal() {
