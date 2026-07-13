@@ -29,51 +29,63 @@ async function uploadFromURL(env, relativePath, url, storage = null) {
   const fileSize = parseInt(response.headers.get('content-length')) || 0;
   console.log(`File size from URL: ${fileSize} bytes`);
   
-  // Create readable stream from the URL response
-  const { Readable } = await import('stream');
-  const { ReadableStream } = await import('web-streams-node');
-  
-  // Convert web stream to Node stream
-  const nodeStream = Readable.fromWeb(response.body);
-  
-  // Upload to MEGA using streaming
-  const uploadPromise = new Promise((resolve, reject) => {
-    folder.upload({ 
-      name: fileName, 
-      size: fileSize,
-      maxConnections: 1,
-      initialChunkSize: 65536,
-      chunkSizeIncrement: 65536,
-      maxChunkSize: 524288,
-      handleRetries: (tries, error, cb) => {
-        console.log(`MEGA upload retry ${tries}/8, error:`, error.message);
-        if (tries > 8) {
-          cb(error);
-        } else {
-          const delay = 1000 * Math.pow(2, tries);
-          console.log(`Retrying upload in ${delay}ms...`);
-          setTimeout(cb, delay);
-        }
-      }
-    }, nodeStream, (err, file) => {
-      if (err) {
-        console.error(`MEGA upload error:`, err);
-        reject(err);
+  // Create upload stream from MEGA (following MEGAJS documentation)
+  const uploadStream = folder.upload({ 
+    name: fileName,
+    size: fileSize,
+    maxConnections: 1,
+    initialChunkSize: 65536,
+    chunkSizeIncrement: 65536,
+    maxChunkSize: 524288,
+    handleRetries: (tries, error, cb) => {
+      console.log(`MEGA upload retry ${tries}/8, error:`, error.message);
+      if (tries > 8) {
+        cb(error);
       } else {
-        console.log(`MEGA upload complete: ${file.name}`);
-        resolve(file);
+        const delay = 1000 * Math.pow(2, tries);
+        console.log(`Retrying upload in ${delay}ms...`);
+        setTimeout(cb, delay);
       }
-    });
+    }
   });
-
-  const file = await uploadPromise;
-  console.log(`Successfully uploaded file from URL: ${file.name}`);
-  return {
-    name: file.name,
-    size: file.size,
-    nodeId: file.nodeId,
-    downloadId: file.downloadId
-  };
+  
+  // Read from URL response and write to upload stream
+  const reader = response.body.getReader();
+  
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) {
+        uploadStream.end();
+        break;
+      }
+      
+      // Write chunk to upload stream
+      const canContinueWriting = uploadStream.write(Buffer.from(value));
+      
+      if (!canContinueWriting) {
+        // Wait for stream to drain if under pressure
+        await new Promise(resolve => {
+          uploadStream.once('drain', resolve);
+        });
+      }
+    }
+    
+    // Wait for upload to complete
+    const file = await uploadStream.complete;
+    console.log(`Successfully uploaded file from URL: ${file.name}`);
+    
+    return {
+      name: file.name,
+      size: file.size,
+      nodeId: file.nodeId,
+      downloadId: file.downloadId
+    };
+  } catch (error) {
+    console.error(`MEGA streaming upload error:`, error);
+    throw error;
+  }
 }
 
 const FILES_ROOT = "files";
