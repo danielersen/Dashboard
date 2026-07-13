@@ -240,6 +240,35 @@ class ScientificCalculator {
         // Add implicit multiplication for number followed by π or e
         .replace(/(\d)(π)/g, '$1*Math.PI')
         .replace(/(\d)(e(?![x^]))/g, '$1*Math.E')
+        // Add implicit multiplication for number followed by functions
+        .replace(/(\d)(sin⁻¹\()/g, '$1*Math.asin(')
+        .replace(/(\d)(cos⁻¹\()/g, '$1*Math.acos(')
+        .replace(/(\d)(tan⁻¹\()/g, '$1*Math.atan(')
+        .replace(/(\d)(sin\()/g, '$1*Math.sin(')
+        .replace(/(\d)(cos\()/g, '$1*Math.cos(')
+        .replace(/(\d)(tan\()/g, '$1*Math.tan(')
+        .replace(/(\d)(log\()/g, '$1*Math.log10(')
+        .replace(/(\d)(ln\()/g, '$1*Math.log(')
+        .replace(/(\d)(√\()/g, '$1*Math.sqrt(')
+        .replace(/(\d)(∛\()/g, '$1*Math.cbrt(')
+        // Add implicit multiplication for number followed by parenthesis
+        .replace(/(\d)\(/g, '$1*(')
+        // Add implicit multiplication for parenthesis followed by number
+        .replace(/\)(\d)/g, ')*$1')
+        // Add implicit multiplication for parenthesis followed by π or e
+        .replace(/\)(π)/g, ')*Math.PI')
+        .replace(/\)(e(?![x^]))/g, ')*Math.E')
+        // Add implicit multiplication for parenthesis followed by functions
+        .replace(/\)(sin⁻¹\()/g, ')*Math.asin(')
+        .replace(/\)(cos⁻¹\()/g, ')*Math.acos(')
+        .replace(/\)(tan⁻¹\()/g, ')*Math.atan(')
+        .replace(/\)(sin\()/g, ')*Math.sin(')
+        .replace(/\)(cos\()/g, ')*Math.cos(')
+        .replace(/\)(tan\()/g, ')*Math.tan(')
+        .replace(/\)(log\()/g, ')*Math.log10(')
+        .replace(/\)(ln\()/g, ')*Math.log(')
+        .replace(/\)(√\()/g, ')*Math.sqrt(')
+        .replace(/\)(∛\()/g, ')*Math.cbrt(')
         .replace(/π/g, 'Math.PI')
         .replace(/e(?![x^])/g, 'Math.E')
         .replace(/sin⁻¹\(/g, 'Math.asin(')
@@ -358,6 +387,36 @@ function renderCalculatorHistory(history) {
 }
 
 async function addCalculationToHistory(calculation, result) {
+  // Optimistic update - add to UI immediately
+  const newEntry = {
+    calculation,
+    result,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Get current history from DOM or create new array
+  const currentHistory = [];
+  const existingItems = document.querySelectorAll('.history-item');
+  existingItems.forEach(item => {
+    currentHistory.push({
+      calculation: item.dataset.calculation,
+      result: item.dataset.result,
+      timestamp: item.querySelector('.history-timestamp').textContent
+    });
+  });
+  
+  // Add new entry at the beginning
+  currentHistory.unshift(newEntry);
+  
+  // Keep only most recent 30
+  if (currentHistory.length > 30) {
+    currentHistory.splice(30);
+  }
+  
+  // Update UI immediately
+  renderCalculatorHistory(currentHistory);
+  
+  // Then send to API in background
   try {
     const response = await authedFetch('/api/tools/calcul-history', {
       method: 'POST',
@@ -367,6 +426,7 @@ async function addCalculationToHistory(calculation, result) {
     
     if (response.ok) {
       const data = await response.json();
+      // Update with server response to ensure consistency
       renderCalculatorHistory(data.history || []);
     }
   } catch (error) {
