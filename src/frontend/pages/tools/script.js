@@ -353,7 +353,7 @@ async function loadCalculatorHistory() {
     
     if (response.ok) {
       const data = await response.json();
-      renderCalculatorHistory(data.history || []);
+      renderCalculatorHistory(data.resp?.history || []);
     }
   } catch (error) {
     console.error('Error loading calculator history:', error);
@@ -427,7 +427,7 @@ async function addCalculationToHistory(calculation, result) {
     if (response.ok) {
       const data = await response.json();
       // Update with server response to ensure consistency
-      renderCalculatorHistory(data.history || []);
+      renderCalculatorHistory(data.resp?.history || []);
     }
   } catch (error) {
     console.error('Error adding to calculator history:', error);
