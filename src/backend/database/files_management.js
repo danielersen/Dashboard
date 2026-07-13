@@ -27,23 +27,49 @@ async function uploadFromURL(env, relativePath, url, storage = null) {
   }
   
   const fileSize = parseInt(response.headers.get('content-length')) || 0;
-  console.log(`File size from URL: ${fileSize} bytes`);
+  const fileSizeMB = fileSize / 1024 / 1024;
+  console.log(`File size from URL: ${fileSize} bytes (${fileSizeMB.toFixed(2)} MB)`);
+  
+  // Calculate dynamic chunk sizes based on file size
+  let initialChunkSize = 1048576; // 1MB default
+  let chunkSizeIncrement = 1048576; // 1MB increment
+  let maxChunkSize = 8388608; // 8MB max
+  let maxConnections = 2;
+  
+  // Use larger chunks for larger files
+  if (fileSizeMB > 100) {
+    initialChunkSize = 2097152; // 2MB
+    chunkSizeIncrement = 2097152; // 2MB
+    maxChunkSize = 16777216; // 16MB
+    maxConnections = 3;
+  } else if (fileSizeMB > 50) {
+    initialChunkSize = 1048576; // 1MB
+    chunkSizeIncrement = 1048576; // 1MB
+    maxChunkSize = 8388608; // 8MB
+    maxConnections = 2;
+  }
+  
+  console.log(`Using chunk sizes: initial=${initialChunkSize / 1024 / 1024}MB, max=${maxChunkSize / 1024 / 1024}MB, connections=${maxConnections}`);
+  
+  // Calculate timeout based on file size (at least 5 minutes, more for larger files)
+  const timeoutMs = Math.max(300000, fileSizeMB * 10000); // 10 seconds per MB minimum
+  console.log(`Upload timeout: ${timeoutMs / 1000 / 60} minutes`);
   
   // Create upload stream from MEGA (following MEGAJS documentation)
   const uploadStream = folder.upload({ 
     name: fileName,
     size: fileSize,
-    maxConnections: 1,
-    initialChunkSize: 65536,
-    chunkSizeIncrement: 65536,
-    maxChunkSize: 524288,
+    maxConnections: maxConnections,
+    initialChunkSize: initialChunkSize,
+    chunkSizeIncrement: chunkSizeIncrement,
+    maxChunkSize: maxChunkSize,
     handleRetries: (tries, error, cb) => {
-      console.log(`MEGA upload retry ${tries}/8, error:`, error.message);
-      if (tries > 8) {
+      console.log(`MEGA upload retry ${tries}/12, error:`, error.message);
+      if (tries > 12) {
         cb(error);
       } else {
-        const delay = 1000 * Math.pow(2, tries);
-        console.log(`Retrying upload in ${delay}ms...`);
+        const delay = 2000 * Math.pow(2, tries); // Start with 2 seconds
+        console.log(`Retrying upload in ${delay / 1000}s...`);
         setTimeout(cb, delay);
       }
     }
@@ -51,6 +77,8 @@ async function uploadFromURL(env, relativePath, url, storage = null) {
   
   // Read from URL response and write to upload stream
   const reader = response.body.getReader();
+  let totalBytesRead = 0;
+  let lastProgressLog = Date.now();
   
   try {
     while (true) {
@@ -70,11 +98,26 @@ async function uploadFromURL(env, relativePath, url, storage = null) {
           uploadStream.once('drain', resolve);
         });
       }
+      
+      totalBytesRead += value.length;
+      
+      // Log progress every 10 seconds for large files
+      if (fileSizeMB > 10 && Date.now() - lastProgressLog > 10000) {
+        const progress = fileSize > 0 ? ((totalBytesRead / fileSize) * 100).toFixed(1) : 'unknown';
+        console.log(`Download/upload progress: ${progress}% (${(totalBytesRead / 1024 / 1024).toFixed(2)} MB / ${(fileSize / 1024 / 1024).toFixed(2)} MB)`);
+        lastProgressLog = Date.now();
+      }
     }
     
-    // Wait for upload to complete
-    const file = await uploadStream.complete;
-    console.log(`Successfully uploaded file from URL: ${file.name}`);
+    // Wait for upload to complete with timeout
+    const file = await Promise.race([
+      uploadStream.complete,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Upload timeout after ${timeoutMs / 1000 / 60} minutes`)), timeoutMs)
+      )
+    ]);
+    
+    console.log(`Successfully uploaded file from URL: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
     
     return {
       name: file.name,
@@ -89,6 +132,23 @@ async function uploadFromURL(env, relativePath, url, storage = null) {
 }
 
 const FILES_ROOT = "files";
+
+// Initialize the folder architecture on first load
+export async function initializeFolderArchitecture(env) {
+  try {
+    const storage = await getClient(env);
+    console.log('Initializing folder architecture...');
+    
+    // Create the root "files" folder if it doesn't exist
+    await getOrCreateFolder(storage, FILES_ROOT);
+    
+    console.log('Folder architecture initialized successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error initializing folder architecture:', error);
+    throw error;
+  }
+}
 
 function normalizePath(path) {
   const normalized = path.replace(/^\/+|\/+$/g, "");
@@ -207,7 +267,7 @@ async function uploadFromBuffer(env, relativePath, fileData, storage = null) {
   const fullPath = normalizePath(`${FILES_ROOT}/${relativePath}`);
   const storageInstance = storage || await getClient(env);
   
-  console.log(`uploadFromBuffer called: path=${fullPath}, size=${fileData.length} bytes`);
+  console.log(`uploadFromBuffer called: path=${fullPath}, size=${fileData.length} bytes (${(fileData.length / 1024 / 1024).toFixed(2)} MB)`);
   
   // Ensure parent folder exists
   const segments = fullPath.split("/").filter(Boolean);
@@ -221,29 +281,56 @@ async function uploadFromBuffer(env, relativePath, fileData, storage = null) {
   
   const folder = folderPath ? await getOrCreateFolder(storageInstance, folderPath) : storageInstance.root;
   
+  // Calculate dynamic chunk sizes based on file size
+  const fileSizeMB = fileData.length / 1024 / 1024;
+  let initialChunkSize = 1048576; // 1MB default
+  let chunkSizeIncrement = 1048576; // 1MB increment
+  let maxChunkSize = 8388608; // 8MB max
+  let maxConnections = 2;
+  
+  // Use larger chunks for larger files
+  if (fileSizeMB > 100) {
+    initialChunkSize = 2097152; // 2MB
+    chunkSizeIncrement = 2097152; // 2MB
+    maxChunkSize = 16777216; // 16MB
+    maxConnections = 3;
+  } else if (fileSizeMB > 50) {
+    initialChunkSize = 1048576; // 1MB
+    chunkSizeIncrement = 1048576; // 1MB
+    maxChunkSize = 8388608; // 8MB
+    maxConnections = 2;
+  }
+  
+  console.log(`Using chunk sizes: initial=${initialChunkSize / 1024 / 1024}MB, max=${maxChunkSize / 1024 / 1024}MB, connections=${maxConnections}`);
+  
+  // Calculate timeout based on file size (at least 5 minutes, more for larger files)
+  const timeoutMs = Math.max(300000, fileSizeMB * 10000); // 10 seconds per MB minimum
+  console.log(`Upload timeout: ${timeoutMs / 1000 / 60} minutes`);
+  
   // Create upload stream from MEGA
   const uploadStream = folder.upload({ 
     name: fileName,
     size: fileData.length,
-    maxConnections: 1,
-    initialChunkSize: 65536,
-    chunkSizeIncrement: 65536,
-    maxChunkSize: 524288,
+    maxConnections: maxConnections,
+    initialChunkSize: initialChunkSize,
+    chunkSizeIncrement: chunkSizeIncrement,
+    maxChunkSize: maxChunkSize,
     handleRetries: (tries, error, cb) => {
-      console.log(`MEGA upload retry ${tries}/8, error:`, error.message);
-      if (tries > 8) {
+      console.log(`MEGA upload retry ${tries}/12, error:`, error.message);
+      if (tries > 12) {
         cb(error);
       } else {
-        const delay = 1000 * Math.pow(2, tries);
-        console.log(`Retrying upload in ${delay}ms...`);
+        const delay = 2000 * Math.pow(2, tries); // Start with 2 seconds
+        console.log(`Retrying upload in ${delay / 1000}s...`);
         setTimeout(cb, delay);
       }
     }
   });
   
   // Write buffer to upload stream in chunks
-  const chunkSize = 65536;
+  const chunkSize = initialChunkSize;
   let offset = 0;
+  let lastProgressLog = Date.now();
   
   try {
     while (offset < fileData.length) {
@@ -258,14 +345,27 @@ async function uploadFromBuffer(env, relativePath, fileData, storage = null) {
       }
       
       offset += chunkSize;
+      
+      // Log progress every 10 seconds for large files
+      if (fileSizeMB > 10 && Date.now() - lastProgressLog > 10000) {
+        const progress = ((offset / fileData.length) * 100).toFixed(1);
+        console.log(`Upload progress: ${progress}% (${(offset / 1024 / 1024).toFixed(2)} MB / ${(fileData.length / 1024 / 1024).toFixed(2)} MB)`);
+        lastProgressLog = Date.now();
+      }
     }
     
     // End the stream
     uploadStream.end();
     
-    // Wait for upload to complete
-    const file = await uploadStream.complete;
-    console.log(`Successfully uploaded file from buffer: ${file.name}`);
+    // Wait for upload to complete with timeout
+    const file = await Promise.race([
+      uploadStream.complete,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error(`Upload timeout after ${timeoutMs / 1000 / 60} minutes`)), timeoutMs)
+      )
+    ]);
+    
+    console.log(`Successfully uploaded file from buffer: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
     
     return {
       name: file.name,
@@ -335,6 +435,14 @@ async function createFolder(env, relativePath) {
 }
 
 export async function FilesFunction(env, path, method, body) {
+  // Initialize folder architecture on first access
+  try {
+    await initializeFolderArchitecture(env);
+  } catch (error) {
+    console.error('Failed to initialize folder architecture:', error);
+    // Don't fail the request if initialization fails, it might already exist
+  }
+
   switch (method) {
     case "GET":
       if (path === "" || path === "/") {

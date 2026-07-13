@@ -8,7 +8,7 @@ import { Cache } from "./backend/cache/index.js";
 import { Auth, verifySessionToken } from "./backend/auth/index.js";
 import { Pomodoro } from "./backend/database/pomodoro.js";
 import { WebsitesFunction } from "./backend/database/websites.js";
-import { FilesFunction } from "./backend/database/files_management.js";
+import { FilesFunction, initializeFolderArchitecture } from "./backend/database/files_management.js";
 import { ToolsFunction } from "./backend/tools/index.js";
  
 import { sendMail } from "./backend/notifications/mail.js";

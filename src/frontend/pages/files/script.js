@@ -137,6 +137,37 @@ function getFileIcon(extension) {
 
 // ===================== RENDER FUNCTIONS =====================
 
+function renderBreadcrumb() {
+  const breadcrumb = document.getElementById('files-path');
+  if (!breadcrumb) return;
+
+  if (!currentPath) {
+    breadcrumb.innerHTML = `
+      <span class="path-segment">Root</span>
+    `;
+    return;
+  }
+
+  const segments = currentPath.split('/');
+  let html = '<span class="path-segment" data-path="">Root</span>';
+
+  segments.forEach((segment, index) => {
+    const path = segments.slice(0, index + 1).join('/');
+    html += `<span class="path-separator">›</span>`;
+    html += `<span class="path-segment" data-path="${path}">${segment}</span>`;
+  });
+
+  breadcrumb.innerHTML = html;
+
+  // Add click handlers to segments
+  breadcrumb.querySelectorAll('.path-segment').forEach(segment => {
+    segment.addEventListener('click', () => {
+      const path = segment.dataset.path;
+      navigateTo(path);
+    });
+  });
+}
+
 function renderFiles() {
   const filesList = document.getElementById('files-list');
   if (!filesList) return;
@@ -309,6 +340,7 @@ async function navigateTo(path) {
     const data = await fetchFiles(currentPath);
     folders = data.folders || [];
     files = data.files || [];
+    renderBreadcrumb();
     renderFiles();
   } catch (error) {
     console.error('Error navigating to path:', error);
