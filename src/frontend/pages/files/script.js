@@ -1,6 +1,6 @@
 // ===================== FILES PAGE JAVASCRIPT =====================
 
-import { ensureSessionToken } from "/lib/auth.js";
+import { authedFetch } from "/lib/auth.js";
 
 let currentPath = "";
 let files = [];
@@ -10,24 +10,11 @@ let selectedFile = null;
 
 // ===================== API FUNCTIONS =====================
 
-async function getAuthToken() {
-  const token = await ensureSessionToken();
-  if (!token) {
-    throw new Error('No authentication token found');
-  }
-  return token;
-}
-
 async function fetchFiles(path = "") {
   try {
-    const token = await getAuthToken();
     const encodedPath = encodeURIComponent(path);
-    const response = await fetch(`/api/files/list/${encodedPath}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+    const response = await authedFetch(`/api/files/list/${encodedPath}`, {
+      method: 'GET'
     });
 
     if (!response.ok) {
@@ -45,13 +32,9 @@ async function fetchFiles(path = "") {
 
 async function uploadFile(relativePath, content) {
   try {
-    const token = await getAuthToken();
-    const response = await fetch('/api/files/upload', {
+    const response = await authedFetch('/api/files/upload', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ relativePath, content })
     });
 
@@ -70,13 +53,9 @@ async function uploadFile(relativePath, content) {
 
 async function createFolder(relativePath) {
   try {
-    const token = await getAuthToken();
-    const response = await fetch('/api/files/folder', {
+    const response = await authedFetch('/api/files/folder', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ relativePath })
     });
 
@@ -95,14 +74,9 @@ async function createFolder(relativePath) {
 
 async function deleteFile(relativePath) {
   try {
-    const token = await getAuthToken();
     const encodedPath = encodeURIComponent(relativePath);
-    const response = await fetch(`/api/files/delete/${encodedPath}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+    const response = await authedFetch(`/api/files/delete/${encodedPath}`, {
+      method: 'DELETE'
     });
 
     if (!response.ok) {
