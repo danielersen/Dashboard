@@ -81,11 +81,11 @@
 
     <div class="files-shell">
       <aside class="files-sidebar" aria-label="Files actions">
-        <button class="files-nav" type="button" id="create-folder-btn" aria-label="Create folder">
+        <button class="files-nav" type="button" id="upload-btn" aria-label="Upload file">
           <span class="files-icon" data-icon="/assets/icons/plus.svg"></span>
         </button>
-        <button class="files-nav" type="button" id="upload-btn" aria-label="Upload file" style="display: none;">
-          <span class="files-icon" data-icon="/assets/icons/upload.svg"></span>
+        <button class="files-nav" type="button" id="download-btn" aria-label="Download file" style="display: none;">
+          <span class="files-icon" data-icon="/assets/icons/download.svg"></span>
         </button>
       </aside>
 
@@ -115,24 +115,6 @@
           <div class="modal-actions">
             <button type="button" class="btn-secondary" id="cancel-upload-btn">Cancel</button>
             <button type="submit" class="btn-primary">Upload</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Create Folder Modal -->
-    <div class="modal" id="folder-modal" aria-hidden="true">
-      <div class="modal-backdrop"></div>
-      <div class="modal-content">
-        <h2 class="modal-title">Create Folder</h2>
-        <form id="folder-form">
-          <div class="form-group">
-            <label for="folder-name">Folder Name</label>
-            <input type="text" id="folder-name" name="name" required placeholder="Folder name">
-          </div>
-          <div class="modal-actions">
-            <button type="button" class="btn-secondary" id="cancel-folder-btn">Cancel</button>
-            <button type="submit" class="btn-primary">Create</button>
           </div>
         </form>
       </div>
