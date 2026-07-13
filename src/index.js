@@ -44,10 +44,19 @@ export default {
     }
 
     let body;
-    try {
-      body = JSON.parse(await request.text());
-    } catch (e) {
-      body = {};
+    const contentType = request.headers.get('content-type') || '';
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData (file upload)
+      const formData = await request.formData();
+      body = formData;
+    } else {
+      // Handle JSON
+      try {
+        body = JSON.parse(await request.text());
+      } catch (e) {
+        body = {};
+      }
     }
     
     // =========================

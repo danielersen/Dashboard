@@ -30,12 +30,15 @@ async function fetchFiles(path = "") {
   }
 }
 
-async function uploadFile(relativePath, content = null, url = null) {
+async function uploadFile(relativePath, file) {
   try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('relativePath', relativePath);
+
     const response = await authedFetch('/api/files/upload', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ relativePath, content, url })
+      body: formData
     });
 
     if (!response.ok) {
@@ -312,15 +315,13 @@ const folderModal = document.getElementById('folder-modal');
 const deleteModal = document.getElementById('delete-modal');
 const uploadForm = document.getElementById('upload-form');
 const folderForm = document.getElementById('folder-form');
-const fileNameInput = document.getElementById('file-name');
-const fileUrlInput = document.getElementById('file-url');
+const fileInput = document.getElementById('file-input');
 const folderNameInput = document.getElementById('folder-name');
 
 function openUploadModal() {
-  fileNameInput.value = '';
-  fileUrlInput.value = '';
+  fileInput.value = '';
   uploadModal.setAttribute('aria-hidden', 'false');
-  fileNameInput.focus();
+  fileInput.focus();
 }
 
 function closeUploadModal() {
@@ -386,11 +387,9 @@ document.getElementById('confirm-delete-btn').addEventListener('click', async ()
 uploadForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const fileName = document.getElementById('file-name').value.trim();
-  const fileUrl = document.getElementById('file-url').value.trim();
-  
-  if (!fileName || !fileUrl) {
-    alert('Please enter both file name and URL');
+  const file = fileInput.files[0];
+  if (!file) {
+    alert('Please select a file');
     return;
   }
 
@@ -400,13 +399,13 @@ uploadForm.addEventListener('submit', async (e) => {
   submitBtn.style.cursor = 'not-allowed';
 
   try {
-    const relativePath = currentPath ? `${currentPath}/${fileName}` : fileName;
+    const relativePath = currentPath ? `${currentPath}/${file.name}` : file.name;
     
     // Close modal immediately after starting upload
     closeUploadModal();
     
     // Start upload in background without waiting
-    uploadFile(relativePath, null, fileUrl)
+    uploadFile(relativePath, file)
       .then(async () => {
         await navigateTo(currentPath);
       })
@@ -437,8 +436,7 @@ uploadForm.addEventListener('submit', async (e) => {
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
         submitBtn.style.cursor = 'pointer';
-        document.getElementById('file-name').value = '';
-        document.getElementById('file-url').value = '';
+        fileInput.value = '';
       });
   } catch (error) {
     console.error('Error processing upload:', error);
