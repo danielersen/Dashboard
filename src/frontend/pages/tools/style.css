@@ -483,6 +483,99 @@ a {
   overflow-y: auto;
 }
 
+/* ===================== CALCULATOR HISTORY STYLES ===================== */
+
+.calculator-history-container {
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.calculator-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.calculator-history-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.clear-history-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--faint);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.clear-history-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text);
+}
+
+.calculator-history {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 20px;
+}
+
+.history-item {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.history-calculation {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
+.history-result {
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.history-timestamp {
+  font-size: 0.75rem;
+  color: var(--faint);
+  margin-top: 4px;
+}
+
 /* ===================== RESPONSIVE ===================== */
 
 @media (max-width: 768px) {
