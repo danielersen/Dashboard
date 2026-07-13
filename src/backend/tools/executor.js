@@ -15,14 +15,35 @@ export async function executeCode(env, language, code) {
   if (language === 'javascript') {
     try {
       console.log('Executing JavaScript code:', code);
+      console.log('Code length:', code.length);
       
-      // Wrap code in a function to allow return statements
-      const fn = new Function(code);
+      // Split code into lines and find the last non-empty, non-comment line
+      const lines = code.split('\n').filter(line => line.trim() && !line.trim().startsWith('//'));
+      const lastLine = lines[lines.length - 1];
+      
+      console.log('Last line:', lastLine);
+      
+      // If the last line doesn't start with return, const, let, var, function, or control structures
+      // prepend return to it
+      let modifiedCode = code;
+      if (lastLine && !lastLine.trim().startsWith('return') && 
+          !lastLine.trim().startsWith('const') && 
+          !lastLine.trim().startsWith('let') && 
+          !lastLine.trim().startsWith('var') &&
+          !lastLine.trim().startsWith('function') &&
+          !lastLine.trim().startsWith('if') &&
+          !lastLine.trim().startsWith('for') &&
+          !lastLine.trim().startsWith('while') &&
+          !lastLine.trim().startsWith('class')) {
+        modifiedCode = code.replace(lastLine, `return ${lastLine}`);
+        console.log('Modified code:', modifiedCode);
+      }
+      
+      const fn = new Function(modifiedCode);
       const result = fn();
       
       console.log('Execution result:', result);
       console.log('Result type:', typeof result);
-      console.log('Result is undefined:', result === undefined);
       
       // Convert result to string
       let output;
@@ -44,7 +65,7 @@ export async function executeCode(env, language, code) {
       };
     } catch (error) {
       console.error('JavaScript execution error:', error);
-      console.error('Error stack:', error.stack);
+      console.error('Error message:', error.message);
       return {
         output: '',
         error: error.message

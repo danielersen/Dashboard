@@ -445,7 +445,9 @@ const codeCopyOutput = document.getElementById('code-copy-output');
 
 // Set default code examples
 const codeExamples = {
-  javascript: `return "Hello, World!";`
+  javascript: `const numbers = [1, 2, 3, 4, 5];
+const doubled = numbers.map(n => n * 2);
+doubled;`
 };
 
 // Initialize code executor
