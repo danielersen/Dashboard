@@ -68,7 +68,7 @@ function clearCache() {
 
 // ===================== API FUNCTIONS =====================
 
-async function fetchFiles(path = "", useCache = true) {
+async function downloadFiles(path = "", useCache = true) {
   // Try to get cached data first
   if (useCache) {
     const cached = getCachedData(path);
@@ -85,8 +85,9 @@ async function fetchFiles(path = "", useCache = true) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch files');
+      console.error(`Failed to fetch files for path ${path}: ${response.status}`);
+      // Return empty data instead of throwing error to prevent UI disruption
+      return { files: [], folders: [], path };
     }
 
     const data = await response.json();
@@ -97,8 +98,9 @@ async function fetchFiles(path = "", useCache = true) {
     
     return result;
   } catch (error) {
-    console.error('Error fetching files:', error);
-    throw error;
+    console.error('Error downloading files:', error);
+    // Return empty data instead of throwing error to prevent UI disruption
+    return { files: [], folders: [], path };
   }
 }
 
@@ -340,6 +342,9 @@ function createFolderBlock(folder) {
 function createFileBlock(file) {
   const block = document.createElement('div');
   block.className = 'file-block';
+  if (file.uploading) {
+    block.classList.add('uploading');
+  }
   block.dataset.path = file.path;
 
   const icon = document.createElement('div');
@@ -421,7 +426,7 @@ async function navigateTo(path) {
     }
     
     // Then fetch fresh data in background
-    const data = await fetchFiles(path, false); // Don't use cache for fresh fetch
+    const data = await downloadFiles(path, false); // Don't use cache for fresh fetch
     folders = data.folders || [];
     files = data.files || [];
     
@@ -660,49 +665,65 @@ uploadForm.addEventListener('submit', async (e) => {
   try {
     const relativePath = currentPath ? `${currentPath}/${file.name}` : file.name;
     
-    // Close modal immediately after starting upload
+    // Create optimistic file entry
+    const optimisticFile = {
+      name: file.name,
+      path: relativePath,
+      size: file.size,
+      modified: new Date().toISOString(),
+      extension: getFileExtension(file.name),
+      uploading: true
+    };
+    
+    // Add to files array immediately
+    files.push(optimisticFile);
+    renderFiles();
+    
+    // Close modal
     closeUploadModal();
     
-    // Start upload in background without waiting
-    uploadFile(relativePath, file)
-      .then(async () => {
-        await navigateTo(currentPath);
-      })
-      .catch((error) => {
-        // Show error message for 2 seconds
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'upload-error-message';
-        errorMsg.textContent = 'Upload failed';
-        errorMsg.style.cssText = `
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          background: #ef4444;
-          color: white;
-          padding: 12px 24px;
-          border-radius: 8px;
-          z-index: 10000;
-          animation: slideIn 0.3s ease;
-        `;
-        document.body.appendChild(errorMsg);
-        
-        setTimeout(() => {
-          errorMsg.style.animation = 'slideOut 0.3s ease';
-          setTimeout(() => errorMsg.remove(), 300);
-        }, 2000);
-      })
-      .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-        submitBtn.style.cursor = 'pointer';
-        fileInput.value = '';
-      });
+    // Start upload
+    await uploadFile(relativePath, file);
+    
+    // Upload succeeded, refresh data
+    await navigateTo(currentPath);
+    
   } catch (error) {
-    console.error('Error processing upload:', error);
-    alert(`Failed to process upload: ${error.message}`);
+    console.error('Upload failed:', error);
+    
+    // Remove optimistic file from array
+    files = files.filter(f => !f.uploading);
+    renderFiles();
+    
+    // Show error message
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'upload-error-message';
+    errorMsg.textContent = 'Upload failed';
+    errorMsg.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ef4444;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      animation: slideIn 0.3s ease;
+    `;
+    document.body.appendChild(errorMsg);
+    
+    setTimeout(() => {
+      errorMsg.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => errorMsg.remove(), 300);
+    }, 2000);
+    
+    // Reopen modal to allow retry
+    openUploadModal();
+  } finally {
     submitBtn.disabled = false;
     submitBtn.style.opacity = '1';
     submitBtn.style.cursor = 'pointer';
+    fileInput.value = '';
   }
 });
 
@@ -723,7 +744,7 @@ document.addEventListener('keydown', (e) => {
 async function init() {
   try {
     // Load root directory with cache
-    const data = await fetchFiles("", true);
+    const data = await downloadFiles("", true);
     folders = data.folders || [];
     files = data.files || [];
     renderBreadcrumb();
@@ -733,7 +754,7 @@ async function init() {
     if (folders.length > 0) {
       console.log(`Preloading ${folders.length} folders in parallel...`);
       const preloadPromises = folders.map(folder => 
-        fetchFiles(folder.path, true).catch(error => {
+        downloadFiles(folder.path, true).catch(error => {
           console.error(`Failed to preload folder ${folder.path}:`, error);
           return null;
         })
