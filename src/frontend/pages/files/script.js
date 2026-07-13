@@ -95,6 +95,27 @@ async function deleteFile(relativePath) {
   }
 }
 
+async function renameItem(oldPath, newName) {
+  try {
+    const response = await authedFetch('/api/files/rename', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPath, newName })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to rename item');
+    }
+
+    const data = await response.json();
+    return data.resp;
+  } catch (error) {
+    console.error('Error renaming item:', error);
+    throw error;
+  }
+}
+
 // ===================== UTILITY FUNCTIONS =====================
 
 function formatFileSize(bytes) {
@@ -178,6 +199,16 @@ function createFolderBlock(folder) {
   const actions = document.createElement('div');
   actions.className = 'file-actions';
 
+  const editBtn = document.createElement('button');
+  editBtn.className = 'file-action-btn edit';
+  editBtn.type = 'button';
+  editBtn.ariaLabel = 'Rename folder';
+  editBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openEditModal(folder, true);
+  });
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'file-action-btn delete';
   deleteBtn.type = 'button';
@@ -188,6 +219,7 @@ function createFolderBlock(folder) {
     openDeleteModal(folder, true);
   });
 
+  actions.appendChild(editBtn);
   actions.appendChild(deleteBtn);
 
   block.appendChild(icon);
@@ -232,6 +264,16 @@ function createFileBlock(file) {
   const actions = document.createElement('div');
   actions.className = 'file-actions';
 
+  const editBtn = document.createElement('button');
+  editBtn.className = 'file-action-btn edit';
+  editBtn.type = 'button';
+  editBtn.ariaLabel = 'Rename file';
+  editBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+  editBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openEditModal(file, false);
+  });
+
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'file-action-btn delete';
   deleteBtn.type = 'button';
@@ -242,6 +284,7 @@ function createFileBlock(file) {
     openDeleteModal(file, false);
   });
 
+  actions.appendChild(editBtn);
   actions.appendChild(deleteBtn);
 
   block.appendChild(icon);
@@ -313,10 +356,13 @@ async function openFile(file) {
 const uploadModal = document.getElementById('upload-modal');
 const folderModal = document.getElementById('folder-modal');
 const deleteModal = document.getElementById('delete-modal');
+const editModal = document.getElementById('edit-modal');
 const uploadForm = document.getElementById('upload-form');
 const folderForm = document.getElementById('folder-form');
+const editForm = document.getElementById('edit-form');
 const fileInput = document.getElementById('file-input');
 const folderNameInput = document.getElementById('folder-name');
+const editNameInput = document.getElementById('edit-name');
 
 function openUploadModal() {
   fileInput.value = '';
@@ -340,6 +386,21 @@ function closeFolderModal() {
   folderForm.reset();
 }
 
+let editingItem = null;
+
+function openEditModal(item, isFolder) {
+  editingItem = { ...item, isFolder };
+  editNameInput.value = item.name;
+  editModal.setAttribute('aria-hidden', 'false');
+  editNameInput.focus();
+}
+
+function closeEditModal() {
+  editModal.setAttribute('aria-hidden', 'true');
+  editForm.reset();
+  editingItem = null;
+}
+
 function openDeleteModal(item, isFolder) {
   deletingItem = { ...item, isFolder };
   deleteModal.setAttribute('aria-hidden', 'false');
@@ -353,6 +414,7 @@ function closeDeleteModal() {
 // ===================== EVENT LISTENERS =====================
 
 document.getElementById('upload-btn').addEventListener('click', openUploadModal);
+document.getElementById('folder-btn').addEventListener('click', openFolderModal);
 document.getElementById('download-btn').addEventListener('click', () => {
   if (selectedFile) {
     openFile(selectedFile);
@@ -361,6 +423,69 @@ document.getElementById('download-btn').addEventListener('click', () => {
 
 document.getElementById('cancel-upload-btn').addEventListener('click', closeUploadModal);
 document.getElementById('cancel-delete-btn').addEventListener('click', closeDeleteModal);
+document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
+document.getElementById('cancel-folder-btn').addEventListener('click', closeFolderModal);
+
+editForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  if (!editingItem) {
+    return;
+  }
+
+  const newName = editNameInput.value.trim();
+  if (!newName) {
+    alert('Please enter a new name');
+    return;
+  }
+
+  const submitBtn = editForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.5';
+  submitBtn.style.cursor = 'not-allowed';
+
+  try {
+    await renameItem(editingItem.path, newName);
+    closeEditModal();
+    await navigateTo(currentPath);
+  } catch (error) {
+    console.error('Error renaming item:', error);
+    alert(`Failed to rename item: ${error.message}`);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
+  }
+});
+
+folderForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const name = folderNameInput.value.trim();
+  if (!name) {
+    alert('Please enter a folder name');
+    return;
+  }
+
+  const submitBtn = folderForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.5';
+  submitBtn.style.cursor = 'not-allowed';
+
+  try {
+    const relativePath = currentPath ? `${currentPath}/${name}` : name;
+    await createFolder(relativePath);
+    closeFolderModal();
+    await navigateTo(currentPath);
+  } catch (error) {
+    console.error('Error creating folder:', error);
+    alert(`Failed to create folder: ${error.message}`);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
+  }
+});
 
 document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
   if (deletingItem) {

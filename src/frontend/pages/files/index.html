@@ -84,6 +84,9 @@
         <button class="files-nav" type="button" id="upload-btn" aria-label="Upload file">
           <span class="files-icon" data-icon="/assets/icons/plus.svg"></span>
         </button>
+        <button class="files-nav" type="button" id="folder-btn" aria-label="Create folder">
+          <span class="files-icon" data-icon="/assets/icons/folder.svg"></span>
+        </button>
         <button class="files-nav" type="button" id="download-btn" aria-label="Download file" style="display: none;">
           <span class="files-icon" data-icon="/assets/icons/download.svg"></span>
         </button>
@@ -130,6 +133,42 @@
           <button type="button" class="btn-secondary" id="cancel-delete-btn">No</button>
           <button type="button" class="btn-danger" id="confirm-delete-btn">Yes</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Edit/Rename Modal -->
+    <div class="modal" id="edit-modal" aria-hidden="true">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h2 class="modal-title">Rename Item</h2>
+        <form id="edit-form">
+          <div class="form-group">
+            <label for="edit-name">New Name</label>
+            <input type="text" id="edit-name" name="name" required>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancel-edit-btn">Cancel</button>
+            <button type="submit" class="btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Create Folder Modal -->
+    <div class="modal" id="folder-modal" aria-hidden="true">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h2 class="modal-title">Create Folder</h2>
+        <form id="folder-form">
+          <div class="form-group">
+            <label for="folder-name">Folder Name</label>
+            <input type="text" id="folder-name" name="name" required>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="cancel-folder-btn">Cancel</button>
+            <button type="submit" class="btn-primary">Create</button>
+          </div>
+        </form>
       </div>
     </div>
   </body>
