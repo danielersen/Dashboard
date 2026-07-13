@@ -1,5 +1,81 @@
 import { getClient, getFolderIfExists, getOrCreateFolder, megaRead, megaWrite, megaDelete } from "./mega.js";
 
+// Helper function to download from URL and stream to MEGA
+async function uploadFromURL(env, relativePath, url, storage = null) {
+  const fullPath = normalizePath(`${FILES_ROOT}/${relativePath}`);
+  const storageInstance = storage || await getClient(env);
+  
+  console.log(`uploadFromURL called: path=${fullPath}, url=${url}`);
+  
+  // Ensure parent folder exists
+  const segments = fullPath.split("/").filter(Boolean);
+  if (segments.length > 1) {
+    const folderPath = segments.slice(0, -1).join("/");
+    await getOrCreateFolder(storageInstance, folderPath);
+  }
+
+  // Get file info from URL to determine name and size
+  const fileName = segments.at(-1);
+  const folderPath = segments.length > 1 ? segments.slice(0, -1).join("/") : "";
+  
+  const folder = folderPath ? await getOrCreateFolder(storageInstance, folderPath) : storageInstance.root;
+  
+  // Download from URL and get file size
+  const response = await fetch(url, { redirect: 'follow' });
+  if (!response.ok) {
+    throw new Error(`Failed to download from URL: ${response.status}`);
+  }
+  
+  const fileSize = parseInt(response.headers.get('content-length')) || 0;
+  console.log(`File size from URL: ${fileSize} bytes`);
+  
+  // Create readable stream from the URL response
+  const { Readable } = await import('stream');
+  const { ReadableStream } = await import('web-streams-node');
+  
+  // Convert web stream to Node stream
+  const nodeStream = Readable.fromWeb(response.body);
+  
+  // Upload to MEGA using streaming
+  const uploadPromise = new Promise((resolve, reject) => {
+    folder.upload({ 
+      name: fileName, 
+      size: fileSize,
+      maxConnections: 1,
+      initialChunkSize: 65536,
+      chunkSizeIncrement: 65536,
+      maxChunkSize: 524288,
+      handleRetries: (tries, error, cb) => {
+        console.log(`MEGA upload retry ${tries}/8, error:`, error.message);
+        if (tries > 8) {
+          cb(error);
+        } else {
+          const delay = 1000 * Math.pow(2, tries);
+          console.log(`Retrying upload in ${delay}ms...`);
+          setTimeout(cb, delay);
+        }
+      }
+    }, nodeStream, (err, file) => {
+      if (err) {
+        console.error(`MEGA upload error:`, err);
+        reject(err);
+      } else {
+        console.log(`MEGA upload complete: ${file.name}`);
+        resolve(file);
+      }
+    });
+  });
+
+  const file = await uploadPromise;
+  console.log(`Successfully uploaded file from URL: ${file.name}`);
+  return {
+    name: file.name,
+    size: file.size,
+    nodeId: file.nodeId,
+    downloadId: file.downloadId
+  };
+}
+
 const FILES_ROOT = "files";
 
 function normalizePath(path) {
@@ -76,10 +152,18 @@ async function readFile(env, relativePath) {
   }
 }
 
-async function writeFile(env, relativePath, content) {
+async function writeFile(env, relativePath, content, url = null) {
   const fullPath = normalizePath(`${FILES_ROOT}/${relativePath}`);
   const storage = await getClient(env);
   
+  console.log(`writeFile called: path=${fullPath}, url=${url}`);
+  
+  // If URL is provided, use streaming upload from URL
+  if (url) {
+    return await uploadFromURL(env, relativePath, url, storage);
+  }
+  
+  // Otherwise, use traditional content upload
   console.log(`writeFile called: path=${fullPath}, content length=${typeof content === 'string' ? content.length : 'unknown'}`);
   
   // Ensure parent folder exists
@@ -142,11 +226,14 @@ export async function FilesFunction(env, path, method, body) {
     
     case "POST":
       if (path === "upload") {
-        const { relativePath, content } = body;
+        const { relativePath, content, url } = body;
         if (!relativePath) {
           throw new Error("relativePath is required");
         }
-        return await writeFile(env, relativePath, content);
+        if (!content && !url) {
+          throw new Error("content or url is required");
+        }
+        return await writeFile(env, relativePath, content, url);
       }
       if (path === "folder") {
         const { relativePath } = body;
