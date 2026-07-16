@@ -395,9 +395,15 @@ async function sendMessage(message) {
 
   try {
     const category = CATEGORY_ALIASES[state.selectedCategory] || state.selectedCategory;
+    
+    // Find the full model ID from the categorized models
+    const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+    const selectedModelData = categoryModels.find(m => m.name === state.selectedModel);
+    const modelId = selectedModelData?.id || state.selectedModel;
+    
     const response = await aiPost("chat", {
-      message,
-      model: state.selectedModel,
+      prompt: message,
+      model: modelId,
       category,
       conversationId: state.conversationId,
     });
