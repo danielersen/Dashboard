@@ -24,7 +24,7 @@ function findCheapestModel(categorizedModels) {
     }
   }
   
-  return cheapestModel || "@cf/meta/llama-2-7b-chat-int8";
+  return cheapestModel;
 }
 
 // Generate a conversation title using a cheap model

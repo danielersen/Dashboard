@@ -360,7 +360,8 @@ export async function AIfunction(env, subpath, method, headers, body) {
   if (parts.length === 1 && parts[0] === "chat" && method === "POST") {
     // Chat endpoint for unified AI interface
     const category = body?.category || "basic";
-    const model = body?.model || env.DEFAULT_AI_MODEL || "openai/gpt-4o-mini";
+    const model = body?.model || env.DEFAULT_AI_MODEL;
+    if (!model) return { error: "No model specified and no default model configured" };
     const prompt = body?.prompt || "";
     
     console.log("Chat request - category:", category, "model:", model, "prompt:", prompt);
@@ -385,7 +386,8 @@ export async function AIfunction(env, subpath, method, headers, body) {
   if (!fn) return { error: "unknown category" };
 
   if (action === "ask" && method === "POST") {
-    const model = body?.model || env.DEFAULT_AI_MODEL || "openai/gpt-4o-mini";
+    const model = body?.model || env.DEFAULT_AI_MODEL;
+    if (!model) return { error: "No model specified and no default model configured" };
     // Skip monthly limit check to reduce subrequests
     // call category function with mapped category name
     const resp = await fn(env, model, body || {});
