@@ -245,15 +245,6 @@ export default {
     }
 
     return env.ASSETS.fetch(request)
-  },
-
-  async scheduled(event, env, ctx) {
-    // Déclencher le workflow check_grades
-    try {
-      await env.CHECK_GRADES.create();
-    } catch (error) {
-      console.error("Error triggering check_grades workflow:", error);
-    }
   }
 }
 
