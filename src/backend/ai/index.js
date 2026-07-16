@@ -5,6 +5,7 @@ import { search_web } from "./search_web.js";
 import { notes_remarks } from "./notes_remarks.js";
 import { readIndex, readDiscussion } from "./core.js";
 import { fetchCloudflareLimits } from "./limits.js";
+import { getGatewayMetadata } from "./gateway.js";
 
 const CATEGORIES = {
   basic,
@@ -363,8 +364,44 @@ export async function AIfunction(env, subpath, method, headers, body) {
     const model = body?.model || env.DEFAULT_AI_MODEL;
     if (!model) return { error: "No model specified and no default model configured" };
     const prompt = body?.prompt || "";
+    const conversationId = body?.conversationId || null;
+    const conversationName = body?.conversationName || null;
     
     console.log("Chat request - category:", category, "model:", model, "prompt:", prompt);
+    
+    // Get categorized models for gateway metadata
+    const cloudflareModels = await fetchCloudflareModels(env);
+    const categorizedModels = {};
+    Object.keys(CATEGORIES).forEach(cat => {
+      categorizedModels[cat] = [];
+    });
+    cloudflareModels.forEach(modelData => {
+      const categories = categorizeModel(modelData);
+      const modelInfo = {
+        id: modelData.id,
+        name: modelData.name,
+        brand: modelData.brand,
+        description: modelData.description,
+        type: modelData.type,
+        consumption: estimateConsumption(modelData),
+        pricing: modelData.pricing
+      };
+      categories.forEach(cat => {
+        if (categorizedModels[cat]) {
+          categorizedModels[cat].push(modelInfo);
+        }
+      });
+    });
+    
+    // Generate gateway metadata
+    const gatewayMetadata = await getGatewayMetadata(env, {
+      conversationId,
+      conversationName,
+      prompt,
+      categorizedModels
+    });
+    
+    console.log("Generated gateway metadata:", gatewayMetadata);
     
     // Map frontend category names to backend category names
     const mappedCategory = CATEGORY_ALIASES[category] || category;
@@ -373,9 +410,24 @@ export async function AIfunction(env, subpath, method, headers, body) {
     
     console.log("Using mapped category:", mappedCategory, "function:", fn.name);
     
-    // Call category function with proper body structure, including category
-    const resp = await fn(env, model, { prompt, text: prompt, category: mappedCategory });
-    return resp;
+    // Call category function with proper body structure, including category and gateway metadata
+    const resp = await fn(env, model, { 
+      prompt, 
+      text: prompt, 
+      category: mappedCategory,
+      gatewayMetadata,
+      conversationId: gatewayMetadata.gateway.metadata.conversationId,
+      conversationName: gatewayMetadata.gateway.metadata.conversationName,
+      categorizedModels
+    });
+    
+    // Return response with conversation info
+    return {
+      ...resp,
+      conversationId: gatewayMetadata.gateway.metadata.conversationId,
+      conversationName: gatewayMetadata.gateway.metadata.conversationName,
+      isNewConversation: gatewayMetadata.gateway.metadata.isNewConversation
+    };
   }
 
   const category = parts[0];

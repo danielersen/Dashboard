@@ -406,6 +406,7 @@ async function sendMessage(message) {
       model: modelId,
       category,
       conversationId: state.conversationId,
+      conversationName: state.conversationName,
     });
 
     // Remove loading message
@@ -417,9 +418,18 @@ async function sendMessage(message) {
     if (response && response.response) {
       displayAIMessage(response.response);
       
-      // Update conversation ID if provided
+      // Update conversation ID and name if provided
       if (response.conversationId) {
         state.conversationId = response.conversationId;
+      }
+      if (response.conversationName) {
+        state.conversationName = response.conversationName;
+      }
+      
+      // If this was a new conversation, hide selector after first message
+      if (response.isNewConversation) {
+        state.selectorVisible = false;
+        updateSelectorVisibility();
       }
     } else {
       showError("Failed to get response from AI");
@@ -675,14 +685,39 @@ async function loadConversation(conversationId) {
         });
       }
 
-      // Show selector when loading conversation
-      state.selectorVisible = true;
+      // Hide selector when loading existing conversation
+      state.selectorVisible = false;
       updateSelectorVisibility();
+
+      // Set model to the conversation's previous model if available
+      if (data.conversation.model) {
+        const categoryModels = state.categorizedModels[state.selectedCategory] || [];
+        const modelData = categoryModels.find(m => m.id === data.conversation.model);
+        if (modelData) {
+          state.selectedModel = modelData.name;
+          // Update model dropdown
+          const modelSelect = document.getElementById("model-select");
+          if (modelSelect) {
+            const trigger = modelSelect.querySelector(".custom-select-trigger");
+            if (trigger) {
+              trigger.textContent = modelData.name;
+            }
+            const options = modelSelect.querySelectorAll(".custom-option");
+            options.forEach(opt => {
+              opt.classList.remove("selected");
+              if (opt.dataset.model === modelData.name) {
+                opt.classList.add("selected");
+              }
+            });
+          }
+        }
+      }
 
       // Show toggle-selector button
       const toggleSelectorBtn = document.getElementById("toggle-selector-btn");
       if (toggleSelectorBtn) {
         toggleSelectorBtn.style.display = "flex";
+        toggleSelectorBtn.classList.remove("active");
       }
     }
   } catch (error) {

@@ -11,6 +11,7 @@ MODE = "production" # -> "production" if enabled, or any other name if disabled
 SITE = "enabled" # -> "enabled" if enabled, or any other name if disabled
 JWT_SECRET = "generate-a-secure-random-key"
 JWT = "generate-a-secure-random-key"
+GATEWAY_ID = "dashboard-gateway"
 
 # Production environment
 [env.production]
@@ -25,6 +26,11 @@ binding = "ASSETS"
 [ai]
 name = "AI"
 binding = "AI"
+
+# Gateway AI for storage
+[gateway_ai]
+name = "GATEWAY_AI"
+binding = "GATEWAY_AI"
 
 # Worker executed before assets
 run_worker_first = [

@@ -1,4 +1,4 @@
-import { megaRead, megaWrite, megaDelete } from "../database/mega.js";
+// Using Cloudflare Gateway AI for storage
 
 function indexPath(category) {
   return `artificial_intelligence/${String(category).replace(/^\/+|\/+$/g, "")}/index.json`;
@@ -8,25 +8,50 @@ function discussionFilePath(category, filename) {
   return `artificial_intelligence/${String(category).replace(/^\/+|\/+$/g, "")}/${String(filename)}`;
 }
 
+// Gateway AI storage functions
+async function gatewayRead(env, key) {
+  try {
+    if (!env.GATEWAY_AI) {
+      console.warn("Gateway AI binding not configured");
+      return null;
+    }
+    const result = await env.GATEWAY_AI.get(key);
+    return result;
+  } catch (e) {
+    console.error("Gateway AI read error:", e);
+    return null;
+  }
+}
+
+async function gatewayWrite(env, key, value) {
+  try {
+    if (!env.GATEWAY_AI) {
+      console.warn("Gateway AI binding not configured");
+      return;
+    }
+    await env.GATEWAY_AI.put(key, value);
+  } catch (e) {
+    console.error("Gateway AI write error:", e);
+    throw e;
+  }
+}
+
 export async function readIndex(env, category) {
   try {
-    const idx = await megaRead(env, indexPath(category));
+    const idx = await gatewayRead(env, indexPath(category));
     if (!Array.isArray(idx)) return [];
     return idx;
   } catch (e) {
-    if (String(e?.message || "").toLowerCase().includes("file not found") || String(e?.message || "").toLowerCase().includes("folder not found")) {
-      return [];
-    }
-    throw e;
+    return [];
   }
 }
 
 export async function readDiscussion(env, category, discussionId) {
   try {
-    const discussion = await megaRead(env, discussionFilePath(category, `${discussionId}.json`));
+    const discussion = await gatewayRead(env, discussionFilePath(category, `${discussionId}.json`));
     return discussion;
   } catch (e) {
-    if (String(e?.message || "").toLowerCase().includes("file not found") || String(e?.message || "").toLowerCase().includes("folder not found")) {
+    if (String(e?.message || "").toLowerCase().includes("not found")) {
       return null;
     }
     throw e;
@@ -34,7 +59,7 @@ export async function readDiscussion(env, category, discussionId) {
 }
 
 export async function writeIndex(env, category, index) {
-  return await megaWrite(env, indexPath(category), index || []);
+  return await gatewayWrite(env, indexPath(category), index || []);
 }
 
 function nowTS() { return new Date().toISOString(); }
@@ -81,7 +106,7 @@ export async function addMessagePair(env, category, { discussionId = null, userC
 
   // Save discussion to file
   try {
-    await megaWrite(env, discussionFilePath(category, `${discussion.id}.json`), discussion);
+    await gatewayWrite(env, discussionFilePath(category, `${discussion.id}.json`), discussion);
     
     // Update index
     const index = await readIndex(env, category);
@@ -154,13 +179,13 @@ export async function callModel(env, model, prompt, options = {}, gatewayMetadat
         // Image generation format
         aiModel = env.AI.run(actualModel, {
           prompt: message,
-        });
+        }, options.gatewayMetadata);
       } else {
         // Text generation format
         aiModel = env.AI.run(actualModel, {
           messages: [{ role: "user", content: message }],
           max_tokens: options.maxTokens || 512,
-        });
+        }, options.gatewayMetadata);
       }
       
       const response = await aiModel;

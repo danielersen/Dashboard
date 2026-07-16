@@ -28,6 +28,6 @@ export async function basic(env, model, body = {}) {
 		}
 	});
 	
-	return { result, discussion };
+	return { result, discussion, conversationId, conversationName: gatewayMetadata.gateway?.metadata?.conversationName, isNewConversation: gatewayMetadata.gateway?.metadata?.isNewConversation };
 }
 

@@ -26,6 +26,6 @@ export async function notes_remarks(env, model, body = {}) {
 			gateway: gatewayMetadata.gateway
 		}
 	});
-	return { result, discussion };
+	return { result, discussion, conversationId, conversationName: gatewayMetadata.gateway?.metadata?.conversationName, isNewConversation: gatewayMetadata.gateway?.metadata?.isNewConversation };
 }
 
