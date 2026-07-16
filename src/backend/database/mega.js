@@ -142,7 +142,7 @@ export async function getClient(env, forceRefresh = false) {
 }
 
 export async function getOrCreateFolder(storage, folderPath) {
-  const normalized = normalizePath(folderPath);
+  const normalized = normalizePath(`dashboard/${folderPath}`);
   if (!normalized) return storage.root;
 
   const segments = normalized.split("/").filter(Boolean);
@@ -183,7 +183,7 @@ export async function getOrCreateFolder(storage, folderPath) {
 }
 
 export async function getFolderIfExists(storage, folderPath) {
-  const normalized = normalizePath(folderPath);
+  const normalized = normalizePath(`dashboard/${folderPath}`);
   if (!normalized) return storage.root;
 
   const segments = normalized.split("/").filter(Boolean);
@@ -217,7 +217,7 @@ export async function getFolderIfExists(storage, folderPath) {
 }
 
 async function ensureParentFolder(storage, path) {
-  const normalized = normalizePath(path);
+  const normalized = normalizePath(`dashboard/${path}`);
   const segments = normalized.split("/").filter(Boolean);
   if (segments.length <= 1) return null;
   const folderPath = segments.slice(0, -1).join("/");
